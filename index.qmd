@@ -1,0 +1,15 @@
+---
+title: "Evgeni Chasnovski"
+about:
+  template: trestles
+  image: assets/EC2.png
+---
+
+My name is Evgeni Chasnovski. I am a mathematician and a data scientist from Kharkiv (Ukraine) with a strong passion for data analysis, Neovim, and R.
+
+I enjoy maintaining and frequently contributing to Open Source Software, as well as occasionally writing blog posts.
+
+- [Projects](projects.qmd)
+- [Blog](blog.qmd)
+- [Talks](talks.qmd)
+- [CV](assets/EvgeniChasnovski.pdf)

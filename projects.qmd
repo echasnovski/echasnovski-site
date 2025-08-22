@@ -1,0 +1,23 @@
+---
+title: "Projects"
+---
+
+### Neovim
+
+- [mini.nvim](https://github.com/echasnovski/mini.nvim) - Library of 40+ independent Lua modules improving overall Neovim experience. Creator and maintainer.
+
+- [Neovim](https://github.com/neovim/neovim) - Vim-fork focused on extensibility and usability. Team member.
+
+### R
+
+- [pdqr](https://github.com/echasnovski/pdqr) Package with extensive functionality for creating, transforming, and summarizing custom random variables. Creator and maintainer.
+
+- [ruler](https://github.com/echasnovski/ruler) Functionality for creating tidy data validation reports. Creator and maintainer.
+
+- [comperank](https://github.com/echasnovski/comperank) Implementation of multiple algorithms for computing ranking and rating based on competition results. Creator and maintainer.
+
+- [infer](https://github.com/tidymodels/infer) Tools for tidy statistical inference. Extensively refactored and enhanced code base, which wasn't initially mine. Team member.
+
+### Python
+
+- [randomvars](https://github.com/echasnovski/randomvars) Scikit package for applied work with random variables. Creator and maintainer.

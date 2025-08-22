@@ -1,0 +1,505 @@
+---
+title: Usage of ruler package
+author: Evgeni Chasnovski
+date: 2017-12-05
+categories: [rstats, ruler, questionflow]
+description: "Usage examples of ruler package: dplyr-style exploration and validation of data frame like objects"
+---
+
+# Prologue
+
+My [previous post](2017-11-28-rule-your-data-with-tidy-validation-reports-design.qmd) tells a story about design of my [ruler](https://echasnovski.github.io/ruler/) package, which presents tools for "... creating data validation pipelines and tidy reports". This package offers a framework for exploring and validating data frame like objects using [dplyr](http://dplyr.tidyverse.org/) grammar of data manipulation.
+
+This post is intended to show some close to reality `ruler` usage examples. Described methods and approaches reflect package design. Along the way you will learn why Yoda and Jabba the Hutt are "outliers" among core "Star Wars" characters.
+
+For more information see [README](https://echasnovski.github.io/ruler/) (for relatively brief comprehensive introduction) or [vignettes](https://echasnovski.github.io/ruler/articles/) (for more thorough description of package capabilities).
+
+__Beware__ of a lot of code.
+
+# Overview
+
+```r
+suppressMessages(library(dplyr))
+suppressMessages(library(purrr))
+library(ruler)
+```
+
+The general way of performing validation with `ruler` can be described with following steps:
+
+- __Formulate a validation task__. It is usually stated in the form of a yes-no question or true-false statement about some part (data unit) of an input data frame. Data unit can be one of: data [as a whole], group of rows [as a whole], column [as a whole], row [as a whole], cell. For example, _does every column contain elements with sum more than 100?_.
+- __Create a `dplyr`-style validation function__ (rule pack) which checks desired data unit for obedience to [possibly] several rules:
+    - Create `dplyr` code for "interactive" validation. __Note__ to use only [functions supported by keyholder package](https://echasnovski.github.io/keyholder/reference/keyholder-supported-funs.html). An example with "enough_sum" as a rule name:
+
+      ```r
+      mtcars %>% summarise_all(funs(enough_sum = sum(.) > 100))
+      ```
+
+    - Use `ruler`'s function `rules()` instead of explicit or implicit usage of `funs()`:
+
+      ```r
+      mtcars %>% summarise_all(rules(enough_sum = sum(.) > 100))
+      ```
+
+    - Modify code to create [magrittr functional sequence](http://magrittr.tidyverse.org/reference/pipe.html) by replacing input variable name by a `.`:
+
+      ```r
+      . %>% summarise_all(rules(enough_sum = sum(.) > 100))
+      ```
+
+    - Wrap with [rule specification function ](https://echasnovski.github.io/ruler/reference/rule-packs.html) to explicitly identify validated data unit and to name rule pack. In this case it is `col_packs()` for column data unit with "is_enough_sum" as rule pack name:
+
+      ```r
+      col_packs(
+        is_enough_sum = . %>% summarise_all(rules(is_enough = sum(.) > 100))
+      )
+      ```
+
+- __Expose data to rules__ to obtain validation result (exposure). Use `ruler`'s `expose()` function for that. It doesn't modify contents of input data frame but creates/updates `exposure` attribute. [Exposure](https://echasnovski.github.io/ruler/reference/exposure.html) is a list with information about used rule packs ([packs_info](https://echasnovski.github.io/ruler/reference/packs_info.html)) and tidy data validation report ([report](https://echasnovski.github.io/ruler/reference/ruler-report.html)).
+- __Act after exposure__. It can be:
+    - Observing validation results with `get_exposure()`, `get_packs_info()` or `get_report()`.
+    - Making assertions if specific rules are not followed in desired way.
+    - Imputing input data frame based on report.
+
+In examples we will use [starwars](http://dplyr.tidyverse.org/reference/starwars.html) data from `dplyr` package (to celebrate an upcoming new episode). It is a tibble with every row describing one "Star Wars" character. Every example starts with a validation task stated _in italic_ and performs validation from beginning to end.
+
+# Create rule packs
+
+## Data
+■ _Does `starwars` have 1) number of rows 1a) more than 50; 1b) less than 60; 2) number of columns 2a) more than 10; 2b) less than 15?_
+
+```r
+check_data_dims <- data_packs(
+  check_dims = . %>% summarise(
+    nrow_low = nrow(.) >= 50, nrow_up = nrow(.) <= 60,
+    ncol_low = ncol(.) >= 10, ncol_up = ncol(.) <= 15
+  )
+)
+
+starwars %>%
+  expose(check_data_dims) %>%
+  get_exposure()
+##   Exposure
+##
+## Packs info:
+## # A tibble: 1 x 4
+##         name      type             fun remove_obeyers
+##        <chr>     <chr>          <list>          <lgl>
+## 1 check_dims data_pack <S3: data_pack>           TRUE
+##
+## Tidy data validation report:
+## # A tibble: 1 x 5
+##         pack    rule   var    id value
+##        <chr>   <chr> <chr> <int> <lgl>
+## 1 check_dims nrow_up  .all     0 FALSE
+```
+
+The result is interpreted as follows:
+
+- Data was exposed to one rule pack for data as a whole (data rule pack) named "check_dims". For it all obeyers (data units which follow specified rule) were removed from validation report.
+- Combination of `var` equals `.all` and `id` equals `0` means that data as a whole is validated.
+- Input data frame doesn't obey (because `value` is equal to `FALSE`) rule `nrow_up` from rule pack `check_dims`.
+
+■ _Does `starwars` have enough rows for characters 1) with blond hair; 2) humans; 3) humans with blond hair?_
+
+```r
+check_enough_rows <- data_packs(
+  enough_blond = . %>% filter(hair_color == "blond") %>%
+    summarise(is_enough = n() > 10),
+  enough_humans = . %>% summarise(
+    is_enough = sum(species == "Human", na.rm = TRUE) > 30
+  ),
+  ehough_blond_humans = . %>% filter(
+    hair_color == "blond", species == "Human"
+  ) %>%
+    summarise(is_enough = n() > 5)
+)
+
+starwars %>%
+  expose(check_enough_rows) %>%
+  get_exposure()
+##   Exposure
+##
+## Packs info:
+## # A tibble: 3 x 4
+##                  name      type             fun remove_obeyers
+##                 <chr>     <chr>          <list>          <lgl>
+## 1        enough_blond data_pack <S3: data_pack>           TRUE
+## 2       enough_humans data_pack <S3: data_pack>           TRUE
+## 3 ehough_blond_humans data_pack <S3: data_pack>           TRUE
+##
+## Tidy data validation report:
+## # A tibble: 2 x 5
+##                  pack      rule   var    id value
+##                 <chr>     <chr> <chr> <int> <lgl>
+## 1        enough_blond is_enough  .all     0 FALSE
+## 2 ehough_blond_humans is_enough  .all     0 FALSE
+```
+
+New information gained from example:
+
+- Rule specification functions can be supplied with multiple rule packs all of which will be independently used during exposing.
+
+■ _Does `starwars` have enough numeric columns?_
+
+```r
+check_enough_num_cols <- data_packs(
+  enough_num_cols = . %>% summarise(
+    is_enough = sum(map_lgl(., is.numeric)) > 1
+  )
+)
+
+starwars %>%
+  expose(check_enough_num_cols) %>%
+  get_report()
+## Tidy data validation report:
+## # A tibble: 0 x 5
+## # ... with 5 variables: pack <chr>, rule <chr>, var <chr>, id <int>,
+## #   value <lgl>
+```
+
+- If no breaker is found `get_report()` returns tibble with zero rows and usual columns.
+
+## Group
+
+■ _Does group defined by hair color and gender have a member from Tatooine?_
+
+```r
+has_hair_gender_tatooine <- group_packs(
+  hair_gender_tatooine = . %>%
+    group_by(hair_color, gender) %>%
+    summarise(has_tatooine = any(homeworld == "Tatooine")),
+  .group_vars = c("hair_color", "gender"),
+  .group_sep = "__"
+)
+
+starwars %>%
+  expose(has_hair_gender_tatooine) %>%
+  get_report()
+## Tidy data validation report:
+## # A tibble: 12 x 5
+##                   pack         rule                 var    id value
+##                  <chr>        <chr>               <chr> <int> <lgl>
+## 1 hair_gender_tatooine has_tatooine      auburn__female     0 FALSE
+## 2 hair_gender_tatooine has_tatooine  auburn, grey__male     0 FALSE
+## 3 hair_gender_tatooine has_tatooine auburn, white__male     0 FALSE
+## 4 hair_gender_tatooine has_tatooine      blonde__female     0 FALSE
+## 5 hair_gender_tatooine has_tatooine          grey__male     0 FALSE
+## # ... with 7 more rows
+```
+
+- `group_packs()` needs grouping columns supplied via `.group_vars`.
+- Column `var` of validation report contains levels of grouping columns to identify group. By default their are pasted together with `.`. To change that supply `.group_sep` argument.
+- 12 combinations of `hair_color` and `gender` don't have a character from Tatooine. They are "auburn"-"female", "auburn, grey"-"male" and so on.
+
+## Column
+
+■ _Does every list-column have 1) enough average length; 2) enough unique elements?_
+
+```r
+check_list_cols <- col_packs(
+  check_list_cols = . %>%
+    summarise_if(
+      is.list,
+      rules(
+        is_enough_mean = mean(map_int(., length)) >= 1,
+        length(unique(unlist(.))) >= 10
+      )
+    )
+)
+
+starwars %>%
+  expose(check_list_cols) %>%
+  get_report()
+## Tidy data validation report:
+## # A tibble: 3 x 5
+##              pack           rule       var    id value
+##             <chr>          <chr>     <chr> <int> <lgl>
+## 1 check_list_cols is_enough_mean  vehicles     0 FALSE
+## 2 check_list_cols is_enough_mean starships     0 FALSE
+## 3 check_list_cols        rule..2     films     0 FALSE
+```
+
+- To specify rule functions inside `dplyr`'s scoped verbs use `ruler::rules()`. It powers correct output interpretation during exposing process and imputes missing rule names based on the present rules in current rule pack.
+- Columns `vehicles` and `starships` don't have enough average length and column `films` doesn't have enough unique elements.
+
+■ _Are all values of column `birth_year` non-`NA`?_
+
+```r
+starwars %>%
+  expose(
+    col_packs(
+      . %>% summarise_at(
+        vars(birth_year = "birth_year"),
+        rules(all_present = all(!is.na(.)))
+      )
+    )
+  ) %>%
+  get_report()
+## Tidy data validation report:
+## # A tibble: 1 x 5
+##          pack        rule        var    id value
+##         <chr>       <chr>      <chr> <int> <lgl>
+## 1 col_pack..1 all_present birth_year     0 FALSE
+```
+
+- To correctly validate one column with scoped `dplyr` verb it should be a named argument inside `vars`. It is needed for correct interpretation of rule pack output.
+
+## Row
+
+■ _Has character appeared in enough films?_ As character is defined by row, this is a row pack.
+
+```r
+has_enough_films <- row_packs(
+  enough_films = . %>% transmute(is_enough = map_int(films, length) >= 3)
+)
+
+starwars %>%
+  expose(has_enough_films) %>%
+  get_report() %>%
+  left_join(y = starwars %>% transmute(id = 1:n(), name),
+            by = "id") %>%
+  print(.validate = FALSE)
+## Tidy data validation report:
+## # A tibble: 64 x 6
+##           pack      rule   var    id value              name
+##          <chr>     <chr> <chr> <int> <lgl>             <chr>
+## 1 enough_films is_enough  .all     8 FALSE             R5-D4
+## 2 enough_films is_enough  .all     9 FALSE Biggs Darklighter
+## 3 enough_films is_enough  .all    12 FALSE    Wilhuff Tarkin
+## 4 enough_films is_enough  .all    15 FALSE            Greedo
+## 5 enough_films is_enough  .all    18 FALSE  Jek Tono Porkins
+## # ... with 59 more rows
+```
+
+- 64 characters haven't appeared in 3 films or more. Those are characters described in `starwars` in rows 8, 9, etc. (counting based on input data).
+
+■ _Is character with `height` less than 100 a droid?_
+
+```r
+is_short_droid <- row_packs(
+  is_short_droid = . %>% filter(height < 100) %>%
+    transmute(is_droid = species == "Droid")
+)
+
+starwars %>%
+  expose(is_short_droid) %>%
+  get_report() %>%
+  left_join(y = starwars %>% transmute(id = 1:n(), name, height),
+            by = "id") %>%
+  print(.validate = FALSE)
+## Tidy data validation report:
+## # A tibble: 5 x 7
+##             pack     rule   var    id value                  name height
+##            <chr>    <chr> <chr> <int> <lgl>                 <chr>  <int>
+## 1 is_short_droid is_droid  .all    19 FALSE                  Yoda     66
+## 2 is_short_droid is_droid  .all    29 FALSE Wicket Systri Warrick     88
+## 3 is_short_droid is_droid  .all    45 FALSE              Dud Bolt     94
+## 4 is_short_droid is_droid  .all    72 FALSE         Ratts Tyerell     79
+## 5 is_short_droid is_droid  .all    73    NA                R4-P17     96
+```
+
+- One can expose only subset of rows by using `filter` or `slice`. The value of `id` column in result will reflect row number in the original input data frame. This feature is powered by [keyholder](https://echasnovski.github.io/keyholder/) package. In order to use it, rule pack should be created using its supported functions.
+- `value` equal to `NA` is treated as rule breaker.
+- 5 "not tall" characters are not droids.
+
+## Cell
+
+■ _Is non-`NA` numeric cell not an outlier based on z-score?_ This is a bit tricky. To present outliers as rule breakers one should ask whether cell __is not__ outlier.
+
+```r
+z_score <- function(x, ...) {abs(x - mean(x, ...)) / sd(x, ...)}
+
+cell_isnt_outlier <- cell_packs(
+  dbl_not_outlier = . %>%
+    transmute_if(
+      is.numeric,
+      rules(isnt_out = z_score(., na.rm = TRUE) < 3 | is.na(.))
+    )
+)
+
+starwars %>%
+  expose(cell_isnt_outlier) %>%
+  get_report() %>%
+  left_join(y = starwars %>% transmute(id = 1:n(), name),
+            by = "id") %>%
+  print(.validate = FALSE)
+## Tidy data validation report:
+## # A tibble: 4 x 6
+##              pack     rule        var    id value                  name
+##             <chr>    <chr>      <chr> <int> <lgl>                 <chr>
+## 1 dbl_not_outlier isnt_out     height    19 FALSE                  Yoda
+## 2 dbl_not_outlier isnt_out       mass    16 FALSE Jabba Desilijic Tiure
+## 3 dbl_not_outlier isnt_out birth_year    16 FALSE Jabba Desilijic Tiure
+## 4 dbl_not_outlier isnt_out birth_year    19 FALSE                  Yoda
+```
+
+- 4 non-`NA` numeric cells appear to be an outlier within their column.
+
+# Expose data to rules
+
+■ _Do groups defined by `species`, `gender` and `eye_color` (3 different checks) have appropriate size?_
+
+```r
+starwars %>%
+  expose(
+    group_packs(. %>% group_by(species) %>% summarise(isnt_many = n() <= 5),
+                .group_vars = "species")
+  ) %>%
+  expose(
+    group_packs(. %>% group_by(gender) %>% summarise(isnt_many = n() <= 60),
+                .group_vars = "gender"),
+    .remove_obeyers = FALSE
+  ) %>%
+  expose(is_enough_eye_color = . %>% group_by(eye_color) %>%
+           summarise(isnt_many = n() <= 20)) %>%
+  get_exposure() %>%
+  print(n_report = Inf)
+##   Exposure
+##
+## Packs info:
+## # A tibble: 3 x 4
+##                  name       type              fun remove_obeyers
+##                 <chr>      <chr>           <list>          <lgl>
+## 1       group_pack..1 group_pack <S3: group_pack>           TRUE
+## 2       group_pack..2 group_pack <S3: group_pack>          FALSE
+## 3 is_enough_eye_color group_pack <S3: group_pack>           TRUE
+##
+## Tidy data validation report:
+## # A tibble: 7 x 5
+##                  pack      rule           var    id value
+##                 <chr>     <chr>         <chr> <int> <lgl>
+## 1       group_pack..1 isnt_many         Human     0 FALSE
+## 2       group_pack..2 isnt_many        female     0  TRUE
+## 3       group_pack..2 isnt_many hermaphrodite     0  TRUE
+## 4       group_pack..2 isnt_many          male     0 FALSE
+## 5       group_pack..2 isnt_many          none     0  TRUE
+## 6       group_pack..2 isnt_many            NA     0  TRUE
+## 7 is_enough_eye_color isnt_many         brown     0 FALSE
+```
+
+- `expose()` can be applied sequentially which results into updating existing `exposure` with new information.
+- `expose()` imputes names of supplied unnamed rule packs based on the present rule packs for the same data unit type.
+- `expose()` by default removes obeyers (rows with data units that obey respective rules) from validation report. To stop doing that use `.remove_obeyers = FALSE` during `expose()` call.
+- `expose()` by default guesses the type of the supplied rule pack based only on its output. This has some annoying edge cases but is suitable for interactive usage. To turn this feature off use `.guess = FALSE` as an argument for `expose()`. Also, to avoid edge cases create rule packs with appropriate wrappers.
+
+■ _Perform some previous checks with one `expose()`._
+
+```r
+my_packs <- list(check_data_dims, is_short_droid, cell_isnt_outlier)
+
+str(my_packs)
+## List of 3
+##  $ :List of 1
+##   ..$ check_dims:function (value)
+##   .. ..- attr(*, "class")= chr [1:4] "data_pack" "rule_pack" "fseq" "function"
+##  $ :List of 1
+##   ..$ is_short_droid:function (value)
+##   .. ..- attr(*, "class")= chr [1:4] "row_pack" "rule_pack" "fseq" "function"
+##  $ :List of 1
+##   ..$ dbl_not_outlier:function (value)
+##   .. ..- attr(*, "class")= chr [1:4] "cell_pack" "rule_pack" "fseq" "function"
+
+starwars_exposed_list <- starwars %>%
+  expose(my_packs)
+
+starwars_exposed_arguments <- starwars %>%
+  expose(check_data_dims, is_short_droid, cell_isnt_outlier)
+
+identical(starwars_exposed_list, starwars_exposed_arguments)
+## [1] TRUE
+```
+
+- `expose()` can have for rule pack argument a list of lists [of lists, of lists, ...] with functions at any depth. This enables creating a list of rule packs wrapped with `*_packs()` functions (which all return a list of functions).
+- `expose()` can have multiple rule packs as separate arguments.
+
+# Act after exposure
+
+■ _Throw an error if any non-`NA` value of `mass` is more than 1000._
+
+```r
+starwars %>%
+  expose(
+    col_packs(
+      low_mass = . %>% summarise_at(
+        vars(mass = "mass"),
+        rules(is_small_mass = all(. <= 1000, na.rm = TRUE))
+      )
+    )
+  ) %>%
+  assert_any_breaker()
+##   Breakers report
+## Tidy data validation report:
+## # A tibble: 1 x 5
+##       pack          rule   var    id value
+##      <chr>         <chr> <chr> <int> <lgl>
+## 1 low_mass is_small_mass  mass     0 FALSE
+## Error: assert_any_breaker: Some breakers found in exposure.
+```
+
+- `assert_any_breaker()` is used to assert presence of at least one breaker in validation report.
+
+However, offered solution via column pack doesn't show rows which break the rule. To do that one can use cell pack:
+
+```r
+starwars %>%
+  expose(
+    cell_packs(
+      low_mass = . %>% transmute_at(
+        vars(mass = "mass"),
+        rules(is_small_mass = (. <= 1000) | is.na(.))
+      )
+    )
+  ) %>%
+  assert_any_breaker()
+##   Breakers report
+## Tidy data validation report:
+## # A tibble: 1 x 5
+##       pack          rule   var    id value
+##      <chr>         <chr> <chr> <int> <lgl>
+## 1 low_mass is_small_mass  mass    16 FALSE
+## Error: assert_any_breaker: Some breakers found in exposure.
+```
+
+■ _Remove numeric columns with mean value below certain threshold._ To achieve that one should formulate rule as "column mean should be __above__ threshold", identify breakers and act upon this information.
+
+```r
+remove_bad_cols <- function(.tbl) {
+  bad_cols <- .tbl %>%
+    get_report() %>%
+    pull(var) %>%
+    unique()
+
+  .tbl[, setdiff(colnames(.tbl), bad_cols)]
+}
+
+starwars %>%
+  expose(
+    col_packs(
+      . %>% summarise_if(is.numeric, rules(mean(., na.rm = TRUE) >= 100))
+    )
+  ) %>%
+  act_after_exposure(
+    .trigger = any_breaker,
+    .actor = remove_bad_cols
+  ) %>%
+  remove_exposure()
+## # A tibble: 87 x 11
+##             name height hair_color  skin_color eye_color gender homeworld
+##            <chr>  <int>      <chr>       <chr>     <chr>  <chr>     <chr>
+## 1 Luke Skywalker    172      blond        fair      blue   male  Tatooine
+## 2          C-3PO    167       <NA>        gold    yellow   <NA>  Tatooine
+## 3          R2-D2     96       <NA> white, blue       red   <NA>     Naboo
+## 4    Darth Vader    202       none       white    yellow   male  Tatooine
+## 5    Leia Organa    150      brown       light     brown female  Alderaan
+## # ... with 82 more rows, and 4 more variables: species <chr>,
+## #   films <list>, vehicles <list>, starships <list>
+```
+
+- [act_after_exposure](https://echasnovski.github.io/ruler/reference/act_after_exposure.html) is a wrapper for performing actions after exposing. It takes `.trigger` function to trigger action and `.actor` function to perform action and return its result.
+- `any_breaker` is a function which return `TRUE` if tidy validation report attached to it has any breaker and `FALSE` otherwise.
+
+# Conclusions
+
+- Yoda and Jabba the Hutt are outliers among other "Star Wars" characters: Yoda is by height and birth year, Jabba is by mass and also birth year.
+- There are less than 10 "Star Wars" films yet.
+- `ruler` offers flexible and extendable functionality for common validation tasks. Validation can be done for data [as a whole], group of rows [as a whole], column [as a whole], row [as a whole] and cell. After exposing data frame of interest to rules and obtaining tidy validation report, one can perform any action based on this information: explore report, throw error, impute input data frame, etc.

@@ -1,0 +1,315 @@
+---
+title: Store Data About Rows
+author: Evgeni Chasnovski
+date: 2017-11-20
+categories: [rstats, keyholder, questionflow]
+description: Introduction to keyholder package. Tools for keeping track of information about rows
+---
+
+# Prologue
+
+During development of my other R package ([ruler](https://github.com/echasnovski/ruler)), I encountered the following problem: how to track rows of data frame after application of some __user defined__ function? It is assumed that this function takes data frame as input, subsets it (with possible creation of new columns, but not rows) and returns the result. The typical example using [dplyr](http://dplyr.tidyverse.org/) and [magrittr](http://magrittr.tidyverse.org/)'s pipe:
+
+```r
+suppressMessages(library(dplyr))
+
+# Custom `mtcars` for more clear explanation
+mtcars_tbl <- mtcars %>%
+  select(mpg, vs, am) %>%
+  as_tibble()
+
+# A handy way of creating function with one argument
+modify <- . %>%
+  mutate(vs_am = vs * am) %>%
+  filter(vs_am == 1) %>%
+  arrange(desc(mpg))
+
+# The question is: which rows of `mtcars_tbl` are returned?
+mtcars_tbl %>% modify()
+## # A tibble: 7 x 4
+##     mpg    vs    am vs_am
+##   <dbl> <dbl> <dbl> <dbl>
+## 1  33.9     1     1     1
+## 2  32.4     1     1     1
+## 3  30.4     1     1     1
+## 4  30.4     1     1     1
+## 5  27.3     1     1     1
+## # ... with 2 more rows
+```
+
+To solve this problem I ended up creating package [keyholder](https://echasnovski.github.io/keyholder), which became my first CRAN release. You can install its stable version with :
+
+```r
+install.packages("keyholder")
+```
+
+This post describes basis of design and main use cases of `keyholder`. For more information see its vignette [Introduction to keyholder](https://echasnovski.github.io/keyholder/articles/introduction.html).
+
+# Overview
+
+```r
+suppressMessages(library(keyholder))
+```
+
+The main idea of package is to create S3 class `keyed_df`, which indicates that original data frame (or tibble) should have attribute `keys`. "Key" is __any vector__ (even list) of the same length as number of rows in data frame. Keys are stored as tibble in attribute `keys` and so one data frame can have multiple keys. In other words, keys can be considered as __columns of data frame which are hidden from subsetting functions but are updated according to them__.
+
+To achieve that, those functions should be generic and have method for `keyed_df` implemented. Look [here](https://echasnovski.github.io/keyholder/reference/keyholder-supported-funs.html) for the list of functions supported by `keyholder`. As for version `0.1.1` they are all one- and two-table `dplyr` verbs for local data frames and `[` function.
+
+# Create and manipulate keys
+
+There are two distinct ways of creating keys: by assigning and by using existing columns:
+
+```r
+# By assigning
+mtcars_tbl_1 <- mtcars_tbl
+keys(mtcars_tbl_1) <- tibble(rev_id = nrow(mtcars_tbl_1):1)
+mtcars_tbl_1
+## # A keyed object. Keys: rev_id
+## # A tibble: 32 x 3
+##     mpg    vs    am
+## * <dbl> <dbl> <dbl>
+## 1  21.0     0     1
+## 2  21.0     0     1
+## 3  22.8     1     1
+## 4  21.4     1     0
+## 5  18.7     0     0
+## # ... with 27 more rows
+
+# By using existing columns
+mtcars_keyed <- mtcars_tbl %>% key_by(vs)
+mtcars_keyed
+## # A keyed object. Keys: vs
+## # A tibble: 32 x 3
+##     mpg    vs    am
+## * <dbl> <dbl> <dbl>
+## 1  21.0     0     1
+## 2  21.0     0     1
+## 3  22.8     1     1
+## 4  21.4     1     0
+## 5  18.7     0     0
+## # ... with 27 more rows
+```
+
+To get keys use `keys()` (which always returns tibble) or `pull_key()` (similar to `dplyr::pull()` but for keys):
+
+```r
+mtcars_keyed %>% keys()
+## # A tibble: 32 x 1
+##      vs
+## * <dbl>
+## 1     0
+## 2     0
+## 3     1
+## 4     1
+## 5     0
+## # ... with 27 more rows
+
+mtcars_keyed %>% pull_key(vs)
+##  [1] 0 0 1 1 0 1 0 1 1 1 1 0 0 0 0 0 0 1 1 1 1 0 0 0 0 1 0 1 0 0 0 1
+```
+
+To restore keys (create respective columns in data frame) use `restore_keys()`:
+
+```r
+# Column `vs` didn't change in output because it was restored from keys
+mtcars_keyed %>%
+  mutate(vs = 2) %>%
+  restore_keys(vs)
+## # A keyed object. Keys: vs
+## # A tibble: 32 x 3
+##     mpg    vs    am
+##   <dbl> <dbl> <dbl>
+## 1  21.0     0     1
+## 2  21.0     0     1
+## 3  22.8     1     1
+## 4  21.4     1     0
+## 5  18.7     0     0
+## # ... with 27 more rows
+```
+
+To end having keys use `unkey()`:
+
+```r
+mtcars_keyed %>% unkey()
+## # A tibble: 32 x 3
+##     mpg    vs    am
+## * <dbl> <dbl> <dbl>
+## 1  21.0     0     1
+## 2  21.0     0     1
+## 3  22.8     1     1
+## 4  21.4     1     0
+## 5  18.7     0     0
+## # ... with 27 more rows
+```
+
+# Use cases
+
+## Track rows
+
+To track rows after application of user defined function one can create key with row number as values. `keyholder` has a wrapper `use_id()` for this:
+
+```r
+# `use_id()` removes all existing keys and creates key ".id"
+mtcars_track <- mtcars_tbl %>%
+  use_id()
+
+mtcars_track %>% pull_key(.id)
+##  [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+## [24] 24 25 26 27 28 29 30 31 32
+```
+
+Now rows are tracked:
+
+```r
+mtcars_track %>%
+  modify() %>%
+  pull_key(.id)
+## [1] 20 18 19 28 26  3 32
+
+# Make sure of correct result
+mtcars_tbl %>%
+  mutate(id = seq_len(n())) %>%
+  modify() %>%
+  pull(id)
+## [1] 20 18 19 28 26  3 32
+```
+
+The reason for using "key id" instead of "column id" is that `modify()` hypothetically can perform differently depending on columns of its input. For example, it can use `dplyr`'s [scoped variants](http://dplyr.tidyverse.org/reference/scoped.html) of verbs or simply check input's column structure.
+
+## Restore information
+
+During development of tools for data analysis one can have a need to ensure that certain columns don't change after application of some function. This can be achieved by keying those columns and restoring them later (__note__ that this can change the order of columns.):
+
+```r
+weird_modify <- . %>% transmute(new_col = vs + 2 * am)
+
+# Suppose there is a need for all columns to stay untouched in the output
+mtcars_tbl %>%
+  key_by(everything()) %>%
+  weird_modify() %>%
+  # This can be replaced by its scoped variant: restore_keys_all()
+  restore_keys(everything()) %>%
+  unkey()
+## # A tibble: 32 x 4
+##   new_col   mpg    vs    am
+##     <dbl> <dbl> <dbl> <dbl>
+## 1       2  21.0     0     1
+## 2       2  21.0     0     1
+## 3       3  22.8     1     1
+## 4       1  21.4     1     0
+## 5       0  18.7     0     0
+## # ... with 27 more rows
+```
+
+## Hide columns
+
+In actual data analysis the following situation can happen: one should modify all but handful of columns with `dplyr::mutate_if()`.
+
+```r
+is_integerish <- function(x) {all(x == as.integer(x))}
+
+if_modify <- . %>% mutate_if(is_integerish, ~ . * 10)
+
+mtcars_tbl %>% if_modify()
+## # A tibble: 32 x 3
+##     mpg    vs    am
+##   <dbl> <dbl> <dbl>
+## 1  21.0     0    10
+## 2  21.0     0    10
+## 3  22.8    10    10
+## 4  21.4    10     0
+## 5  18.7     0     0
+## # ... with 27 more rows
+```
+
+Suppose column `vs` should appear unchanged in the output. This can be achieved in several ways, which differ slightly but significantly. The first one is to key by `vs`, apply function and restore `vs` from keys.
+
+```r
+mtcars_tbl %>%
+  key_by(vs) %>%
+  if_modify() %>%
+  restore_keys(vs)
+## # A keyed object. Keys: vs
+## # A tibble: 32 x 3
+##     mpg    vs    am
+##   <dbl> <dbl> <dbl>
+## 1  21.0     0    10
+## 2  21.0     0    10
+## 3  22.8     1    10
+## 4  21.4     1     0
+## 5  18.7     0     0
+## # ... with 27 more rows
+```
+
+The advantage is that it doesn't change the order of columns. The disadvantage is that it actually applies modification function to column, which can be undesirable in some cases.
+
+The second approach is similar, but after keying by `vs` one can remove this column from data frame. This way column `vs` is moved to last column.
+
+```r
+mtcars_hidden_vs <- mtcars_tbl %>% key_by(vs, .exclude = TRUE)
+
+mtcars_hidden_vs
+## # A keyed object. Keys: vs
+## # A tibble: 32 x 2
+##     mpg    am
+## * <dbl> <dbl>
+## 1  21.0     1
+## 2  21.0     1
+## 3  22.8     1
+## 4  21.4     0
+## 5  18.7     0
+## # ... with 27 more rows
+
+mtcars_hidden_vs %>%
+  if_modify() %>%
+  restore_keys(vs)
+## # A keyed object. Keys: vs
+## # A tibble: 32 x 3
+##     mpg    am    vs
+##   <dbl> <dbl> <dbl>
+## 1  21.0    10     0
+## 2  21.0    10     0
+## 3  22.8    10     1
+## 4  21.4     0     1
+## 5  18.7     0     0
+## # ... with 27 more rows
+```
+
+# Conclusions
+
+- It might be a good idea to extract some package functionality into separate package, as this can lead to one more useful tool.
+- Package `keyholder` offers functionality for keeping track of arbitrary data about rows after application of some __user defined__ function. This is done by creating special attribute "keys" which is updated after every change in rows (subsetting, ordering, etc.).
+
+::: {.callout-note title="sessionInfo()" collapse="true"}
+```
+## R version 3.4.2 (2017-09-28)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 16.04.3 LTS
+##
+## Matrix products: default
+## BLAS: /usr/lib/openblas-base/libblas.so.3
+## LAPACK: /usr/lib/libopenblasp-r0.2.18.so
+##
+## locale:
+##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C
+##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8
+##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8
+##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C
+## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C
+##
+## attached base packages:
+## [1] methods   stats     graphics  grDevices utils     datasets  base
+##
+## other attached packages:
+## [1] keyholder_0.1.1 bindrcpp_0.2    dplyr_0.7.4
+##
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.13     bookdown_0.5     assertthat_0.2.0 digest_0.6.12
+##  [5] rprojroot_1.2    R6_2.2.2         backports_1.1.1  magrittr_1.5
+##  [9] evaluate_0.10.1  blogdown_0.2     rlang_0.1.4      stringi_1.1.5
+## [13] rmarkdown_1.7    tools_3.4.2      stringr_1.2.0    glue_1.2.0
+## [17] yaml_2.1.14      compiler_3.4.2   pkgconfig_2.0.1  htmltools_0.3.6
+## [21] bindr_0.1        knitr_1.17       tibble_1.3.4
+```
+:::

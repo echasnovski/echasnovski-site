@@ -1,0 +1,243 @@
+---
+title: Transformers, glue!
+author: Evgeni Chasnovski
+date: 2018-08-21
+slug: transformers-glue
+categories: [rstats, glue]
+description: General description of transformers functionality in {glue} with some potentially useful examples
+---
+
+# Prologue
+
+Package {[glue](https://glue.tidyverse.org/index.html)} is designed as "small, fast, dependency free" tools to "glue strings to data in R". To put simply, it provides concise and flexible alternatives for `paste()` with some additional features:
+
+```r
+library(glue)
+
+x <- 10
+paste("I have", x, "apples.")
+## [1] "I have 10 apples."
+glue("I have {x} apples.")
+## I have 10 apples.
+```
+
+Recently, fate lead me to try using {glue} in a package. I was very pleased to how it makes code more readable, which I believe is a very important during package development. However, I stumbled upon this pretty unexpected behavior:
+
+```r
+y <- NULL
+paste("I have", x, "apples and", y, "oranges.")
+## [1] "I have 10 apples and  oranges."
+str(glue("I have {x} apples and {y} oranges."))
+## Classes 'glue', 'character'  chr(0)
+```
+
+If one of the expressions is evaluated into `NULL` then the output becomes empty string. This was unintuitive result and for a while I thought about stop using {glue} because `NULL` is expected to be a valid input. However, if [Jim Hester](https://github.com/jimhester) is package author, you should expect some sort of designed solution to *any* problem. This time wasn't an exception: there is a [transformers](https://glue.tidyverse.org/articles/transformers.html) functionality.
+
+Basically, transformer is a function that changes the output of R expressions the way you want. As I wanted to make `NULL` visible, this is a perfect way to do it.
+
+# Overview
+
+This post describes an easy way to create {glue} wrappers with custom transformers. It also lists some examples that can be helpful in common tasks:
+
+- **Transformers** uses a little bit of functional programming magic to create a potentially useful transformers.
+
+Setup is very simple this time:
+
+```r
+# {glue} was loaded in examples
+# For functional programming magic
+library(purrr)
+# For string manipulation in one of the examples
+library(stringr)
+```
+
+# Transformers
+
+The task of creating wrapper for `glue()` essentially consists from two parts:
+
+- Evaluate properly a supplied R expressions.
+- Modify them to show intended behavior.
+
+The `transforming_glue()` wrapper does exactly this:
+
+```r
+transforming_glue <- function(transformer) {
+  function(..., .sep = "", .envir = parent.frame(), .open = "{", .close = "}",
+           .na = "NA") {
+    glue(
+      ..., .sep = .sep, .envir = .envir, .open = .open, .close = .close,
+      .na = "NA",
+      .transformer = compose(transformer, identity_transformer)
+    )
+  }
+}
+```
+
+Breakdown of this code:
+
+- Input is a `transformer` - function that takes an already evaluated R object and modifies it the way you want.
+- Output is a function that is a wrapper for `glue()`. Its transformer is a function composition that first evaluates R expression with `identity_transformer` (function from {glue}) and then applies supplied `transformer`. Composition here is done with [compose()](https://purrr.tidyverse.org/reference/compose.html) - an element of functional programming magic from {[purrr](https://purrr.tidyverse.org/)}.
+
+## Show NULL
+
+Back to initial problem. We want `NULL` to be a valid R value for a `glue()`:
+
+```r
+show_null <- function(x, val = "NULL") {
+  if (is.null(x)) {
+    val
+  } else {
+    x
+  }
+}
+
+glue_null <- transforming_glue(show_null)
+
+# Example from Prologue
+glue_null("I have {x} apples and {y} oranges.")
+## I have 10 apples and NULL oranges.
+```
+
+## Fixed width output
+
+With {[stringr](https://stringr.tidyverse.org/)} package you can force an output to be fixed width:
+
+```r
+str_width <- function(x, width) {
+  if (str_length(x) > width) {
+    str_trunc(x, width, side = "right")
+  } else {
+    str_pad(x, width, side = "right")
+  }
+}
+
+glue_width <- transforming_glue(partial(str_width, width = 10))
+
+short_oh <- "Ooh!"
+long_oh <- "Oooooooooooh!"
+glue_width("This puzzles ({short_oh}) and surprises ({long_oh}) me.")
+## This puzzles (Ooh!      ) and surprises (Ooooooo...) me.
+```
+
+**Note** usage of [partial()](https://purrr.tidyverse.org/reference/partial.html) here: it takes function along with its arguments' values and modifies it by "pre-filling" those arguments.
+
+## Enclose output
+
+In some situation you might want to explicitly show which strings represent R objects in the output. You can do that by enclosing the output in some sort of braces:
+
+```r
+enclose <- function(x, start = "<", end = ">") {
+  paste0(start, x, end)
+}
+
+glue_enclose <- transforming_glue(enclose)
+
+glue_enclose("What if I had {x} oranges?")
+## What if I had <10> oranges?
+```
+
+## Bizarro encryption
+
+One possibly useful pattern is to encrypt the used data to prevent it from seeing by untrustworthy eyes. Here we will use simplified `bizarro()` example from [this insightful UseR 2018 talk](https://www.youtube.com/watch?v=7oyiPBjLAWY) by the amazing [Jennifer (Jenny) Bryan](https://github.com/jennybc). Here `glue_bizarro()` "reverts" R objects based on their type.
+
+```r
+str_reverse <- function(x) {
+  vapply(
+    strsplit(x, ""),
+    FUN = function(z) paste(rev(z), collapse = ""),
+    FUN.VALUE = ""
+  )
+}
+
+bizarro <- function(x) {
+  cls <- class(x)[[1]]
+
+  switch(
+    cls,
+    logical = !x,
+    integer = -x,
+    numeric = -x,
+    character = str_reverse(x),
+    x
+  )
+}
+
+glue_bizarro <- transforming_glue(bizarro)
+
+new_fruit <- "pomegranate"
+glue_bizarro(
+  "Then I might have {x + 10} apples. Is that {TRUE}?
+   Maybe I want {new_fruit}?"
+)
+## Then I might have -20 apples. Is that FALSE?
+## Maybe I want etanargemop?
+```
+
+## Ultimate example
+
+Using already familiar functional programming technique, we can create an ultimate `glue()` wrapper as a combination, or rather `compose()`-ition, of all previous examples. The most important part is supply them in correct order:
+
+```r
+glue_ultimate <- transforming_glue(
+  compose(
+    enclose,
+    partial(str_width, width = 10),
+    # To ensure that input of `str_width()` is character
+    as.character,
+    show_null,
+    bizarro
+  )
+)
+
+glue_ultimate(
+  "I have {x} apples and {y} oranges.
+   This puzzles ({short_oh}) and surprises ({long_oh}) me.
+   What if I had {x} oranges?
+   Then I might have {x + 10} apples. Is that {TRUE}?
+   Maybe I want {new_fruit}?"
+)
+## I have <-10       > apples and <NULL      > oranges.
+## This puzzles (<!hoO      >) and surprises (<!hooooo...>) me.
+## What if I had <-10       > oranges?
+## Then I might have <-20       > apples. Is that <FALSE     >?
+## Maybe I want <etanarg...>?
+```
+
+# Conclusions
+
+- Package {glue} is a very useful and flexible way of creating strings based on evaluation of R expressions.
+- Its "transformer" functionality is an interesting way to manipulate string output by supplying custom modification function.
+- Functional programming with {purrr} can be very helpful in creating concise and extensible code.
+
+::: {.callout-note title="sessionInfo()" collapse="true"}
+```
+## R version 3.4.4 (2018-03-15)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 16.04.5 LTS
+##
+## Matrix products: default
+## BLAS: /usr/lib/openblas-base/libblas.so.3
+## LAPACK: /usr/lib/libopenblasp-r0.2.18.so
+##
+## locale:
+##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C
+##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8
+##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8
+##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C
+## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C
+##
+## attached base packages:
+## [1] methods   stats     graphics  grDevices utils     datasets  base
+##
+## other attached packages:
+## [1] stringr_1.3.1 purrr_0.2.5   glue_1.3.0
+##
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.18     bookdown_0.7     crayon_1.3.4     digest_0.6.15
+##  [5] rprojroot_1.3-2  backports_1.1.2  magrittr_1.5     evaluate_0.11
+##  [9] blogdown_0.8     rlang_0.2.1.9000 stringi_1.2.4    rmarkdown_1.10
+## [13] tools_3.4.4      xfun_0.3         yaml_2.2.0       compiler_3.4.4
+## [17] htmltools_0.3.6  knitr_1.20
+```
+:::

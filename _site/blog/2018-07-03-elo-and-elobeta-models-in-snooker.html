@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.33">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Evgeni Chasnovski">
+<meta name="dcterms.date" content="2018-07-03">
+<meta name="description" content="Research about adequacy of Elo based models applied to snooker match results. Contains a novel approach (EloBeta) targeted for sport results with variable “best of N” format">
+
+<title>Elo and EloBeta models in snooker – Evgeni Chasnovski</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../assets/EC2_256x256.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-5ca60cd7dc66a3d97392c85a846c0f51.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-670b99469b0fedb101f981e5f859b6d1.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-b24b5df978ca4df61ac56f9b38ec0762.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9b1adeea5f6e5b84aa14c1364df925f5.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<meta property="og:title" content="Elo and EloBeta models in snooker – Evgeni Chasnovski">
+<meta property="og:description" content="Research about adequacy of Elo based models applied to snooker match results. Contains a novel approach (EloBeta) targeted for sport results with variable “best of N” format">
+<meta property="og:image" content="https://echasnovski.com/blog/2018-07-03-elo-and-elobeta-models-in-snooker/experiment-results.png">
+<meta property="og:site_name" content="Evgeni Chasnovski">
+<meta property="og:locale" content="en_US">
+<meta property="og:image:height" content="1536">
+<meta property="og:image:width" content="1728">
+<meta name="twitter:title" content="Elo and EloBeta models in snooker – Evgeni Chasnovski">
+<meta name="twitter:description" content="Research about adequacy of Elo based models applied to snooker match results. Contains a novel approach (EloBeta) targeted for sport results with variable “best of N” format">
+<meta name="twitter:image" content="https://echasnovski.com/blog/assets/EC2.png">
+<meta name="twitter:creator" content="@echasnovski">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Evgeni Chasnovski</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../blog.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../projects.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../talks.html"> 
+<span class="menu-text">Talks</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/echasnovski"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/echasnovski.bsky.social"> <i class="bi bi-bluesky" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.youtube.com/@echasnovski"> <i class="bi bi-youtube" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../blog.xml"> <i class="bi bi-rss-fill" role="img" aria-label="RSS">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#prologue" id="toc-prologue" class="nav-link active" data-scroll-target="#prologue">Prologue</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#models" id="toc-models" class="nav-link" data-scroll-target="#models">Models</a>
+  <ul class="collapse">
+  <li><a href="#elo" id="toc-elo" class="nav-link" data-scroll-target="#elo">Elo</a></li>
+  <li><a href="#elobeta" id="toc-elobeta" class="nav-link" data-scroll-target="#elobeta">EloBeta</a></li>
+  </ul></li>
+  <li><a href="#experiment" id="toc-experiment" class="nav-link" data-scroll-target="#experiment">Experiment</a>
+  <ul class="collapse">
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
+  <li><a href="#methodology" id="toc-methodology" class="nav-link" data-scroll-target="#methodology">Methodology</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
+  </ul></li>
+  <li><a href="#exploration-of-elobeta-ratings" id="toc-exploration-of-elobeta-ratings" class="nav-link" data-scroll-target="#exploration-of-elobeta-ratings">Exploration of EloBeta ratings</a>
+  <ul class="collapse">
+  <li><a href="#top-16-by-the-end-of-201718" id="toc-top-16-by-the-end-of-201718" class="nav-link" data-scroll-target="#top-16-by-the-end-of-201718">Top 16 by the end of 2017/18</a></li>
+  <li><a href="#collective-evolution-of-elobeta-ratings" id="toc-collective-evolution-of-elobeta-ratings" class="nav-link" data-scroll-target="#collective-evolution-of-elobeta-ratings">Collective evolution of EloBeta ratings</a></li>
+  <li><a href="#evolution-of-elobeta-top-16" id="toc-evolution-of-elobeta-top-16" class="nav-link" data-scroll-target="#evolution-of-elobeta-top-16">Evolution of EloBeta top 16</a></li>
+  </ul></li>
+  <li><a href="#conclusions" id="toc-conclusions" class="nav-link" data-scroll-target="#conclusions">Conclusions</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Elo and EloBeta models in snooker</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">rstats</div>
+    <div class="quarto-category">snooker</div>
+    <div class="quarto-category">comperank</div>
+    <div class="quarto-category">elobeta</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Research about adequacy of Elo based models applied to snooker match results. Contains a novel approach (EloBeta) targeted for sport results with variable “best of N” format
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Evgeni Chasnovski </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 3, 2018</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="prologue" class="level1">
+<h1>Prologue</h1>
+<p>For many years I’ve been following snooker as a sport. It has it all: hypnotic beauty of smart play, elegance of cue strikes and psychological tension of competition. The one thing I don’t like that much is its <em>ranking system</em>.</p>
+<p>Generally speaking, <strong>current snooker ranking is based on player accomplishments in tournaments (events)</strong> with different “weights” for different tournaments. Long time ago, it just used World Championships. Then, after more events had emerged, there was a table of points player could earn for winning at certain stage of tournament. Now it has the form of “rolling” sum of prize money player won during (roughly) past two calendar years.</p>
+<p>This system has two main advantages: it is <strong>simple</strong> (win more money -&gt; rise in rankings) and <strong>predictabile</strong> (want to get certain ranking -&gt; win certain amount of money, other things being equal). The problem is that <strong>this type of rankings doesn’t account the strength (skill, form) of player’s opponents</strong>. The usual counter-argument for this is that if player reached high stage of tournament then he/she is “strong” at this moment of time (“weak players don’t win tournaments”). Well, it does sound quite convincing. However, in snooker, as in any sport, the role of chance should be taken into account: if player is “weaker” it doesn’t mean that he can’t ever win in a match with “stronger” player. It means that this happens less often then the other way around. Here where <a href="https://en.wikipedia.org/wiki/Elo_rating_system">Elo model</a> comes into play.</p>
+<p>The idea behind Elo model is that each player is associated with numerical rating. The assumption is that a result of a game between two players can be predicted based on difference of their ratings: more value indicates more probability of “stronger” (with higher rating) player to win. <strong>Elo ranking is based on current player “strength”</strong> derived by wins against other players. This eliminates main disadvantage of current official ranking system. It is also capable of updating player rating during tournament to numerically react to player’s strong tournament performance.</p>
+<p>Having some practical experience with Elo ratings, I think it can do well in snooker too. However, there is one obstacle: <em>it is devised for competitions with uniform type of games</em>. Yes, there are some variations to account for <a href="https://medium.com/@mattbarger/soccer-elo-the-rebuild-df6b58bd8b94">home field advantage</a> in football or <a href="https://arxiv.org/pdf/1012.4571.pdf">first move advantage</a> in chess (both by adding fixed amount of rating points to “less advantageous” player). In snooker, however, matches are played in the “best of <span class="math inline">\(N\)</span>” format: the first one to win <span class="math inline">\(n = \frac{N + 1}{2}\)</span> frames wins a match. We will also call this format “<span class="math inline">\(n\)</span> to win”.</p>
+<p>Intuitively, winning a “10 to win” match (final of major tournament) should be harder for “weaker” player then “4 to win” match (first rounds of current Home Nations tournaments). This is taken into account by my proposed <strong>EloBeta model</strong>.</p>
+<p>To celebrate actual start of 2018/19 snooker season I decided to write this post in which <strong>I explore adequacy of both Elo and EloBeta models on snooker match results</strong>. Note that the goal is not to build models for forecasting and gambling purposes but for assessing players “strength” and creating “fair” ranking.</p>
+<p>The idea of using Elo rating in snooker is not new at all. There are works on this topic, for example:</p>
+<ul>
+<li><a href="http://www.snookeranalyst.com/current-ratings/rating-summary/">Snooker Analyst</a> provides “Elo inspired” (more like <a href="https://en.wikipedia.org/wiki/Bradley-Terry_model">Bradley–Terry model</a>) rating system based on the idea of updating rating based on difference between “actual frames won” and “expected frames won”. This approach is a little bit questionable. Surely, more frame difference should indicate more difference in strength, however, achieving that is not player’s goal. In snooker aim is “just” to win match, i.e.&nbsp;get certain amount of frame wins before the opponent.</li>
+<li><a href="https://www.snookerisland.com/forum/viewtopic.php?f=59&amp;t=5585">This forum discussion</a> with implementation of basic Elo model.</li>
+<li>Possibly, there are other works that I’ve missed. I will highly appreciate any information on this topic.</li>
+</ul>
+</section>
+<section id="overview" class="level1">
+<h1>Overview</h1>
+<p>This post is intended for both R users interested in Elo ratings and snooker analysts and fans. All experiments are written with intention to be reproducible. All code is hidden under spoilers (text appears after clicking on its summary, usually beginning with “Code for …”). It has commentaries and uses <a href="https://www.tidyverse.org/">tidyverse</a> packages, so it might be an interesting read for R users and programmers.</p>
+<p>This post is organized as follows:</p>
+<ul>
+<li><strong>Models</strong> describes <em>Elo</em> and <em>EloBeta</em> models with their R implementations.</li>
+<li><strong>Experiment</strong> describes details and intentions of computations: which <em>data</em> and <em>methodology</em> were used (and why) and what are the <em>results</em>.</li>
+<li><strong>Exploration of EloBeta ratings</strong> has application results of EloBeta model to actual snooker data. This section is written more for Snooker fans than for R enthusiasts.</li>
+</ul>
+<p>We will need the following setup:</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for setup">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for setup
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Data wrangling packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(dplyr))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualization package</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Package for ratings</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>(<span class="fu">library</span>(comperank))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>())</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Shouldn't be needed. Added just in case.</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20180703</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="models" class="level1">
+<h1>Models</h1>
+<p>Both models are based on the following assumptions:</p>
+<ol type="1">
+<li>There is a fixed set of players which should be ranked from “strongest” (first place) to “weakest” (last place).</li>
+<li>Ranking is done by associating player <span class="math inline">\(i\)</span> with numerical rating <span class="math inline">\(r_i\)</span>: a number indicating the “strength” of player (more value -&gt; “stronger”).</li>
+<li>The more difference in player ratings before the match the less favorable is “weaker” player to win it.</li>
+<li>Ratings are updated after every match based on its result and the ratings before it.</li>
+<li>Winning against “stronger” opponent should lead to bigger increase in rating than winning against “weaker” opponent. The opposite should be true for losing.</li>
+</ol>
+<section id="elo" class="level2">
+<h2 class="anchored" data-anchor-id="elo">Elo</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for Elo model">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for Elo model
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' @details This function is vectorized by all its arguments. Also usage of</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#' `...` is crucial to allow supplying unrelated arguments in the future.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return A probability of player 1 (rating `rating1`) wins in a match with</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#'   player 2 (rating `rating2`). Here difference in ratings directly affects</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#'   the outcome.</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>elo_win_prob <span class="ot">&lt;-</span> <span class="cf">function</span>(rating1, rating2, <span class="at">ksi =</span> <span class="dv">400</span>, ...) {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  norm_rating_diff <span class="ot">&lt;-</span> (rating2 <span class="sc">-</span> rating1) <span class="sc">/</span> ksi</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> <span class="dv">10</span><span class="sc">^</span>norm_rating_diff)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return A rating function for Elo model that can be supplied to</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">#'   `comperank::add_iterative_ratings()`.</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>elo_fun_gen <span class="ot">&lt;-</span> <span class="cf">function</span>(K, <span class="at">ksi =</span> <span class="dv">400</span>) {</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(rating1, score1, rating2, score2) {</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    comperank<span class="sc">::</span><span class="fu">elo</span>(rating1, score1, rating2, score2, <span class="at">K =</span> K, <span class="at">ksi =</span> ksi)[<span class="dv">1</span>, ]</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>Elo model updates ratings by the following steps:</p>
+<ul>
+<li><p><strong>Compute probability</strong> (<em>before</em> the match) <strong>of certain player to win the match</strong>. Probability of one player (we will call him/her “first”) with “identifier” <span class="math inline">\(i\)</span> and rating <span class="math inline">\(r_i\)</span> winning against the other player (“second”) with “identifier” <span class="math inline">\(j\)</span> and rating <span class="math inline">\(r_j\)</span> is equal to</p>
+<p><span class="math display">\[Pr(r_i , r_j) = \frac{1}{1 + 10^{(r_j - r_i)/400}}\]</span></p>
+<p>This way of computing probability is aligned with third model assumption.</p>
+<p>Difference normalization by 400 is a mathematical way to say which difference is considered “big”. This can be replaced by a model parameter <span class="math inline">\(\xi\)</span>, however this only affects the spread of future ratings and is often an overkill. Number 400 is fairly standard in chess world.</p>
+<p>In general approach probability is equal to <span class="math inline">\(L(r_j - r_i)\)</span> where <span class="math inline">\(L(x)\)</span> is some strictly increasing function with values from 0 to 1. We will use logistic curve to compute winning probability. More thorough study can be found in <a href="https://www.stat.berkeley.edu/~aldous/Papers/me-Elo-SS.pdf">this article</a>.</p></li>
+<li><p><strong>Obtain match result</strong> <span class="math inline">\(S\)</span>. In basic model it is 1 if first player wins (second player loses), 0.5 in case of draw and 0 if second player wins.</p></li>
+<li><p><strong>Update ratings</strong>:</p>
+<ul>
+<li><span class="math inline">\(\delta = K \cdot (S - Pr(r_i , r_j))\)</span>. This is the value by which ratings will change. It introduces the “K factor” (only model parameter). Less <span class="math inline">\(K\)</span> (ratings being equal) means less change in ratings - model is more conservative, i.e.&nbsp;more wins is needed to “prove” increase in “strength”. On the other hand, more <span class="math inline">\(K\)</span> means more “trust” to the current results than current ratings. <em>Choosing “optimal” <span class="math inline">\(K\)</span> is a way to produce “good” ranking system</em>.</li>
+<li><span class="math inline">\(r_i^{(new)} = r_i + \delta\)</span>, <span class="math inline">\(r_j^{(new)} = r_j - \delta\)</span>.</li>
+</ul></li>
+</ul>
+<p><strong>Notes</strong>:</p>
+<ul>
+<li>As one can see from rating update formulas, the sum of ratings for all ranked players doesn’t change over time: rating increase of one rating can be only done by taking this amount from another player.</li>
+<li>Players without any matches played are associated with initial rating 0. The usual value is 1500, however I don’t see any other reason except psychological for this. With previous note, using 0 means that sum of all ratings will always be 0, which is kind of beautiful.</li>
+<li>It is needed some matches to be played in order for rating to represent player’s “strength”. This introduces a problem: newly added players start with rating 0 which is almost surely not the lowest among current players. In other words, newcomers are considered to be “stronger” than some other players. This should be dealt with by external procedures of rating updates when introducing new player: maybe he/she should start with some low rating while compensating overall sum decrease by uniform increasing of other players’ ratings.</li>
+<li>Why this procedure makes sense? In case of equal ratings <span class="math inline">\(\delta\)</span> always equals <span class="math inline">\(0.5 \cdot K\)</span>. Let’s say, for example, that <span class="math inline">\(r_i = 0\)</span> and <span class="math inline">\(r_j = 400\)</span>. It means that probability of first player winning is <span class="math inline">\(\frac{1}{1 + 10} \approx 0.0909\)</span>, i.e.&nbsp;he/she will win 1 out of 11 matches.
+<ul>
+<li>In case of win, he/she will be awarded with approximately <span class="math inline">\(0.909 \cdot K\)</span> increase, which is more than in case of equal ratings.</li>
+<li>If he/she is defeated, then rating is decreased by approximately <span class="math inline">\(0.0909 \cdot K\)</span>, which is less than in case of equal ratings.</li>
+</ul>
+This shows that Elo model is aligned with fifth model assumption: winning against “stronger” opponent leads to bigger increase in rating than winning against “weaker” opponent and vice versa.</li>
+</ul>
+<p>Of course, Elo model has its (fairly high-level) <a href="https://en.wikipedia.org/wiki/Elo_rating_system#Practical_issues">practical issues</a>. However, the most important for our research is that “it thinks” that all matches are played in uniform conditions. It means, that match length isn’t taken into account: winning in “4 to win” match is rewarded the same as winning in “10 to win” match. That is where EloBeta comes into play.</p>
+</section>
+<section id="elobeta" class="level2">
+<h2 class="anchored" data-anchor-id="elobeta">EloBeta</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for EloBeta model">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for EloBeta model
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' @details This function is vectorized by all its arguments.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return A probability of player 1 (rating `rating1`) wins in a match with</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">#'   player 2 (rating `rating2`). Match is played until either player wins</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#'   `frames_to_win` frames. Here difference in ratings directly affects</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">#'   the probability of winning one frame.</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>elobeta_win_prob <span class="ot">&lt;-</span> <span class="cf">function</span>(rating1, rating2, frames_to_win, <span class="at">ksi =</span> <span class="dv">400</span>, ...) {</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  prob_frame <span class="ot">&lt;-</span> <span class="fu">elo_win_prob</span>(<span class="at">rating1 =</span> rating1, <span class="at">rating2 =</span> rating2, <span class="at">ksi =</span> ksi)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Probability that first player wins `frames_to_win` frames sooner than second</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># player based on probability of first player to win one frame `prob_frame`.</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Frames are treated as independent games.</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pbeta</span>(prob_frame, frames_to_win, frames_to_win)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return Match result in terms of player 1 win: 1 if he/she wins, 0.5 in case</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">#'   of a draw, and 0 if he/she loses.</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>get_match_result <span class="ot">&lt;-</span> <span class="cf">function</span>(score1, score2) {</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># There are no ties in snooker but this handles general case</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  near_score <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">near</span>(score1, score2)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">if_else</span>(near_score, <span class="fl">0.5</span>, <span class="fu">as.numeric</span>(score1 <span class="sc">&gt;</span> score2))</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return A rating function for EloBeta model that can be supplied to</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co">#'   `comperank::add_iterative_ratings()`.</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>elobeta_fun_gen <span class="ot">&lt;-</span> <span class="cf">function</span>(K, <span class="at">ksi =</span> <span class="dv">400</span>) {</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(rating1, score1, rating2, score2) {</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    prob_win <span class="ot">&lt;-</span> <span class="fu">elobeta_win_prob</span>(</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>      <span class="at">rating1 =</span> rating1, <span class="at">rating2 =</span> rating2,</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>      <span class="at">frames_to_win =</span> <span class="fu">pmax</span>(score1, score2), <span class="at">ksi =</span> ksi</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    match_result <span class="ot">&lt;-</span> <span class="fu">get_match_result</span>(score1, score2)</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    delta <span class="ot">&lt;-</span> K <span class="sc">*</span> (match_result <span class="sc">-</span> prob_win)</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">c</span>(rating1 <span class="sc">+</span> delta, rating2 <span class="sc">-</span> delta)</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>In Elo model difference in ratings directly affects the outcome probability of winning the whole match. The main idea behind EloBeta model is to <strong>make difference in ratings directly affect the outcome of one frame</strong> and <strong>actually compute the probability of a player winning <span class="math inline">\(n\)</span> frames before his opponent</strong>.</p>
+<p>The question is: how to compute this probability? Turns out, this is one of the oldest task in the history of probability theory and has its own name - <a href="https://en.wikipedia.org/wiki/Problem_of_points">Problem of points</a>. Very nice description can be found in <a href="https://probabilityandstats.wordpress.com/2016/11/06/the-problem-of-points/">this post</a>. Using its notation, the outcome probability equals to:</p>
+<p><span class="math display">\[
+P(n, n) = \sum\limits_{j = n}^{2n-1}{{{2n-1} \choose {j}} p^j (1-p)^{2n-1-j}}
+\]</span></p>
+<p>Here <span class="math inline">\(P(n, n)\)</span> is a probability of first player to win in “<span class="math inline">\(n\)</span> to win” match; <span class="math inline">\(p\)</span> is his/her probability to win one frame (<span class="math inline">\(1-p\)</span> - opponents probability). With this approach one assumes that <strong>result of frames inside a match is independent one from another</strong>. This is arguable, but necessary assumption (in terms of this model).</p>
+<p>Is there a way to compute this faster? It turns out, that the answer is yes. After hours of formula wrangling, practical experiments and internet search I found the following <a href="https://dlmf.nist.gov/8.17#E5">property</a> of <a href="https://en.wikipedia.org/wiki/Beta_function#Incomplete_beta_function">regularized incomplete beta function</a> <span class="math inline">\(I_x(a, b)\)</span>. By substituting <span class="math inline">\(m = k,~ n = 2k - 1\)</span> into that property and changing <span class="math inline">\(k\)</span> into <span class="math inline">\(n\)</span> we obtain that <span class="math inline">\(P(n, n) = I_p(n, n)\)</span>.</p>
+<p>This is also very good news for R users, because <span class="math inline">\(I_p(n, n)\)</span> can be computed as simply as <code>pbeta(p, n, n)</code>. <strong>Note</strong> that the general case probability of winning <span class="math inline">\(n\)</span> frames before opponent wins <span class="math inline">\(m\)</span> can also be computed as <span class="math inline">\(I_p(n, m)\)</span> and <code>pbeta(p, n, m)</code> respectively. This introduces the reach field of <em>updating winning probabilities during the mach</em>.</p>
+<p>So the procedure of updating ratings within EloBeta model is as follows (given ratings <span class="math inline">\(r_i, r_j\)</span>, number of frames <span class="math inline">\(n\)</span> to win in match and match outcome <span class="math inline">\(S\)</span>, as in Elo model):</p>
+<ul>
+<li><strong>Compute probability of first player to win the frame</strong>: <span class="math inline">\(p = Pr(r_i , r_j) = \frac{1}{1 + 10^{(r_j - r_i)/400}}\)</span>.</li>
+<li><strong>Compute probability of this player to win the match</strong>: <span class="math inline">\(Pr^{Beta}(r_i, r_j) = I_p(n, n)\)</span>. For example, if <span class="math inline">\(p\)</span> equals 0.4 then probability to win “4 to win” match drops to <code>r round(pbeta(0.4, 4, 4), 2)</code> and with “18 to win” to <code>r round(pbeta(0.4, 18, 18), 2)</code>.</li>
+<li><strong>Update ratings</strong>:
+<ul>
+<li><span class="math inline">\(\delta = K \cdot (S - Pr^{Beta}(r_i , r_j))\)</span>.</li>
+<li><span class="math inline">\(r_i^{(new)} = r_i + \delta\)</span>, <span class="math inline">\(r_j^{(new)} = r_j - \delta\)</span>.</li>
+</ul></li>
+</ul>
+<p><strong>Note</strong> that, as difference in ratings affects probability of winning one frame (not the whole match), we should expect lower optimal <span class="math inline">\(K\)</span>: part of <span class="math inline">\(\delta\)</span>’s value comes from amplifying effect of <span class="math inline">\(Pr^{Beta}(r_i, r_j)\)</span>.</p>
+<p>The idea of computation match result based on probability of winning one frame is not very novel. On <a href="https://wismuth.com/elo/calculator.html">this site</a>, authored by François Labelle, you can find online computation of probability of winning a “best of <span class="math inline">\(N\)</span>” match (with some other functionality). I was very glad to notice that results of our computations match. However, I didn’t find any sources of incorporating this into Elo updating procedure. I will highly appreciate any information on this topic.</p>
+<p>I’ve only managed to found <a href="http://freerangestats.info/blog/2015/08/07/fibs-elo-ratings-basics">this post</a> and <a href="http://www.bkgm.com/articles/McCool/ratings.html">this description</a> of Elo system on backgammon internet server (FIBS). Here different matches are handled by multiplying rating difference by square root of match length. However, there seems to be no strong theoretical reason for this.</p>
+</section>
+</section>
+<section id="experiment" class="level1">
+<h1>Experiment</h1>
+<p>The experiment has several goals. Based on snooker data:</p>
+<ul>
+<li>Derive best value of “K factor” for both models.</li>
+<li>Study stability of models in terms of prediction probability accuracy.</li>
+<li>Study the effect of using “invitational” events on ratings.</li>
+<li>Produce “best” rating history of all professional players from 2017/18 season.</li>
+</ul>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for data creation">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for data creation
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to split cases between "train", "validation", and "test" types</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>split_cases <span class="ot">&lt;-</span> <span class="cf">function</span>(n, <span class="at">props =</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.25</span>, <span class="fl">0.25</span>)) {</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  breaks <span class="ot">&lt;-</span> n <span class="sc">*</span> <span class="fu">cumsum</span>(<span class="fu">head</span>(props, <span class="sc">-</span><span class="dv">1</span>)) <span class="sc">/</span> <span class="fu">sum</span>(props)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  id_vec <span class="ot">&lt;-</span> <span class="fu">findInterval</span>(<span class="fu">seq_len</span>(n), breaks, <span class="at">left.open =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>(<span class="st">"train"</span>, <span class="st">"validation"</span>, <span class="st">"test"</span>)[id_vec]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>pro_players <span class="ot">&lt;-</span> snooker_players <span class="sc">%&gt;%</span> <span class="fu">filter</span>(status <span class="sc">==</span> <span class="st">"pro"</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Matches only between pro players.</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>pro_matches_all <span class="ot">&lt;-</span> snooker_matches <span class="sc">%&gt;%</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Using actually happened matches</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>walkover1, <span class="sc">!</span>walkover2) <span class="sc">%&gt;%</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter matches only between pro players</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">semi_join</span>(<span class="at">y =</span> pro_players, <span class="at">by =</span> <span class="fu">c</span>(<span class="at">player1Id =</span> <span class="st">"id"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">semi_join</span>(<span class="at">y =</span> pro_players, <span class="at">by =</span> <span class="fu">c</span>(<span class="at">player2Id =</span> <span class="st">"id"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add 'season' column</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> snooker_events <span class="sc">%&gt;%</span> <span class="fu">select</span>(id, season), <span class="at">by =</span> <span class="fu">c</span>(<span class="at">eventId =</span> <span class="st">"id"</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Ensure arranging by end date</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(endDate) <span class="sc">%&gt;%</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Prepare for widecr format</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">game =</span> <span class="fu">seq_len</span>(<span class="fu">n</span>()),</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">player1 =</span> player1Id, score1, <span class="at">player2 =</span> player2Id, score2,</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">matchId =</span> id, endDate, eventId, season,</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Compute match type ("train", "validation", or "test") with 50/25/25 split</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">matchType =</span> <span class="fu">split_cases</span>(<span class="fu">n</span>())</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Convert to widecr format</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_widecr</span>()</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Matches only between pro players in not invitational events (which by</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># quantity is dominated by Championship League).</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>pro_matches_off <span class="ot">&lt;-</span> pro_matches_all <span class="sc">%&gt;%</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> snooker_events <span class="sc">%&gt;%</span> <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">"Invitational"</span>),</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="at">eventId =</span> <span class="st">"id"</span>)</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Split confirmation</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>get_split <span class="ot">&lt;-</span> . <span class="sc">%&gt;%</span> <span class="fu">count</span>(matchType) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">share =</span> n <span class="sc">/</span> <span class="fu">sum</span>(n))</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co"># This should give 50/25/25 split (train/validation/test).</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>pro_matches_all <span class="sc">%&gt;%</span> <span class="fu">get_split</span>()</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a><span class="co"># This gives different split because invitational events aren't spread evenly</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># during season. However, this way matches are split based on the same</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>  <span class="co"># __time__ breaks as in `pro_matches_all`. This ensures that matches with same</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>  <span class="co"># type represent identical __time periods__.</span></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>pro_matches_off <span class="sc">%&gt;%</span> <span class="fu">get_split</span>()</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="co"># Grid for K factor</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>k_grid <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">100</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>tot_n_players <span class="ot">&lt;-</span> pro_matches_all <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_longcr</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(player) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>get_mean_nmatches <span class="ot">&lt;-</span> . <span class="sc">%&gt;%</span> <span class="fu">as_longcr</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(player) <span class="sc">%&gt;%</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">meanMatches =</span> <span class="fu">mean</span>(n)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(meanMatches) <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(<span class="at">digits =</span> <span class="dv">1</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>all_matches_per_player <span class="ot">&lt;-</span> <span class="fu">get_mean_nmatches</span>(pro_matches_all)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>off_matches_per_player <span class="ot">&lt;-</span> <span class="fu">get_mean_nmatches</span>(pro_matches_off)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>pro_matches_off_split <span class="ot">&lt;-</span> pro_matches_off <span class="sc">%&gt;%</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_split</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(matchType, <span class="at">share =</span> <span class="fu">round</span>(share <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  tibble<span class="sc">::</span><span class="fu">deframe</span>()</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>off_split <span class="ot">&lt;-</span> pro_matches_off_split[<span class="fu">c</span>(<span class="st">"train"</span>, <span class="st">"validation"</span>, <span class="st">"test"</span>)] <span class="sc">%&gt;%</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="at">collapse =</span> <span class="st">"/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>We will use snooker data from <a href="https://echasnovski.github.io/comperank/reference/index.html#section-snooker-data">comperank</a> package. The original source is <a href="http://www.snooker.org/">snooker.org</a> site. Results are taken from the following matches:</p>
+<ul>
+<li>Match is <strong>from 2016/17 or 2017/18 seasons</strong>.</li>
+<li>Match is a <strong>part of “professional” snooker event</strong>. That is:
+<ul>
+<li>It has “Invitational”, “Qualifying”, or “Ranking” type. We will also differ two sets of matches: “all matches” (from all these events) and “official matches” (not from invitational events). There are two main reasons behind it:
+<ul>
+<li>In invitational events not all players are given opportunity to change their ratings (which isn’t a clearly bad thing under Elo and EloBeta models).</li>
+<li>Belief that players “take seriously” only official ranking events. <strong>Note</strong> that most of “Invitational” events are from “Championship League” which, I think, are treated by most players as practice with opportunity to win money, i.e.&nbsp;“not very seriously”. Their presence can affect outcome ratings.</li>
+</ul>
+Besides “Championship League”, other invitational events are: “2016 China Championship”, both “Champion of Champions”, both “Masters”, “2017 Hong Kong Masters”, “2017 World games”, “2017 Romanian Masters”.</li>
+<li>It describes traditional snooker (not 6 Red or Power Snooker) between individual players (not teams).</li>
+<li>Both genders can take part (not only men or women).</li>
+<li>Players of all ages can take part (not only seniors or under 21).</li>
+<li>It is not “Shoot-Out” as those events are treated differently in snooker.org database.</li>
+</ul></li>
+<li>Match <strong>actually happened</strong>: its result is due to actual play from both players.</li>
+<li>Match <strong>is between two professionals</strong> (pros). List of professionals is taken as for 2017/18 season (<code>r tot_n_players</code> players). This seems like the most controversial decision, as removing “pro-ama” (“ama” for “amateur”) and “ama-ama” matches leads to “closing eyes” on pros’ losses to amateurs, and thus giving unfair advantage to those pros. I think this choice is necessary to ensure absence of <a href="https://en.wikipedia.org/wiki/Elo_rating_system#Ratings_inflation_and_deflation">rating inflation</a> which will happen if matches with amateurs are taken into account. Another possibility would be to study pros and amas together, but this seems unreasonable to me within this research. Professional’s loss to amateur is treated as loss of opportunity to increase rating.</li>
+</ul>
+<p>The final numbers of used matches are <code>r nrow(pro_matches_all)</code> for “all matches” and <code>r nrow(pro_matches_off)</code> for “official matches” (<code>r all_matches_per_player</code> and <code>r off_matches_per_player</code> matches per player respectively).</p>
+</section>
+<section id="methodology" class="level2">
+<h2 class="anchored" data-anchor-id="methodology">Methodology</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for methodology functions">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for methodology functions
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-5" class="callout-5-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param matches A `longcr` or `widecr` object with column `matchType` (with</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'   type of match for the experiment: "train", "validation", or "test").</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param test_type A type of match to be used for computing goodness of fit.</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#'   For experiment correctness, all matches with this type should happen later</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#'   than all other ("warm-up") matches. This means having bigger values in</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#'   `game` column.</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param k_vec Vector of "K factor" values to compute goodness of fit.</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param rate_fun_gen Function that, given "K factor" value, returns rating</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#'   function that can be supplied to `comperank::add_iterative_ratings()`.</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param get_win_prob Function to compute rating probability based on</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#'   ratings of players (`rating1`, `rating2`) and number of frames needed to</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#'   win in a match (`frames_to_win`). __Note__ that it should be vectorized by</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#'   all its arguments.</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param initial_ratings Initial ratings in format ready for</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#'   `comperank::add_iterative_ratings()`.</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#' @details This function computes:</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#' - History of iterative ratings after arranging `matches` by `game` column.</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co">#' - For matches with type equals to `test_type`:</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#'     - Probability of player 1 winning.</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co">#'     - Match result in terms of player 1 win: 1 if he/she wins, 0.5 in case of</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#'     a draw, and 0 if he/she loses.</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#' - Goodness of fit in the form of RMSE: square root of mean square error,</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="co">#' where "error" is difference between predicted probability and match result.</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return A tibble with columns 'k' for "K factor" and 'goodness' for RMSE</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co">#'   goodness of fit.</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>compute_goodness <span class="ot">&lt;-</span> <span class="cf">function</span>(matches, test_type, k_vec, rate_fun_gen,</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>                             get_win_prob, <span class="at">initial_ratings =</span> <span class="dv">0</span>) {</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(k_vec, <span class="cf">function</span>(cur_k) {</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Track execution</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(cur_k, <span class="st">" "</span>)</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    matches <span class="sc">%&gt;%</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>      <span class="fu">arrange</span>(game) <span class="sc">%&gt;%</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>      <span class="fu">add_iterative_ratings</span>(</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">rate_fun =</span> <span class="fu">rate_fun_gen</span>(cur_k), <span class="at">initial_ratings =</span> initial_ratings</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>        <span class="fu">left_join</span>(<span class="at">y =</span> matches <span class="sc">%&gt;%</span> <span class="fu">select</span>(game, matchType), <span class="at">by =</span> <span class="st">"game"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>        <span class="fu">filter</span>(matchType <span class="sc">%in%</span> test_type) <span class="sc">%&gt;%</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>          <span class="co"># Number of frames needed to win in a match</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>          <span class="at">framesToWin =</span> <span class="fu">pmax</span>(score1, score2),</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>          <span class="co"># Probability of player 1 winning a match with `frame_to_win` frames</span></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>            <span class="co"># needed to win.</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>          <span class="at">winProb =</span> <span class="fu">get_win_prob</span>(</span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>            <span class="at">rating1 =</span> rating1Before, <span class="at">rating2 =</span> rating2Before,</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>            <span class="at">frames_to_win =</span> framesToWin</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>          ),</span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>          <span class="at">result =</span> <span class="fu">get_match_result</span>(score1, score2),</span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>          <span class="at">squareError =</span> (result <span class="sc">-</span> winProb)<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>        ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>        <span class="fu">summarise</span>(<span class="at">goodness =</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>(squareError)))</span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>  }) <span class="sc">%&gt;%</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">k =</span> k_vec) <span class="sc">%&gt;%</span></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(k, goodness)</span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="co">#' A wrapper for `compute_goodness()` to be used with design matrix data.</span></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a>compute_goodness_wrap <span class="ot">&lt;-</span> <span class="cf">function</span>(matches_name, test_type, k_vec,</span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a>                                  rate_fun_gen_name, win_prob_fun_name,</span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">initial_ratings =</span> <span class="dv">0</span>) {</span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a>  matches_tbl <span class="ot">&lt;-</span> <span class="fu">get</span>(matches_name)</span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a>  rate_fun_gen <span class="ot">&lt;-</span> <span class="fu">get</span>(rate_fun_gen_name)</span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a>  get_win_prob <span class="ot">&lt;-</span> <span class="fu">get</span>(win_prob_fun_name)</span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compute_goodness</span>(</span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a>    matches_tbl, test_type, k_vec, rate_fun_gen, get_win_prob, initial_ratings</span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a><span class="co">#' Function to perform experiment.</span></span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param test_type Vector of values for `test_type` for `compute_goodness()`.</span></span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param rating_type Names of rating models.</span></span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param data_type Suffixes of data types.</span></span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param k_vec,initial_ratings Values for `compute_goodnes()`</span></span>
+<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a><span class="co">#' @details This function generates design matrix and computes multiple values</span></span>
+<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a><span class="co">#' of goodness of fit for different combinations of rating and data types. For</span></span>
+<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a><span class="co">#' this to work, variables with the following combinations of names should be</span></span>
+<span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a><span class="co">#' created in the global environment:</span></span>
+<span id="cb6-83"><a href="#cb6-83" aria-hidden="true" tabindex="-1"></a><span class="co">#' - "pro_matches_" + `&lt;test type&gt;` + `&lt;data type&gt;` for matches data.</span></span>
+<span id="cb6-84"><a href="#cb6-84" aria-hidden="true" tabindex="-1"></a><span class="co">#' - `&lt;rating type&gt;` + "_fun_gen" for rating function generators.</span></span>
+<span id="cb6-85"><a href="#cb6-85" aria-hidden="true" tabindex="-1"></a><span class="co">#' - `&lt;rating type&gt;` + "_win_prob" for functions that compute win probability.</span></span>
+<span id="cb6-86"><a href="#cb6-86" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb6-87"><a href="#cb6-87" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return A tibble with columns:</span></span>
+<span id="cb6-88"><a href="#cb6-88" aria-hidden="true" tabindex="-1"></a><span class="co">#' - __testType__ &lt;chr&gt; : Test type identifier.</span></span>
+<span id="cb6-89"><a href="#cb6-89" aria-hidden="true" tabindex="-1"></a><span class="co">#' - __ratingType__ &lt;chr&gt; : Rating type identifier.</span></span>
+<span id="cb6-90"><a href="#cb6-90" aria-hidden="true" tabindex="-1"></a><span class="co">#' - __dataType__ &lt;chr&gt; : Data type identifier.</span></span>
+<span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a><span class="co">#' - __k__ &lt;dbl/int&gt; : Value of "K factor".</span></span>
+<span id="cb6-92"><a href="#cb6-92" aria-hidden="true" tabindex="-1"></a><span class="co">#' - __goodness__ &lt;dbl&gt; : Value of goodness of fit.</span></span>
+<span id="cb6-93"><a href="#cb6-93" aria-hidden="true" tabindex="-1"></a>do_experiment <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">test_type =</span> <span class="fu">c</span>(<span class="st">"validation"</span>, <span class="st">"test"</span>),</span>
+<span id="cb6-94"><a href="#cb6-94" aria-hidden="true" tabindex="-1"></a>                          <span class="at">rating_type =</span> <span class="fu">c</span>(<span class="st">"elo"</span>, <span class="st">"elobeta"</span>),</span>
+<span id="cb6-95"><a href="#cb6-95" aria-hidden="true" tabindex="-1"></a>                          <span class="at">data_type =</span> <span class="fu">c</span>(<span class="st">"all"</span>, <span class="st">"off"</span>),</span>
+<span id="cb6-96"><a href="#cb6-96" aria-hidden="true" tabindex="-1"></a>                          <span class="at">k_vec =</span> k_grid,</span>
+<span id="cb6-97"><a href="#cb6-97" aria-hidden="true" tabindex="-1"></a>                          <span class="at">initial_ratings =</span> <span class="dv">0</span>) {</span>
+<span id="cb6-98"><a href="#cb6-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">crossing</span>(</span>
+<span id="cb6-99"><a href="#cb6-99" aria-hidden="true" tabindex="-1"></a>    <span class="at">testType =</span> test_type, <span class="at">ratingType =</span> rating_type, <span class="at">dataType =</span> data_type</span>
+<span id="cb6-100"><a href="#cb6-100" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-101"><a href="#cb6-101" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb6-102"><a href="#cb6-102" aria-hidden="true" tabindex="-1"></a>      <span class="at">dataName =</span> <span class="fu">paste0</span>(<span class="st">"pro_matches_"</span>, testType, <span class="st">"_"</span>, dataType),</span>
+<span id="cb6-103"><a href="#cb6-103" aria-hidden="true" tabindex="-1"></a>      <span class="at">kVec =</span> <span class="fu">rep</span>(<span class="fu">list</span>(k_vec), <span class="fu">n</span>()),</span>
+<span id="cb6-104"><a href="#cb6-104" aria-hidden="true" tabindex="-1"></a>      <span class="at">rateFunGenName =</span> <span class="fu">paste0</span>(ratingType, <span class="st">"_fun_gen"</span>),</span>
+<span id="cb6-105"><a href="#cb6-105" aria-hidden="true" tabindex="-1"></a>      <span class="at">winProbFunName =</span> <span class="fu">paste0</span>(ratingType, <span class="st">"_win_prob"</span>),</span>
+<span id="cb6-106"><a href="#cb6-106" aria-hidden="true" tabindex="-1"></a>      <span class="at">initialRatings =</span> <span class="fu">rep</span>(<span class="fu">list</span>(initial_ratings), <span class="fu">n</span>()),</span>
+<span id="cb6-107"><a href="#cb6-107" aria-hidden="true" tabindex="-1"></a>      <span class="at">experimentData =</span> <span class="fu">pmap</span>(</span>
+<span id="cb6-108"><a href="#cb6-108" aria-hidden="true" tabindex="-1"></a>        <span class="fu">list</span>(dataName, testType, kVec,</span>
+<span id="cb6-109"><a href="#cb6-109" aria-hidden="true" tabindex="-1"></a>             rateFunGenName, winProbFunName, initialRatings),</span>
+<span id="cb6-110"><a href="#cb6-110" aria-hidden="true" tabindex="-1"></a>        compute_goodness_wrap</span>
+<span id="cb6-111"><a href="#cb6-111" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb6-112"><a href="#cb6-112" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest</span>(experimentData) <span class="sc">%&gt;%</span></span>
+<span id="cb6-114"><a href="#cb6-114" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(testType, ratingType, dataType, k, goodness)</span>
+<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>To find “optimal” value of <span class="math inline">\(K\)</span> we will use the even grid <span class="math inline">\(K = 1, 2, ..., 100\)</span>. Accounting for greater values seems to be unreasonable which is confirmed by the experiment. The following procedure is used to find it:</p>
+<ul>
+<li>For every <span class="math inline">\(K\)</span>:
+<ul>
+<li><strong>Compute history of iterative ratings</strong> of certain model based on certain data set. It means that ratings of players would be known before every match. This is done with <a href="https://echasnovski.github.io/comperank/reference/iterative.html">add_iterative_ratings()</a> function from <code>comperank</code> package. This procedure corresponds to “live ratings” which update after every match.</li>
+<li>Based on data, starting from a certain (distant from the beginning) moment in time, <strong>compute goodness of model fit</strong>. We will use <a href="https://en.wikipedia.org/wiki/Root-mean-square_deviation">RMSE</a> between probability of first player to win (computed based on model) and match result. That is <span class="math inline">\(RMSE = \sqrt{\frac{1}{|T|} \sum\limits_{t \in T}{(S_t - P_t)^2}}\)</span>, where <span class="math inline">\(T\)</span> - indices of used matches, <span class="math inline">\(|T|\)</span> - number of used matches, <span class="math inline">\(S_t\)</span> - result of match for first player, <span class="math inline">\(P_t\)</span> - probability of first player to win the match (computed based on model). Not including matches from the beginning of data is needed for ratings to “catch up” to “current strength” from initial ratings.</li>
+</ul></li>
+<li>The value of <span class="math inline">\(K\)</span> with <strong>stable minimal RMSE</strong> is said to be optimal. Here by “stable” we mean that small RMSE values is present in some neighborhood of optimal <span class="math inline">\(K\)</span> (will be controlled not very strictly by looking at graphs). Values of RMSE lower 0.5 (value for “model” with constant 0.5 probability) will be considered a success.</li>
+</ul>
+<p>As one of the goals is to study stability of models, data will be split into three subsets: “train”, “validation” and “test”. They are ordered in time, i.e.&nbsp;any “train”/“validation” match has ending time earlier than any “validation”/“test” match. I decided to do actual split in 50/25/25 proportion for “all matches”. Split of “official matches” is done by removing from “all matches” invitational events. It gives split not totally in desired proportion, but rather <code>r off_split</code>. However, this approach ensures that matches with same type in both match data represent identical <strong>time periods</strong>.</p>
+<p>Experiment will be performed for all combinations of the following variables:</p>
+<ul>
+<li><strong>Type of model</strong>: Elo and EloBeta.</li>
+<li><strong>Type of match data</strong>: “All matches” and “official matches”.</li>
+<li><strong>Experiment type</strong>: “Validation” (“validation” matches are used for computing RMSE after “warming up” on “train” matches) and “Test” (“test” matches are used after “warming up” on both “train” and “validation” ones).</li>
+</ul>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for doing experiment">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for doing experiment
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>pro_matches_validation_all <span class="ot">&lt;-</span> pro_matches_all <span class="sc">%&gt;%</span> <span class="fu">filter</span>(matchType <span class="sc">!=</span> <span class="st">"test"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>pro_matches_validation_off <span class="ot">&lt;-</span> pro_matches_off <span class="sc">%&gt;%</span> <span class="fu">filter</span>(matchType <span class="sc">!=</span> <span class="st">"test"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>pro_matches_test_all <span class="ot">&lt;-</span> pro_matches_all</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>pro_matches_test_off <span class="ot">&lt;-</span> pro_matches_off</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes some time to run</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>experiment_tbl <span class="ot">&lt;-</span> <span class="fu">do_experiment</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for producing results of experiment">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for producing results of experiment
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-7" class="callout-7-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>experiment_tbl <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"2018-07-03-elo-and-elobeta-models-in-snooker_results.rds"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>cap_first <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="fu">toupper</span>(<span class="fu">substring</span>(x, <span class="dv">1</span>, <span class="dv">1</span>)), <span class="fu">substring</span>(x, <span class="dv">2</span>))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>plot_data <span class="ot">&lt;-</span> experiment_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unite</span>(group, ratingType, dataType) <span class="sc">%&gt;%</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">testType =</span> <span class="fu">cap_first</span>(testType),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">groupName =</span> <span class="fu">recode</span>(</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      group, <span class="at">elo_all =</span> <span class="st">"Elo, all matches"</span>, <span class="at">elo_off =</span> <span class="st">"Elo, official matches"</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">elobeta_all =</span> <span class="st">"EloBeta, all matches"</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">elobeta_off =</span> <span class="st">"EloBeta, official matches"</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Ensure preferred order. This is needed because sorting of strings will</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      <span class="co"># give "Elo, all matches", "EloBeta, all matches", "EloBeta, official</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>      <span class="co"># matches", and "Elo, official matches" as, apperently, non-letters are</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>      <span class="co"># ignored while sorting.</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">groupName =</span> <span class="fu">factor</span>(groupName, <span class="at">levels =</span> <span class="fu">unique</span>(groupName))</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>compute_optimal_k <span class="ot">&lt;-</span> . <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(testType, groupName) <span class="sc">%&gt;%</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="fu">which.min</span>(goodness)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>compute_k_labels <span class="ot">&lt;-</span> . <span class="sc">%&gt;%</span> <span class="fu">compute_optimal_k</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">label =</span> <span class="fu">paste0</span>(<span class="st">"K = "</span>, k)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(groupName) <span class="sc">%&gt;%</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># If optimal K within future facet is on the right, it needs a little</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># adjustment to the right. If on the left - full and a little adjustment to</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the left.</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">hjust =</span> <span class="sc">-</span> (k <span class="sc">==</span> <span class="fu">max</span>(k)) <span class="sc">*</span> <span class="fl">1.1</span> <span class="sc">+</span> <span class="fl">1.05</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>plot_experiment_results <span class="ot">&lt;-</span> <span class="cf">function</span>(results_tbl) {</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(results_tbl) <span class="sc">+</span></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_hline</span>(</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">yintercept =</span> <span class="fl">0.5</span>, <span class="at">colour =</span> <span class="st">"#AA5555"</span>, <span class="at">size =</span> <span class="fl">0.5</span>, <span class="at">linetype =</span> <span class="st">"dotted"</span></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="fu">aes</span>(k, goodness, <span class="at">colour =</span> testType)) <span class="sc">+</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> compute_optimal_k,</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">xintercept =</span> k, <span class="at">colour =</span> testType),</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">show.legend =</span> <span class="cn">FALSE</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_text</span>(</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> compute_k_labels,</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>      <span class="at">mapping =</span> <span class="fu">aes</span>(k, <span class="cn">Inf</span>, <span class="at">label =</span> label, <span class="at">hjust =</span> hjust),</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>      <span class="at">vjust =</span> <span class="fl">1.2</span></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span> groupName) <span class="sc">+</span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(</span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>      <span class="at">values =</span> <span class="fu">c</span>(<span class="at">Validation =</span> <span class="st">"#377EB8"</span>, <span class="at">Test =</span> <span class="st">"#FF7F00"</span>),</span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>      <span class="at">guide =</span> <span class="fu">guide_legend</span>(</span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Experiment"</span>, <span class="at">reverse =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>        <span class="at">override.aes =</span> <span class="fu">list</span>(<span class="at">size =</span> <span class="dv">4</span>)</span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> <span class="st">"K factor"</span>, <span class="at">y =</span> <span class="st">"Goodness of fit (RMSE)"</span>,</span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>      <span class="at">title =</span> <span class="st">"Best goodness of fit of Elo and EloBeta models are almost equal"</span>,</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a>      <span class="at">subtitle =</span> <span class="fu">paste0</span>(</span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>        <span class="st">'Using official matches (without invitational events) gives more '</span>,</span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>        <span class="st">'stable results.</span><span class="sc">\n</span><span class="st">'</span>,</span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>        <span class="st">'All optimal K values from test experiment (with longer "warm up") are'</span>,</span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>        <span class="st">' lower than from validation experiment.'</span></span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>), <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_experiment_results</span>(plot_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p><img src="2018-07-03-elo-and-elobeta-models-in-snooker/experiment-results.png" class="img-fluid"></p>
+<p>From the experiment we can make the following conclusions:</p>
+<ul>
+<li>As it was expected, optimal <span class="math inline">\(K\)</span> values for EloBeta are lower than for Elo.</li>
+<li>Using official matches (without invitational events) gives more stable results (“Validation” and “Test” results differ less). This shouldn’t be considered as a point that professionals take invitational events not seriously. Probably, this is due to quality of match results from “Championship League”: it has rather unpredictable “3 to win” format and tight schedule.</li>
+<li>Change in RMSE for optimal <span class="math inline">\(K\)</span> is not substantial. That is, RMSE didn’t change drastically after computing optimal <span class="math inline">\(K\)</span> in “Validation” and applying it in “Test” experiment. Moreover, on “official matches” it even decreased.</li>
+<li>All optimal K values from test experiment (with longer “warm up”) are lower than from validation experiment. This may be <em>the result</em> of longer “warm up” or <em>just a feature</em> of particular data.</li>
+<li>Best goodness of Elo and EloBeta fits are almost the same. Both are stable and below 0.5. Data for “official matches” (as they demonstrate stable behavior) is presented below. As results don’t differ that much, we will round optimal <span class="math inline">\(K\)</span> to a factor of 5: for Elo model it is 30 and for EloBeta - 10.</li>
+</ul>
+<!-- ```{r model-performance, echo = FALSE, results = "asis"} -->
+<!-- plot_data %>% -->
+<!--   compute_optimal_k() %>% -->
+<!--   filter(testType == "Test") %>% -->
+<!--   transmute(Group = groupName, `Optimal K` = k, RMSE = round(goodness, 3)) %>% -->
+<!--   knitr::kable() %>% -->
+<!--   kableExtra::kable_styling( -->
+<!--     bootstrap_options = c("striped", "hover"), -->
+<!--     full_width = FALSE -->
+<!--   ) -->
+<!-- ``` -->
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Group</th>
+<th>Optimal K</th>
+<th>RMSE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Elo, all matches</td>
+<td>24</td>
+<td>0.465</td>
+</tr>
+<tr class="even">
+<td>Elo, official matches</td>
+<td>29</td>
+<td>0.455</td>
+</tr>
+<tr class="odd">
+<td>EloBeta, all matches</td>
+<td>10</td>
+<td>0.462</td>
+</tr>
+<tr class="even">
+<td>EloBeta, official matches</td>
+<td>11</td>
+<td>0.453</td>
+</tr>
+</tbody>
+</table>
+<p>Based on these results, I am inclined to conclude that <strong>Elo model with <span class="math inline">\(K = 30\)</span> and EloBeta model with <span class="math inline">\(K = 10\)</span> can be usefully applied to officially ranked snooker matches</strong>. However, EloBeta model accounts for different “<span class="math inline">\(n\)</span> to win” matches, so it should be preferred over Elo.</p>
+</section>
+</section>
+<section id="exploration-of-elobeta-ratings" class="level1">
+<h1>Exploration of EloBeta ratings</h1>
+<p>The following results are computed based on “official matches” with EloBeta model (<span class="math inline">\(K = 10\)</span>). All possible conclusions shouldn’t be viewed as personal to any player.</p>
+<section id="top-16-by-the-end-of-201718" class="level2">
+<h2 class="anchored" data-anchor-id="top-16-by-the-end-of-201718">Top 16 by the end of 2017/18</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for 2017/18 top 16">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for 2017/18 top 16
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Helper function</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>gather_to_longcr <span class="ot">&lt;-</span> <span class="cf">function</span>(tbl) {</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    tbl <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">matches</span>(<span class="st">"2"</span>)) <span class="sc">%&gt;%</span> <span class="fu">rename_all</span>(<span class="fu">funs</span>(<span class="fu">gsub</span>(<span class="st">"1"</span>, <span class="st">""</span>, .))),</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    tbl <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">matches</span>(<span class="st">"1"</span>)) <span class="sc">%&gt;%</span> <span class="fu">rename_all</span>(<span class="fu">funs</span>(<span class="fu">gsub</span>(<span class="st">"2"</span>, <span class="st">""</span>, .)))</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(game)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract best "K factor" value</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>best_k <span class="ot">&lt;-</span> experiment_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(testType <span class="sc">==</span> <span class="st">"test"</span>, ratingType <span class="sc">==</span> <span class="st">"elobeta"</span>, dataType <span class="sc">==</span> <span class="st">"off"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="fu">which.min</span>(goodness)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(k)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="co">#!!! Round to "pretty" number as it doesn't affect result that much!!!</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>best_k <span class="ot">&lt;-</span> <span class="fu">round</span>(best_k <span class="sc">/</span> <span class="dv">5</span>) <span class="sc">*</span> <span class="dv">5</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute ratings at the end of the data</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>elobeta_ratings <span class="ot">&lt;-</span> <span class="fu">rate_iterative</span>(</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  pro_matches_test_off, <span class="fu">elobeta_fun_gen</span>(best_k), <span class="at">initial_ratings =</span> <span class="dv">0</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ratingEloBeta =</span> rating_iterative) <span class="sc">%&gt;%</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(ratingEloBeta)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> snooker_players <span class="sc">%&gt;%</span> <span class="fu">select</span>(id, <span class="at">playerName =</span> name), <span class="at">by =</span> <span class="fu">c</span>(<span class="at">player =</span> <span class="st">"id"</span>)</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">rankEloBeta =</span> <span class="fu">order</span>(ratingEloBeta, <span class="at">decreasing =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(player, playerName, ratingEloBeta, rankEloBeta)</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>elobeta_top16 <span class="ot">&lt;-</span> elobeta_ratings <span class="sc">%&gt;%</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rankEloBeta <span class="sc">&lt;=</span> <span class="dv">16</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">rankChr =</span> <span class="fu">formatC</span>(rankEloBeta, <span class="at">width =</span> <span class="dv">2</span>, <span class="at">format =</span> <span class="st">"d"</span>, <span class="at">flag =</span> <span class="st">"0"</span>),</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">ratingEloBeta =</span> <span class="fu">round</span>(ratingEloBeta, <span class="dv">1</span>)</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>Top 16 by EloBeta model at the end of 2017/18 season looks like this (official data is also taken from snooker.org site):</p>
+<!-- ```r -->
+<!-- official_ratings <- tibble( -->
+<!--   player = c( -->
+<!--          5,      1,    237,      17,     12,     16,    224,     30, -->
+<!--         68,    154,     97,      39,     85,      2,    202,   1260 -->
+<!--   ), -->
+<!--   rankOff = c( -->
+<!--          2,      3,      4,       1,      5,      7,      6,     13, -->
+<!--         16,     10,      8,       9,     26,     17,     12,     23 -->
+<!--   ), -->
+<!--   ratingOff = c( -->
+<!--     905750, 878750, 751525, 1315275, 660250, 543225, 590525, 324587, -->
+<!--     303862, 356125, 453875,  416250, 180862, 291025, 332450, 215125 -->
+<!--   ) -->
+<!-- ) -->
+<!---->
+<!-- first_top16_player <- elobeta_top16 %>% slice(1) -->
+<!-- last_top16_player <- elobeta_top16 %>% slice(n()) -->
+<!---->
+<!-- example_prob <- function(n) { -->
+<!--   elobeta_win_prob( -->
+<!--     rating1 = last_top16_player$ratingEloBeta[1], -->
+<!--     rating2 = first_top16_player$ratingEloBeta[1], -->
+<!--     frames_to_win = n -->
+<!--   ) %>% -->
+<!--     round(digits = 3) -->
+<!-- } -->
+<!---->
+<!-- elobeta_top16 %>% -->
+<!--   left_join(y = official_ratings, by = "player") %>% -->
+<!--   mutate(rankDiff = rankOff - rankEloBeta) %>% -->
+<!--   transmute( -->
+<!--     Player = playerName, -->
+<!--     `EloBeta rank` = rankEloBeta, `EloBeta rating` = ratingEloBeta, -->
+<!--     `Official rank` = rankOff, `Official rating` = ratingOff, -->
+<!--     `EloBeta rank increase` = text_spec( -->
+<!--       rankDiff, format = "html", color = case_when( -->
+<!--         rankDiff < 0 ~ "red", -->
+<!--         rankDiff == 0 ~ "grey", -->
+<!--         rankDiff > 0 ~ "green" -->
+<!--       ) -->
+<!--     ) -->
+<!--   ) %>% -->
+<!--   knitr::kable( -->
+<!--     escape = FALSE, format.args = list(big.mark = " "), -->
+<!--     align = c("l", "c", "r", "c", "r", "c"), -->
+<!--     table.attr = "style = 'width:85%;'" -->
+<!--   ) %>% -->
+<!--   kableExtra::kable_styling( -->
+<!--     bootstrap_options = c("striped", "hover") -->
+<!--   ) %>% -->
+<!--   kableExtra::column_spec(1, width = "30%") %>% -->
+<!--   kableExtra::column_spec(c(2, 4), width = "10%") %>% -->
+<!--   kableExtra::column_spec(3, width = "15%") %>% -->
+<!--   kableExtra::column_spec(5, width = "17%") %>% -->
+<!--   kableExtra::column_spec(c(1, 3, 5), border_right = TRUE) %>% -->
+<!--   kableExtra::column_spec(c(2, 4, 6), bold = TRUE) -->
+<!-- ``` -->
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 13%">
+<col style="width: 15%">
+<col style="width: 14%">
+<col style="width: 16%">
+<col style="width: 22%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Player</th>
+<th>EloBeta rank</th>
+<th>EloBeta rating</th>
+<th>Official rank</th>
+<th>Official rating</th>
+<th>EloBeta rank increase</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Ronnie O’Sullivan</td>
+<td>1</td>
+<td>128.8</td>
+<td>2</td>
+<td>905 750</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>Mark J Williams</td>
+<td>2</td>
+<td>123.4</td>
+<td>3</td>
+<td>878 750</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>John Higgins</td>
+<td>3</td>
+<td>112.5</td>
+<td>4</td>
+<td>751 525</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>Mark Selby</td>
+<td>4</td>
+<td>102.4</td>
+<td>1</td>
+<td>1 315 275</td>
+<td>-3</td>
+</tr>
+<tr class="odd">
+<td>Judd Trump</td>
+<td>5</td>
+<td>92.2</td>
+<td>5</td>
+<td>660 250</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>Barry Hawkins</td>
+<td>6</td>
+<td>83.1</td>
+<td>7</td>
+<td>543 225</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>Ding Junhui</td>
+<td>7</td>
+<td>82.8</td>
+<td>6</td>
+<td>590 525</td>
+<td>-1</td>
+</tr>
+<tr class="even">
+<td>Stuart Bingham</td>
+<td>8</td>
+<td>74.3</td>
+<td>13</td>
+<td>324 587</td>
+<td>5</td>
+</tr>
+<tr class="odd">
+<td>Ryan Day</td>
+<td>9</td>
+<td>71.9</td>
+<td>16</td>
+<td>303 862</td>
+<td>7</td>
+</tr>
+<tr class="even">
+<td>Neil Robertson</td>
+<td>10</td>
+<td>70.6</td>
+<td>10</td>
+<td>356 125</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>Shaun Murphy</td>
+<td>11</td>
+<td>70.1</td>
+<td>8</td>
+<td>453 875</td>
+<td>-3</td>
+</tr>
+<tr class="even">
+<td>Kyren Wilson</td>
+<td>12</td>
+<td>70.1</td>
+<td>9</td>
+<td>416 250</td>
+<td>-3</td>
+</tr>
+<tr class="odd">
+<td>Jack Lisowski</td>
+<td>13</td>
+<td>68.8</td>
+<td>26</td>
+<td>180 862</td>
+<td>13</td>
+</tr>
+<tr class="even">
+<td>Stephen Maguire</td>
+<td>14</td>
+<td>63.7</td>
+<td>17</td>
+<td>291 025</td>
+<td>3</td>
+</tr>
+<tr class="odd">
+<td>Mark Allen</td>
+<td>15</td>
+<td>63.7</td>
+<td>12</td>
+<td>332 450</td>
+<td>-3</td>
+</tr>
+<tr class="even">
+<td>Yan Bingtao</td>
+<td>16</td>
+<td>61.6</td>
+<td>23</td>
+<td>215 125</td>
+<td>7</td>
+</tr>
+</tbody>
+</table>
+<p>Some observations:</p>
+<ul>
+<li>Current official #1 Mark Selby is ranked 3 places lower in EloBeta. This might be a sign that current distribution of prize money doesn’t quite reflect efforts needed to win them (on average).</li>
+<li>Most “underrated” players according to official ranking are Jack Lisowski (astonishing 13 place difference), Ryan Day and Yan Bingtao (both have 7 place difference).</li>
+<li>Stuart Bingham is ranked 5 positions higher by EloBeta probably because he didn’t play for six month due to WPBSA ban. His EloBeta rating didn’t change during this period but in official rating he lost points because of its “rolling” nature. This case demonstrates one important differences between two approaches: official system is good to account for “not playing” and EloBeta is good to account for “playing”.</li>
+<li>Judd Trump and Neil Robertson are ranked the same under both methods.</li>
+<li>With EloBeta model Allister Carter (officially ranked #11), Anthony McGill (#14) and Luca Brecel (#15) are not in top 16. Instead, Jack Lisowski (#26), Yan Bingtao (#23) and Stephen Maguire (#17) are in.</li>
+</ul>
+<p>Here is an <strong>example of predictions Based on EloBeta model</strong>. The probability of 16-th player (<code>r last_top16_player$playerName[1]</code>) win one frame in a match against first player (<code>r first_top16_player$playerName[1]</code>) equals to <code>r example_prob(1)</code>. In “4 to win” match it drops to <code>r example_prob(4)</code>, in “10 to win” - <code>r example_prob(10)</code> and in World Championship final “18 to win” - <code>r example_prob(18)</code>. In my opinion, these numbers might be close to reality.</p>
+</section>
+<section id="collective-evolution-of-elobeta-ratings" class="level2">
+<h2 class="anchored" data-anchor-id="collective-evolution-of-elobeta-ratings">Collective evolution of EloBeta ratings</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for rating evolution">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for rating evolution
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Helper data</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>seasons_break <span class="ot">&lt;-</span> <span class="fu">ISOdatetime</span>(<span class="dv">2017</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="at">tz =</span> <span class="st">"UTC"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Compute evolution of ratings</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>elobeta_history <span class="ot">&lt;-</span> pro_matches_test_off <span class="sc">%&gt;%</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_iterative_ratings</span>(<span class="fu">elobeta_fun_gen</span>(best_k), <span class="at">initial_ratings =</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gather_to_longcr</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="at">y =</span> pro_matches_test_off <span class="sc">%&gt;%</span> <span class="fu">select</span>(game, endDate), <span class="at">by =</span> <span class="st">"game"</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Generate plot</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>plot_all_elobeta_history <span class="ot">&lt;-</span> <span class="cf">function</span>(history_tbl) {</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  history_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">isTop16 =</span> player <span class="sc">%in%</span> elobeta_top16<span class="sc">$</span>player) <span class="sc">%&gt;%</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(endDate, ratingAfter, <span class="at">group =</span> player)) <span class="sc">+</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_step</span>(<span class="at">data =</span> . <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>isTop16), <span class="at">colour =</span> <span class="st">"#C2DF9A"</span>) <span class="sc">+</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_step</span>(<span class="at">data =</span> . <span class="sc">%&gt;%</span> <span class="fu">filter</span>(isTop16), <span class="at">colour =</span> <span class="st">"#22A01C"</span>) <span class="sc">+</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">colour =</span> <span class="st">"#AAAAAA"</span>) <span class="sc">+</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">xintercept =</span> seasons_break, <span class="at">linetype =</span> <span class="st">"dotted"</span>,</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">colour =</span> <span class="st">"#E41A1C"</span>, <span class="at">size =</span> <span class="dv">1</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_text</span>(</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> seasons_break, <span class="at">y =</span> <span class="cn">Inf</span>, <span class="at">label =</span> <span class="st">"End of 2016/17"</span>,</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">colour =</span> <span class="st">"#E41A1C"</span>, <span class="at">hjust =</span> <span class="fl">1.05</span>, <span class="at">vjust =</span> <span class="fl">1.2</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_x_datetime</span>(<span class="at">date_labels =</span> <span class="st">"%Y-%m"</span>) <span class="sc">+</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"EloBeta rating"</span>,</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="fu">paste0</span>(</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>          <span class="st">"Most of current top 16 established at the end of 2016/17 season"</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>        <span class="at">subtitle =</span> <span class="fu">paste0</span>(</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>          <span class="st">"Winning of event is well noticable as rapid increase without "</span>,</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>          <span class="st">"descrease at the end."</span></span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>))</span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_all_elobeta_history</span>(elobeta_history)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p><img src="2018-07-03-elo-and-elobeta-models-in-snooker/rating-evolution_all.png" class="img-fluid"></p>
+</section>
+<section id="evolution-of-elobeta-top-16" class="level2">
+<h2 class="anchored" data-anchor-id="evolution-of-elobeta-top-16">Evolution of EloBeta top 16</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Code for rating evolution of top 16">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-10-contents" aria-controls="callout-10" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Code for rating evolution of top 16
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-10" class="callout-10-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute plot data</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>top16_rating_evolution <span class="ot">&lt;-</span> elobeta_history <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Using `inner_join` to leave only players from `elobeta_top16`</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(<span class="at">y =</span> elobeta_top16 <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>ratingEloBeta), <span class="at">by =</span> <span class="st">"player"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Leave games only from 2017/18 season</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">semi_join</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> pro_matches_test_off <span class="sc">%&gt;%</span> <span class="fu">filter</span>(season <span class="sc">==</span> <span class="dv">2017</span>), <span class="at">by =</span> <span class="st">"game"</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">playerLabel =</span> <span class="fu">paste</span>(rankChr, playerName))</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Generate plot</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>plot_top16_elobeta_history <span class="ot">&lt;-</span> <span class="cf">function</span>(elobeta_history) {</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(elobeta_history) <span class="sc">+</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_step</span>(<span class="fu">aes</span>(endDate, ratingAfter, <span class="at">group =</span> player), <span class="at">colour =</span> <span class="st">"#22A01C"</span>) <span class="sc">+</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">colour =</span> <span class="st">"#AAAAAA"</span>) <span class="sc">+</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_rug</span>(</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">data =</span> elobeta_top16,</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">y =</span> ratingEloBeta), <span class="at">sides =</span> <span class="st">"r"</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span> playerLabel, <span class="at">nrow =</span> <span class="dv">4</span>, <span class="at">ncol =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_datetime</span>(<span class="at">date_labels =</span> <span class="st">"%Y-%m"</span>) <span class="sc">+</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"EloBeta rating"</span>,</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>      <span class="at">title =</span> <span class="st">"Rating evolution for EloBeta top 16 (as of 2017/18 end)"</span>,</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">subtitle =</span> <span class="fu">paste0</span>(</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Ronnie O'Sullivan and Mark J Williams did very well in 2017/18 "</span>,</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>        <span class="st">"season.</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>        <span class="st">"As did Jack Lisowski: rise from negative rating to place 13."</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>), <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_top16_elobeta_history</span>(top16_rating_evolution)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p><img src="2018-07-03-elo-and-elobeta-models-in-snooker/rating-evolution_top16.png" class="img-fluid"></p>
+</section>
+</section>
+<section id="conclusions" class="level1">
+<h1>Conclusions</h1>
+<ul>
+<li>Solving “Problem of points” in R is as easy as <code>pbeta(p, n, m)</code>.</li>
+<li>EloBeta model is a modification of Elo for “best of <span class="math inline">\(N\)</span>” (or “<span class="math inline">\(n\)</span> to win”) matches. It can make predictions for different match length.</li>
+<li>Elo model with <span class="math inline">\(K = 30\)</span> and EloBeta model with <span class="math inline">\(K = 10\)</span> can be usefully applied to officially ranked snooker matches.</li>
+<li>Snooker related:
+<ul>
+<li>Most “underrated” players from EloBeta top 16 according to official ranking (as of end of 2017/18 season) are Jack Lisowski, Ryan Day and Yan Bingtao.</li>
+<li>Season 2017/18 was very productive for Ronnie O’Sullivan, Mark J Williams and Jack Lisowski.</li>
+</ul></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-11-contents" aria-controls="callout-11" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+sessionInfo()
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-11" class="callout-11-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<pre><code>## R version 3.4.2 (2017-09-28)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 16.04.3 LTS
+##
+## Matrix products: default
+## BLAS: /usr/lib/openblas-base/libblas.so.3
+## LAPACK: /usr/lib/libopenblasp-r0.2.18.so
+##
+## locale:
+##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C
+##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8
+##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8
+##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C
+## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C
+##
+## attached base packages:
+## [1] methods   stats     graphics  grDevices utils     datasets  base
+##
+## other attached packages:
+## [1] bindrcpp_0.2 ruler_0.1.0  purrr_0.2.4  dplyr_0.7.4
+##
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.13     knitr_1.17       bindr_0.1        magrittr_1.5
+##  [5] tidyselect_0.2.3 R6_2.2.2         rlang_0.1.4      stringr_1.2.0
+##  [9] tools_3.4.2      htmltools_0.3.6  yaml_2.1.14      rprojroot_1.2
+## [13] digest_0.6.12    assertthat_0.2.0 tibble_1.3.4     bookdown_0.5
+## [17] tidyr_0.7.2      glue_1.2.0       evaluate_0.10.1  rmarkdown_1.7
+## [21] blogdown_0.2     stringi_1.1.5    compiler_3.4.2   keyholder_0.1.1
+## [25] backports_1.1.1  pkgconfig_2.0.1</code></pre>
+</div>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/echasnovski\.com");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© Evgeni Chasnovski, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

@@ -1,0 +1,59 @@
+project:
+  type: website
+
+website:
+  title: Evgeni Chasnovski
+  favicon: assets/EC2_256x256.png
+  description: 'Personal website of Evgeni Chasnovski'
+  site-url: https://echasnovski.com
+  repo-url: https://github.com/echasnovski/echasnovski-site
+
+  open-graph:
+    site-name: "Evgeni Chasnovski"
+    locale: en_US
+  twitter-card:
+    creator: "@echasnovski"
+    image: "assets/EC2.png"
+
+  navbar:
+    search: true
+    left:
+      - href: blog.qmd
+        text: Blog
+      - href: projects.qmd
+        text: Projects
+      - href: talks.qmd
+        text: Talks
+    right:
+      - icon: github
+        href: https://github.com/echasnovski
+      - icon: bluesky
+        href: https://bsky.app/profile/echasnovski.bsky.social
+      - icon: youtube
+        href: https://www.youtube.com/@echasnovski
+      - icon: rss-fill
+        href: blog.xml
+        aria-label: RSS
+
+  page-footer:
+    center: "© Evgeni Chasnovski, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)"
+
+format:
+  html:
+    theme:
+      dark:
+        - darkly
+        - brand
+      light:
+        - darkly
+        - brand
+    toc: true
+    respect-user-color-scheme: true
+    code-overflow: scroll
+    highlight-style:
+      dark: theme/seabed-dark.theme
+      light: theme/seabed-light.theme
+
+brand:
+  light: theme/brand-light.yml
+  dark: theme/brand-dark.yml

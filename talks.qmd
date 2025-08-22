@@ -1,0 +1,7 @@
+---
+title: "Talks"
+---
+
+- [Text editing with 'mini.nvim' - Neovimconf 2024 ](https://www.youtube.com/watch?v=cNK5kYJ7mrs)
+
+- [How to write 35+ plugins and not become more insane - Neovimconf 2023](https://www.youtube.com/watch?v=DkkitZA-wjE)

@@ -1,0 +1,105 @@
+meta:
+  name:
+    full: Evgeni Chasnovski
+  link:
+    home: https://www.echasnovski.com
+    github: https://github.com/echasnovski
+    bluesky: https://bsky.app/profile/echasnovski.bsky.social
+
+color:
+  palette:
+    bg:      "#081823" # OKLch: 10 3 240
+    bg-2:    "#15242F" # OKLch: 15 3 240
+    fg:      "#D5D7C0" # OKLch: 85 3 110
+    fg-2:    "#E3E5CE" # OKLch: 90 3 110
+    grey-bg: "#222222" # OKLch: 15 0
+    grey:    "#D4D4D4" # OKLch: 85 0
+    comment: "#919191" # OKLch: 60 0
+    black:   "#000409" # OKLch:  3 2 240
+    red:     "#FFC2B6" # OKLch: 85 8  30
+    green:   "#AFE4B9" # OKLch: 85 8 150
+    yellow:  "#D7DA9C" # OKLch: 85 8 110
+    blue:    "#A5DBFF" # OKLch: 85 8 240
+    magenta: "#F4C2EE" # OKLch: 85 8 330
+    cyan:    "#94E6E5" # OKLch: 85 8 195
+    white:   "#F7F9E2" # OKLch: 97 3 110
+
+  foreground: fg
+  background: bg
+  primary: blue
+  secondary: green
+  tertiary: magenta
+  success: green
+  info: cyan
+  warning: yellow
+  danger: red
+  light: white
+  dark: black
+
+typography:
+  fonts:
+  - family: Ubuntu
+    source: google
+
+  base:
+    family: Ubuntu
+  headings:
+    weight: bold
+    color: primary
+  monospace:
+    family: monospace
+  monospace-inline:
+    color: grey
+    background-color: bg-2
+  link:
+    color: cyan
+    decoration: underline
+
+defaults:
+  bootstrap:
+    defaults:
+      navbar-bg: "#15242F"
+      navbar-fg: "#E3E5CE"
+      code-block-bg: "#15242F"
+    rules: |
+      .navbar {
+        border-bottom: solid 1px #E3E5CE
+      }
+      .blockquote {
+        border-left: solid #D7DA9C;
+        color: #919191;
+      }
+      .cell-output {
+        color: #919191;
+        background: #222222;
+      }
+      div.category {
+        font-size: 0.8rem;
+      }
+      .blog-listing-item {
+        padding-top: 1em;
+        padding-bottom: 1em;
+        border-bottom: solid 2px #D4D4D4;
+      }
+      .blog-listing-item-title {
+        color: #A5DBFF;
+        text-decoration: none;
+        font-size: 130%;
+      }
+      .blog-listing-item-description {
+        text-decoration: none;
+        color: #D5D7C0;
+      }
+      .blog-listing-item-metadata {
+        color: #919191;
+        text-decoration: none;
+      }
+      .blog-listing-item-category {
+        color: #919191;
+        text-decoration: none;
+        padding: .25em .75em;
+        font-size: .65em;
+        text-transform: uppercase;
+        border: solid 1px;
+        border-radius: .25rem;
+      }

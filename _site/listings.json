@@ -1,0 +1,28 @@
+[
+  {
+    "listing": "/blog.html",
+    "items": [
+      "/blog/2020-05-11-count-bounces-in-table-tennis-world-record.html",
+      "/blog/2019-11-11-statistical-uncertainty-with-pdqr.html",
+      "/blog/2019-08-13-local-randomness-in-r.html",
+      "/blog/2019-08-08-arguments-of-stats-density.html",
+      "/blog/2019-08-01-announcing-pdqr.html",
+      "/blog/2018-08-21-transformers-glue.html",
+      "/blog/2018-07-03-elo-and-elobeta-models-in-snooker.html",
+      "/blog/2018-06-14-animating-mode-variability-with-tidyverse-and-tweenr.html",
+      "/blog/2018-05-31-harry-potter-and-rankings-with-comperank.html",
+      "/blog/2018-05-15-general-gems-of-comperes.html",
+      "/blog/2018-05-09-harry-potter-and-competition-results-with-comperes.html",
+      "/blog/2018-04-09-struggle-with-harry-potter-data.html",
+      "/blog/2018-03-06-tao-of-tidygraph.html",
+      "/blog/2017-12-26-combined-outlier-detection-with-dplyr-and-ruler.html",
+      "/blog/2017-12-04-usage-of-ruler-package.html",
+      "/blog/2017-11-28-rule-your-data-with-tidy-validation-reports-design.html",
+      "/blog/2017-11-20-store-data-about-rows.html",
+      "/blog/2017-11-05-mythical-generic-overhead.html",
+      "/blog/2017-10-29-highlight-the-pipe-pkgdown.html",
+      "/blog/2017-10-20-highlight-the-pipe-highlight-js.html",
+      "/blog/2017-10-13-how-to-scrape-pdf-and-rmd-to-get-inspiration.html"
+    ]
+  }
+]
