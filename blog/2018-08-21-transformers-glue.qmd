@@ -3,7 +3,7 @@ title: Transformers, glue!
 author: Evgeni Chasnovski
 date: 2018-08-21
 slug: transformers-glue
-categories: [rstats, glue]
+categories: [rstats, questionflow]
 description: General description of transformers functionality in {glue} with some potentially useful examples
 ---
 

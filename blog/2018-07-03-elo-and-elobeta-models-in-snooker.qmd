@@ -2,7 +2,7 @@
 title: Elo and EloBeta models in snooker
 author: Evgeni Chasnovski
 date: 2018-07-03
-categories: [rstats, snooker, comperank, elobeta]
+categories: [rstats, curiosity-project, questionflow]
 description: Research about adequacy of Elo based models applied to snooker match results. Contains a novel approach (EloBeta) targeted for sport results with variable "best of N" format
 ---
 

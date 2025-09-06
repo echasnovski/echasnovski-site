@@ -2,7 +2,7 @@
 title: Local randomness in R
 author: Evgeni Chasnovski
 date: 2019-08-13
-categories: [rstats]
+categories: [rstats, questionflow]
 description: One approach of using random number generation inside a function without affecting outer state of random generator
 ---
 

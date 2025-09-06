@@ -2,7 +2,7 @@
 title: How to Scrape Pdf and Rmd to Get Inspiration
 author: Evgeni Chasnovski
 date: 2017-10-13
-categories: [rstats, tidytext, questionflow]
+categories: [rstats, questionflow]
 description: The story of QuestionFlow origins
 ---
 

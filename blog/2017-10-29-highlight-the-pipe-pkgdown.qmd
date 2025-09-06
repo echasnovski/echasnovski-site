@@ -2,7 +2,7 @@
 title: Highlight the Pipe. Pkgdown
 author: Evgeni Chasnovski
 date: 2017-10-29
-categories: [rstats, pkgdown, questionflow]
+categories: [rstats, questionflow]
 description: Practical advices about customizing code highlighting on web pages created with pkgdown
 ---
 

@@ -2,7 +2,7 @@
 title: Harry Potter and rankings with comperank
 author: Evgeni Chasnovski
 date: 2018-05-31
-categories: [rstats, comperank, comperes]
+categories: [rstats, questionflow]
 description: Ranking Harry Potter books with comperank package
 ---
 

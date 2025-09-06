@@ -2,7 +2,7 @@
 title: Combined outlier detection with dplyr and ruler
 author: Evgeni Chasnovski
 date: 2017-12-26
-categories: [rstats, dplyr, ruler]
+categories: [rstats, questionflow]
 description: Overview of simple outlier detection methods with their combination using dplyr and ruler packages
 ---
 

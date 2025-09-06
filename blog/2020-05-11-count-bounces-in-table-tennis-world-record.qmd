@@ -2,7 +2,7 @@
 title: Count bounces in table tennis world record
 author: Evgeni Chasnovski
 date: 2020-05-11
-categories: [python, curiosity-project]
+categories: [python, curiosity-project, questionflow]
 description: On May 7th 2020 Daniel Ives set a new world record by continuously bouncing table tennis ball for 5 hours, 21 minutes, and 4 seconds. But how many bounces did he actually make?
 ---
 

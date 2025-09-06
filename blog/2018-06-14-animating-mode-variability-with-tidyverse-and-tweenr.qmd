@@ -2,7 +2,7 @@
 title: Animating mode variability with tidyverse and tweenr
 author: Evgeni Chasnovski
 date: 2018-06-14
-categories: [rstats, tidyverse, tweenr]
+categories: [rstats, questionflow]
 description: Provided different probability distributions, animate independent sample distributions to demonstrate mode variability. There is a thorough code description with some subtle tips and tricks
 ---
 

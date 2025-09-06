@@ -2,7 +2,7 @@
 title: Harry Potter and competition results with comperes
 author: Evgeni Chasnovski
 date: 2018-05-09
-categories: [rstats, comperes]
+categories: [rstats, questionflow]
 description: Exploration of Harry Potter Books Survey results with help of my new comperes package
 ---
 

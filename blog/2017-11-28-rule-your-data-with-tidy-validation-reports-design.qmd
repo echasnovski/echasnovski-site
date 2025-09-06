@@ -2,7 +2,7 @@
 title: Rule Your Data with Tidy Validation Reports. Design
 author: Evgeni Chasnovski
 date: 2017-11-28
-categories: [rstats, ruler, questionflow]
+categories: [rstats, questionflow]
 description: "The story about design of ruler package: dplyr-style exploration and validation of data frame like objects"
 ---
 

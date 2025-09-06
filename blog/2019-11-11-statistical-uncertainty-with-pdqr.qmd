@@ -2,7 +2,7 @@
 title: Statistical uncertainty with R and pdqr
 author: Evgeni Chasnovski
 date: 2019-11-11
-categories: [rstats, pdqr]
+categories: [rstats, pdqr, questionflow]
 description: CRAN has accepted my 'pdqr' package. Here are important examples of how it can be used to describe and evaluate statistical uncertainty
 ---
 

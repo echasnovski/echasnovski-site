@@ -12,4 +12,3 @@ I enjoy maintaining and frequently contributing to Open Source Software, as well
 - [Projects](projects.qmd)
 - [Blog](blog.qmd)
 - [Talks](talks.qmd)
-- [CV](assets/EvgeniChasnovski.pdf)

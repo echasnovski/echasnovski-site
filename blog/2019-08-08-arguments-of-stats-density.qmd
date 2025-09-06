@@ -2,7 +2,7 @@
 title: Arguments of stats::density()
 author: Evgeni Chasnovski
 date: 2019-08-06
-categories: [rstats, pdqr]
+categories: [rstats, pdqr, questionflow]
 description: Animated illustrations of how arguments affect output of `stats::density()`
 ---
 

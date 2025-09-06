@@ -2,7 +2,7 @@
 title: Announcing pdqr
 author: Evgeni Chasnovski
 date: 2019-08-01
-categories: [rstats, pdqr]
+categories: [rstats, pdqr, questionflow]
 description: "Announcing 'pdqr': package for working with custom distribution functions"
 ---
 

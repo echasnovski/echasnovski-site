@@ -2,7 +2,7 @@
 title: Tao of Tidygraph
 author: Evgeni Chasnovski
 date: 2018-03-06
-categories: [rstats, tidygraph, ggraph]
+categories: [rstats, questionflow]
 description: Analysis of one interesting alliance graph within tidy network analysis framework
 ---
 

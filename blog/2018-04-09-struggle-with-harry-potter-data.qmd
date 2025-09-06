@@ -2,7 +2,7 @@
 title: Struggle with Harry Potter Data
 author: Evgeni Chasnovski
 date: 2018-04-09
-categories: [rstats, javascript]
+categories: [rstats, questionflow]
 description: Notes about creation of Harry Potter Books Survey. It is not over, I need your help
 ---
 

@@ -2,7 +2,7 @@
 title: Usage of ruler package
 author: Evgeni Chasnovski
 date: 2017-12-05
-categories: [rstats, ruler, questionflow]
+categories: [rstats, questionflow]
 description: "Usage examples of ruler package: dplyr-style exploration and validation of data frame like objects"
 ---
 

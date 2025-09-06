@@ -2,7 +2,7 @@
 title: Highlight the Pipe. Highlight.js
 author: Evgeni Chasnovski
 date: 2017-10-20
-categories: [rstats, highlighting, questionflow]
+categories: [rstats, questionflow]
 description: Practical advices about customizing code highlighting on web pages with highlight.js
 ---
 

@@ -2,7 +2,7 @@
 title: Store Data About Rows
 author: Evgeni Chasnovski
 date: 2017-11-20
-categories: [rstats, keyholder, questionflow]
+categories: [rstats, questionflow]
 description: Introduction to keyholder package. Tools for keeping track of information about rows
 ---
 
