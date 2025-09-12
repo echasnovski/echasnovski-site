@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.33">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Evgeni Chasnovski">
+<meta name="dcterms.date" content="2019-08-06">
+<meta name="description" content="Animated illustrations of how arguments affect output of stats::density()">
+
+<title>Arguments of stats::density() – Evgeni Chasnovski</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../assets/EC2_256x256.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8a39431a021621ceac456dfcd09fb292.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-d4933f3589c24838ee12c9f858e4b426.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-aba4b5dbf84275d834ee1f7188d18b2d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-d7bdbb233ae4c8ace8d947e75cddd8fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<meta property="og:title" content="Arguments of stats::density() – Evgeni Chasnovski">
+<meta property="og:description" content="Animated illustrations of how arguments affect output of stats::density()">
+<meta property="og:image" content="https://echasnovski.com/blog/2019-08-08-arguments-of-stats-density/arg_bw-1.gif">
+<meta property="og:site_name" content="Evgeni Chasnovski">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:title" content="Arguments of stats::density() – Evgeni Chasnovski">
+<meta name="twitter:description" content="Animated illustrations of how arguments affect output of stats::density()">
+<meta name="twitter:image" content="https://echasnovski.com/blog/assets/EC2.png">
+<meta name="twitter:creator" content="@echasnovski">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Evgeni Chasnovski</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../projects.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../blog.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../talks.html"> 
+<span class="menu-text">Talks</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/echasnovski"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/echasnovski.bsky.social"> <i class="bi bi-bluesky" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.youtube.com/@echasnovski"> <i class="bi bi-youtube" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../blog.xml"> <i class="bi bi-rss-fill" role="img" aria-label="RSS">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#prologue" id="toc-prologue" class="nav-link active" data-scroll-target="#prologue">Prologue</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#estimation-parameters" id="toc-estimation-parameters" class="nav-link" data-scroll-target="#estimation-parameters">Estimation parameters</a>
+  <ul class="collapse">
+  <li><a href="#bandwidth-bw" id="toc-bandwidth-bw" class="nav-link" data-scroll-target="#bandwidth-bw">Bandwidth <code>bw</code></a></li>
+  <li><a href="#adjusting-bandwidth-adjust" id="toc-adjusting-bandwidth-adjust" class="nav-link" data-scroll-target="#adjusting-bandwidth-adjust">Adjusting bandwidth <code>adjust</code></a></li>
+  <li><a href="#kernel-type-kernel" id="toc-kernel-type-kernel" class="nav-link" data-scroll-target="#kernel-type-kernel">Kernel type <code>kernel</code></a></li>
+  <li><a href="#observation-importance-weights" id="toc-observation-importance-weights" class="nav-link" data-scroll-target="#observation-importance-weights">Observation importance <code>weights</code></a></li>
+  </ul></li>
+  <li><a href="#output-value-parameters" id="toc-output-value-parameters" class="nav-link" data-scroll-target="#output-value-parameters">Output value parameters</a>
+  <ul class="collapse">
+  <li><a href="#number-of-points-n" id="toc-number-of-points-n" class="nav-link" data-scroll-target="#number-of-points-n">Number of points <code>n</code></a></li>
+  <li><a href="#left-edge-from" id="toc-left-edge-from" class="nav-link" data-scroll-target="#left-edge-from">Left edge <code>from</code></a></li>
+  <li><a href="#right-edge-to" id="toc-right-edge-to" class="nav-link" data-scroll-target="#right-edge-to">Right edge <code>to</code></a></li>
+  <li><a href="#range-extension-cut" id="toc-range-extension-cut" class="nav-link" data-scroll-target="#range-extension-cut">Range extension <code>cut</code></a></li>
+  </ul></li>
+  <li><a href="#epilogue" id="toc-epilogue" class="nav-link" data-scroll-target="#epilogue">Epilogue</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Arguments of stats::density()</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">rstats</div>
+    <div class="quarto-category">pdqr</div>
+    <div class="quarto-category">questionflow</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Animated illustrations of how arguments affect output of <code>stats::density()</code>
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Evgeni Chasnovski </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 6, 2019</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="prologue" class="level1">
+<h1>Prologue</h1>
+<p>In R, one of the “go to” functions for <a href="https://en.wikipedia.org/wiki/Kernel_density_estimation">kernel density estimation</a> is <a href="https://rdrr.io/r/stats/density.html">density()</a> from base R package ‘stats’. Given numeric sample, it returns a set of x-y pairs on estimated density curve. It is also a main “workhorse” for estimating continuous distributions in my <a href="https://echasnovski.github.io/pdqr">‘pdqr’</a> package.</p>
+<p>However, output of <code>density()</code> highly depends on values of its arguments. Some of them define kernel density estimation algorithm, and the others are responsible for different properties of output set of x-y pairs.</p>
+<p>In this post I illustrate with animations how changing arguments of <code>density()</code> changes the output.</p>
+</section>
+<section id="overview" class="level1">
+<h1>Overview</h1>
+<p>The illustration workflow will be as follows:</p>
+<ul>
+<li>For a certain <code>density()</code> argument create a set of its values that will help to illustrate how it affects the output.</li>
+<li>For every value <code>a</code> of argument <code>x</code> compute <code>density(mtcars$mpg, x = a)</code> (all other arguments having default values). This results into a set of “density curves”: piecewise-linear curves drawn through x-y points.</li>
+<li>Animate evolution of density curves as argument value changes from first to last.</li>
+</ul>
+<p>We’ll need the following setup (including main helper function <code>density_anim()</code> for creating animations):</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gganimate)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rlang, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Create refernce default `density()` curve</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>default_density_curve <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(<span class="fu">density</span>(mtcars<span class="sc">$</span>mpg)[<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>)])</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Helper function to create density animation. Here `...` should be a vector</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># of argument values of interest (passed as that argument), and `duration` is a</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># total duration of animation in seconds.</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>density_anim <span class="ot">&lt;-</span> <span class="cf">function</span>(..., <span class="at">duration =</span> <span class="dv">10</span>) {</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  density_mpg <span class="ot">&lt;-</span> <span class="cf">function</span>(...) {</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tibble</span>(<span class="fu">density</span>(mtcars<span class="sc">$</span>mpg, ...)[<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>)])</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `...` should consist only from one input</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  dots <span class="ot">&lt;-</span> <span class="fu">list</span>(...)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  arg_name <span class="ot">&lt;-</span> <span class="fu">names</span>(dots)[<span class="dv">1</span>]</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  vals <span class="ot">&lt;-</span> dots[[<span class="dv">1</span>]]</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Take into account that input might be a list (and thus not suitable for</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># `transition_states()`)</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.list</span>(vals)) {</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    arg <span class="ot">&lt;-</span> <span class="fu">paste0</span>(arg_name, <span class="st">"_id"</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    states <span class="ot">&lt;-</span> <span class="fu">seq_along</span>(vals)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    arg <span class="ot">&lt;-</span> arg_name</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    states <span class="ot">&lt;-</span> vals</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert to factor to preserve order of argument values in animation</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  states <span class="ot">&lt;-</span> <span class="fu">factor</span>(states, <span class="at">levels =</span> <span class="fu">unique</span>(states))</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  anim <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="sc">!!</span><span class="fu">sym</span>(arg) <span class="sc">:</span><span class="er">=</span> states) <span class="sc">%&gt;%</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Create points on density curves</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">den_points =</span> <span class="fu">pmap</span>(dots, density_mpg)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest</span>(den_points) <span class="sc">%&gt;%</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Define animation</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(x, y, <span class="at">group =</span> <span class="sc">!!</span><span class="fu">sym</span>(arg))) <span class="sc">+</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Default curve for reference</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_line</span>(</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>        <span class="at">data =</span> default_density_curve,</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>        <span class="at">mapping =</span> <span class="fu">aes</span>(x, y), <span class="at">inherit.aes =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>        <span class="at">color =</span> <span class="st">"grey80"</span>, <span class="at">size =</span> <span class="fl">1.2</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Main curves for different argument values</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_line</span>(<span class="at">size =</span> <span class="fl">1.5</span>) <span class="sc">+</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>      <span class="fu">transition_states</span>(<span class="sc">!!</span><span class="fu">sym</span>(arg)) <span class="sc">+</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ggtitle</span>(</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> <span class="st">"density() with `{arg} = {previous_state}`"</span>,</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>        <span class="at">subtitle =</span> <span class="st">"Grey line is default density() output"</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">+</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">18</span>))</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">animate</span>(anim, <span class="at">duration =</span> duration, <span class="at">fps =</span> <span class="dv">12</span>, <span class="at">start_pause =</span> <span class="dv">6</span>, <span class="at">end_pause =</span> <span class="dv">6</span>)</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="estimation-parameters" class="level1">
+<h1>Estimation parameters</h1>
+<p>Arguments that define kernel density estimation procedure are: <code>bw</code>, <code>adjust</code>, <code>kernel</code>, and <code>weights</code>. There are also <code>window</code> and <code>width</code>, but they seem to be present only for backward compatibility and shouldn’t be used directly.</p>
+<section id="bandwidth-bw" class="level2">
+<h2 class="anchored" data-anchor-id="bandwidth-bw">Bandwidth <code>bw</code></h2>
+<p>Argument <code>bw</code> is responsible for computing <a href="https://en.wikipedia.org/wiki/Kernel_density_estimation#Bandwidth_selection">bandwith</a> of kernel density estimation: one of the main parameters that greatly affect the output. It can be specified as either algorithm of computation or directly as number. Because actual bandwidth is computed as <code>adjust*bw</code> (<code>adjust</code> is another <code>density()</code> argument, which is explored in the next section), here we will see how different algorithms compute bandwidths, and the effect of changing numeric value of bandwidth will be shown in section about <code>adjust</code>.</p>
+<p>There are 5 available algorithms: “nrd0”, “nrd”, “ucv”, “bcv”, “SJ”. Here is an animation of their effect:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">bw =</span> <span class="fu">c</span>(<span class="st">"nrd0"</span>, <span class="st">"nrd"</span>, <span class="st">"ucv"</span>, <span class="st">"bcv"</span>, <span class="st">"SJ"</span>), <span class="at">duration =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-08-arguments-of-stats-density/arg_bw-1.gif" class="img-fluid"></p>
+<p>As you can see, density curve changes, but not drastically. At least the whole shape seems to be somewhat preserved.</p>
+</section>
+<section id="adjusting-bandwidth-adjust" class="level2">
+<h2 class="anchored" data-anchor-id="adjusting-bandwidth-adjust">Adjusting bandwidth <code>adjust</code></h2>
+<p>To easily “specify values like ‘half the default’ bandwidth”, there is an argument <code>adjust</code>. Bigger values indicate greater bandwidth that is actually used. Zero results into zero bandwidth (so never should be used), one (default) - into originally computed by chosen algorithm.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">adjust =</span> <span class="fu">seq</span>(<span class="fl">0.1</span>, <span class="dv">2</span>, <span class="at">by =</span> <span class="fl">0.05</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-08-arguments-of-stats-density/arg_adjust-1.gif" class="img-fluid"></p>
+<p>Changing <code>adjust</code> leads to very noticeable changes in output shape of density curve: bigger values give smoother curves.</p>
+</section>
+<section id="kernel-type-kernel" class="level2">
+<h2 class="anchored" data-anchor-id="kernel-type-kernel">Kernel type <code>kernel</code></h2>
+<p>Argument <code>kernel</code> defines the shape of kernel which will be used. There are 7 possible kernels in total which are shown in the following animation:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">kernel =</span> <span class="fu">c</span>(<span class="st">"gaussian"</span>, <span class="st">"epanechnikov"</span>, <span class="st">"rectangular"</span>, <span class="st">"triangular"</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>             <span class="st">"biweight"</span>, <span class="st">"cosine"</span>, <span class="st">"optcosine"</span>),</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">duration =</span> <span class="dv">7</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-08-arguments-of-stats-density/arg_kernel-1.gif" class="img-fluid"></p>
+<p>Choice of kernel function also considerably affects the output shape of density curve, but not as greatly as <code>adjust</code>. Most notable difference from default “gaussian” kernel is with “rectangular” kernel: result, unsurprisingly, is “more rectangular”.</p>
+</section>
+<section id="observation-importance-weights" class="level2">
+<h2 class="anchored" data-anchor-id="observation-importance-weights">Observation importance <code>weights</code></h2>
+<p>Argument <code>weights</code> should be used if some observations are considered to be “more important” and are “more reference” than the other ones. It should be a numeric vector with the same length as input sample <code>x</code>. <strong>Note</strong> that for output to be a true density plot, sum of <code>weights</code> should be 1.</p>
+<p>To illustrate its effect, lets construct a sequence of <code>weights</code> each of which makes one observation having 10 times more weight than any other (that contribute equally). Order of those observations we will choose so that they progress from the smallest to the biggest.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>weights_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">order</span>(mtcars<span class="sc">$</span>mpg), <span class="cf">function</span>(i) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>, <span class="at">times =</span> i<span class="dv">-1</span>), <span class="dv">10</span>, <span class="fu">rep</span>(<span class="dv">1</span>, <span class="at">times =</span> <span class="fu">length</span>(mtcars<span class="sc">$</span>mpg)<span class="sc">-</span>i))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  res <span class="sc">/</span> <span class="fu">sum</span>(res)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">weights =</span> weights_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-08-arguments-of-stats-density/arg_weights-1.gif" class="img-fluid"></p>
+<p>As expected from <code>weights_list</code> construction, one can see a “spike” that “travels” from left to right, indicating the position of “most important” observation.</p>
+</section>
+</section>
+<section id="output-value-parameters" class="level1">
+<h1>Output value parameters</h1>
+<p>Arguments that define structure of output are: <code>n</code>, <code>from</code>, <code>to</code>, and <code>cut</code>. There are also <code>give.Rkern</code> (can be used to return computed “canonical bandwidth”) and <code>na.rm</code> (whether to remove <code>NA</code> values from input), which are not particularly useful in showing the nature of <code>density()</code> output.</p>
+<section id="number-of-points-n" class="level2">
+<h2 class="anchored" data-anchor-id="number-of-points-n">Number of points <code>n</code></h2>
+<p><code>n</code> is responsible for number of returned x-y points. They are equally spaced on the specified range (see next sections). Default value is 512 (taken as a power of two for performance reasons of <a href="https://rdrr.io/r/stats/fft.html">fft()</a>), but to illustrate its effect on output lets use sequence from 2 to 50.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">n =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">50</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-08-arguments-of-stats-density/arg_n-1.gif" class="img-fluid"></p>
+<p>As you can see, in this case values higher than 40 already give considerably small errors (compared to “true curve” when <code>n</code> is infinity). However, if the underlying curve isn’t that smooth (for example, in case of low <code>adjust</code>) it is a good idea to use more points with default 512 being enough for most practical situations.</p>
+</section>
+<section id="left-edge-from" class="level2">
+<h2 class="anchored" data-anchor-id="left-edge-from">Left edge <code>from</code></h2>
+<p>If specified, <code>from</code> defines a left edge of sequence of “x” points, at which density curve is evaluated. For illustration, lets use sequence from minimum to maximum values of <code>mtcars$mpg</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>from_vec <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fu">min</span>(mtcars<span class="sc">$</span>mpg), <span class="at">to =</span> <span class="fu">max</span>(mtcars<span class="sc">$</span>mpg), <span class="at">length.out =</span> <span class="dv">20</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">from =</span> <span class="fu">round</span>(from_vec, <span class="at">digits =</span> <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-08-arguments-of-stats-density/arg_from-1.gif" class="img-fluid"></p>
+<p>Note that when <code>from</code> is equal to the smallest value of input numeric vector, it is still greater than left edge of default density curve. For explanation of this “extending property” of default curve, see section about <code>cut</code>.</p>
+</section>
+<section id="right-edge-to" class="level2">
+<h2 class="anchored" data-anchor-id="right-edge-to">Right edge <code>to</code></h2>
+<p>Argument <code>to</code> has the same nature as <code>from</code>, but defines right edge of points.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>to_vec <span class="ot">&lt;-</span> <span class="fu">rev</span>(from_vec)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">to =</span> <span class="fu">round</span>(to_vec, <span class="at">digits =</span> <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-08-arguments-of-stats-density/arg_to-1.gif" class="img-fluid"></p>
+<p>Note again, that value of <code>to</code> equal to maximum of input numeric vector is not enough to see the default behavior.</p>
+</section>
+<section id="range-extension-cut" class="level2">
+<h2 class="anchored" data-anchor-id="range-extension-cut">Range extension <code>cut</code></h2>
+<p>By default, sequence of <code>n</code> x-y points is computed as follows:</p>
+<ul>
+<li>Equally spaced grid of <code>n</code> “x” points is computed between <code>from</code> and <code>to</code> which by default are computed as being “<code>cut*bw</code> outside of <code>range(x)</code>”. In other words, default range is extended to left and right of <code>range(x)</code> by the amount of “canonical bandwidth” (computed by <code>bw</code> algorithm) multiplied by argument <code>cut</code> (default being 3).</li>
+<li>“Y” points are taken from “true curve” of kernel density estimate.</li>
+</ul>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">cut =</span> <span class="fu">seq</span>(<span class="dv">3</span>, <span class="dv">0</span>, <span class="at">by =</span> <span class="sc">-</span><span class="fl">0.2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-08-arguments-of-stats-density/arg_cut-1.gif" class="img-fluid"></p>
+<p>When <code>cut</code> changes from 3 to 0, range of computed points shrinks from default one to range of input numeric vector. Default call to <code>density()</code> computes set of points outside of original range. I call this behavior an “extending property” of <code>density()</code>. <strong>Note</strong> that <code>cut</code> can also be negative, which means reduced input range.</p>
+<p>So by default, <code>density()</code> extends range of input vector. The problem is that it can contradict natural constraints on input. For example, what if you want to estimate density for probability distribution of <em>value that can only be positive</em>? Dealing with boundary values during kernel density estimation is an important topic and it is called a boundary correction problem. One of possible solutions is to use <a href="https://echasnovski.github.io/pdqr/reference/form_resupport.html">form_resupport()</a> function from ‘pdqr’ package.</p>
+</section>
+</section>
+<section id="epilogue" class="level1">
+<h1>Epilogue</h1>
+<ul>
+<li><code>density()</code> provides reach possibilities for doing kernel density estimation, which should be carefully studied to use them wisely.</li>
+<li>Using <a href="https://gganimate.com/">‘gganimate’</a> for creating animated illustrations is fun.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+sessionInfo()
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<pre><code>## R version 3.6.1 (2019-07-05)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 18.04.2 LTS
+##
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas/libblas.so.3
+## LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so
+##
+## locale:
+##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C
+##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8
+##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8
+##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C
+## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C
+##
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base
+##
+## other attached packages:
+##  [1] rlang_0.3.4     gganimate_1.0.3 forcats_0.4.0   stringr_1.4.0
+##  [5] dplyr_0.8.1     purrr_0.3.2     readr_1.3.1     tidyr_0.8.3
+##  [9] tibble_2.1.3    ggplot2_3.1.1   tidyverse_1.2.1
+##
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_1.0.1         lubridate_1.7.4    lattice_0.20-38
+##  [4] prettyunits_1.0.2  png_0.1-7          class_7.3-15
+##  [7] assertthat_0.2.1   digest_0.6.19      R6_2.4.0
+## [10] cellranger_1.1.0   plyr_1.8.4         backports_1.1.4
+## [13] evaluate_0.14      e1071_1.7-2        httr_1.4.0
+## [16] blogdown_0.12      pillar_1.4.1       progress_1.2.2
+## [19] lazyeval_0.2.2     readxl_1.3.1       rstudioapi_0.10
+## [22] gifski_0.8.6       rmarkdown_1.13     labeling_0.3
+## [25] munsell_0.5.0      broom_0.5.2        compiler_3.6.1
+## [28] modelr_0.1.4       xfun_0.7           pkgconfig_2.0.2
+## [31] htmltools_0.3.6    tidyselect_0.2.5   lpSolve_5.6.13.2
+## [34] bookdown_0.11      codetools_0.2-16   crayon_1.3.4
+## [37] withr_2.1.2        sf_0.7-7           grid_3.6.1
+## [40] nlme_3.1-140       jsonlite_1.6       gtable_0.3.0
+## [43] DBI_1.0.0          magrittr_1.5       units_0.6-3
+## [46] scales_1.0.0       KernSmooth_2.23-15 cli_1.1.0
+## [49] stringi_1.4.3      farver_1.1.0       xml2_1.2.0
+## [52] generics_0.0.2     transformr_0.1.1   tools_3.6.1
+## [55] glue_1.3.1         tweenr_1.0.1       hms_0.4.2
+## [58] yaml_2.2.0         colorspace_1.4-1   classInt_0.3-3
+## [61] rvest_0.3.4        knitr_1.23         haven_2.1.0</code></pre>
+</div>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/echasnovski\.com");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© Evgeni Chasnovski, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

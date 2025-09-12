@@ -1,0 +1,2663 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss  xmlns:atom="http://www.w3.org/2005/Atom" 
+      xmlns:media="http://search.yahoo.com/mrss/" 
+      xmlns:content="http://purl.org/rss/1.0/modules/content/" 
+      xmlns:dc="http://purl.org/dc/elements/1.1/" 
+      version="2.0">
+<channel>
+<title>Evgeni Chasnovski</title>
+<link>https://echasnovski.com/blog.html</link>
+<atom:link href="https://echasnovski.com/blog.xml" rel="self" type="application/rss+xml"/>
+<description>Personal website of Evgeni Chasnovski</description>
+<generator>quarto-1.7.33</generator>
+<lastBuildDate>Thu, 03 Jul 2025 21:00:00 GMT</lastBuildDate>
+<item>
+  <title>Neovim now has built-in plugin manager</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/1lriv80/neovim_now_has_builtin_plugin_manager/">posted on Reddit</a></em></p>
+<p>Hello, Neovim users!</p>
+<p>After rounds of discussions and iterations, Neovim <a href="https://github.com/neovim/neovim/pull/34009">now has a minimal built-in plugin manager</a>. Its functionality is present only on latest <code>master</code> branch and located in <code>vim.pack</code> module. It is planned to land in 0.12 (which is still not quite soon).</p>
+<p>You can read more about the design and workflow <a href="https://github.com/neovim/neovim/blob/cbfc3d1cdc199ce65368a2f40dc4b1ddc4331714/runtime/doc/lua.txt#L2529">here</a>. You can also see the demo of the latest state in the <a href="https://github.com/neovim/neovim/pull/34009#issue-3060712969">PR’s first comment</a>.</p>
+<p>The overall design is based on ‘mini.deps’ module, but it is visibly reworked to fix some of its shortcomings and to fit “minimal built-in plugin manager” requirements.</p>
+<p>Couple of <em>very important</em> notes:</p>
+<ul>
+<li><p>I can not stress this enough, this is yet a <strong>WORK IN PROGRESS</strong>. There are <a href="https://github.com/neovim/neovim/issues/34763">many planned improvements</a>. Expect breaking changes without notice. Only use it if you are comfortable fixing suddenly not working config.</p></li>
+<li><p>Early testing of <em>existing features</em> is appreciated. Suggestions about new features will be met very conservatively (at least until there is an ongoing planned work).</p></li>
+<li><p>It is not meant to provide all advanced plugin manager features. If you prefer to use a more capable plugin manager, it is totally normal. Probably even possible to use side-by-side with <code>vim.pack</code>.</p></li>
+</ul>
+<p>There is still a long road ahead and we’ll walk it one step at a time. Thanks for reading and using Neovim!</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html</guid>
+  <pubDate>Thu, 03 Jul 2025 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Neovim + mini.pick + nushell = CLI fuzzy picker. Why? Because why not.</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2025-06-20-neovim-minipick-nushell-cli-fuzzy-picker.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/1lg40xm/neovim_minipick_nushell_cli_fuzzy_picker_why/">posted on Reddit</a></em></p>
+<div class="quarto-video"><video id="video_shortcode_videojs_video1" class="video-js vjs-default-skin vjs-fluid" controls="" preload="auto" data-setup="{}" title=""><source src="2025-06-20-neovim-minipick-nushell-cli-fuzzy-picker/demo.mp4"></video></div>
+<p>Hello, Neovim users!</p>
+<p>For quite some time I was interested in trying out <a href="https://www.nushell.sh/">Nushell</a> as my default shell. To be perfectly honest, I am not sure why. Probably because I am drawn to the idea of “piping structured data” and mastering a powerful tool for the future. Or maybe it is just pretty tables, who knows.</p>
+<p>Several weeks ago I decided to give it a try but only in Ghostty (terminal emulator I use for regular activity; as opposed to backup <code>st</code> with Zsh). It is pretty interesting to set up from ground up and use.</p>
+<p>Switching from Zsh to Nushell very much reminds me of switching from Vim to Neovim <em>just after</em> the latter got first-class Lua support. Nu (language of Nushell) is a saner language than Bash to hack the config and add custom features (very much like Lua is to Vimscript). But it is not <em>quite</em> stable yet, so expecting something to break after new release is not baseless.</p>
+<hr>
+<p>Anyway, while writing my prompt from scratch (as one does) I also thought that it would be an interesting challenge to try to go without <code>fzf</code> in CLI and try to use fuzzy picking I have set up in Neovim with <a href="https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-pick.md">‘mini.pick’</a>. It turned out to be not as complicated as I feared at the beginning. The only downside is that Neovim always occupies full terminal window, so it is impossible to have small-ish picker as <code>fzf</code>.</p>
+<p>I believe the overall approach can be generalized to other shells and Neovim’s fuzzy pickers, so decided to share it here. Basically:</p>
+<ul>
+<li><p>The general idea is to manually call Neovim with custom config (it can be regular config, but separate one feels cleaner to me) to fuzzy pick things. <em>Choosing item(s) should write them into a special file</em> . After that, shell reads the file and performs necessary actions.</p></li>
+<li><p>So, to fuzzy pick something like files/subdirectories and insert item at cursor:</p>
+<ul>
+<li>Write a global function in ‘init.lua’ that starts fuzzy picker for files (like using <code>MiniPick.builtin.files()</code>) or subdirectories (custom picker). Choosing item(s) should execute custom action and write to a dedicated file (like ‘/tmp/nvim/out-file’).</li>
+<li>Write custom shell command/function that calls Neovim with a dedicated ‘init.lua’ and executes the necessary global Lua function (like with <code>-c "lua _G.pick_file_cli()"</code>). After calling <code>nvim</code>, the shell command/function should read the ‘/tmp/nvim/out-file’ file, delete it (to not reuse later), and insert its content at cursor.</li>
+<li>Map dedicated keys in shell to that command/function. Currently I have <code>&lt;C-d&gt;</code> for subdirectories and <code>&lt;C-t&gt;</code> for files.</li>
+</ul></li>
+<li><p>To fuzzy pick from piped input, create a shell command/function that:</p>
+<ul>
+<li>Writes piped input to a dedicated file (like ‘/tmp/nvim/in-file’).</li>
+<li>Calls Neovim’s global function that reads from that file, fuzzy picks from items, writes chosen one(s) to ‘/tmp/nvim/out-file’.</li>
+<li>Reads from ‘/tmp/nvim/out-file’ and returns its content.</li>
+</ul></li>
+</ul>
+<p>My dedicated Neovim config for this is <a href="https://github.com/echasnovski/nvim/blob/a7b3e74d439959696f16f05178377cd6f557533d/init-cli-pick.lua">here</a> (it assumes ‘mini.nvim’ is already installed as suggested in ’pack/*/start’ directory). The Nushell part of the approach is <a href="https://github.com/echasnovski/dotfiles/blob/027e1fd73a9ba9e8f73245756bba5721afe6b7d6/nushell/.config/nushell/config.nu#L164-L213">here</a>.</p>
+<p>The approach is not perfect and I’d recommend to daily drive it only if you understand how it works. But maybe the whole approach would interesting to someone.</p>
+<p>Thanks for reading!</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2025-06-20-neovim-minipick-nushell-cli-fuzzy-picker.html</guid>
+  <pubDate>Thu, 19 Jun 2025 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>PSA for color scheme authors: you might want to adjust PmenuSel</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2024-08-29-psa-adjust-`pmenusel`.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/1f439w8/psa_for_color_scheme_authors_you_might_want_to/">posted on Reddit</a></em></p>
+<p>TL;DR: to account for possible new custom highlighting in popup menu items, you might want to switch <code>fg</code> and <code>bg</code> colors in <code>Pmenu*Sel</code> groups while adding <code>reverse</code> attribute.</p>
+<hr>
+<p>Neovim Nightly (0.11) recently landed new features regarding adding custom highlighting to items of built-in popup menu:</p>
+<ul>
+<li>Whole item via <code>hl_group</code> (<a href="https://github.com/neovim/neovim/pull/29876">thanks to glepnir</a>).</li>
+<li>Only “kind” field via <code>kind_hlgroup</code> (<a href="https://github.com/neovim/neovim/pull/30128">also thanks to glepnir</a>).</li>
+</ul>
+<p>Both of the fields combine highlight attributes with underlying highlighting from <code>Pmenu*</code> groups. This is a great choice because it allows plugin authors to use highlight groups which modify only foreground (a.k.a. text) and it will “reuse” background of popup menu. An alternative would have been to expose special highlight groups which <strong>each color scheme</strong> would have needed to define (while only adding its own popup menu background).</p>
+<p>Item highlighting usually should work well with displaying text in regular popup menu item (if it has background similar to <code>Normal</code> in terms of lightness), <strong>but</strong> might result into barely readable text when item is selected. This can be the case if color scheme chooses for <code>PmenuSel</code> (and its variants like <code>PmenuKindSel</code>, etc.) to have intentionally inverted lightness compared to <code>Pmenu</code>. I’ve encountered this with ‘mini.hues’ and default color scheme (which is <a href="https://github.com/neovim/neovim/pull/30183">planned to be fixed</a>).</p>
+<p>Luckily, there is a solution, albeit a bit unintuitive one: switch <code>fg</code>&lt;-&gt;<code>bg</code> attributes and add <code>reverse</code> attribute. Here is an example from bundled ‘evening’ color scheme:</p>
+<ul>
+<li>Current:</li>
+</ul>
+<pre><code>hi PmenuSel      guifg=#000000 guibg=#bebebe gui=NONE cterm=NONE
+hi PmenuMatchSel guifg=#8b008b guibg=#bebebe gui=NONE cterm=NONE</code></pre>
+<ul>
+<li>Adjusted <code>PmenuSel</code>:</li>
+</ul>
+<pre><code>hi PmenuSel      guifg=#bebebe guibg=#000000 gui=reverse cterm=reverse
+hi PmenuMatchSel guifg=#bebebe guibg=#8b008b gui=reverse cterm=reverse</code></pre>
+<p>Here is <a href="https://github.com/user-attachments/assets/8d2b2550-1609-4f27-aac1-ab9d2a0afef7">a screenshot</a> of before (left) and after (right)</p>
+<p>This works because combining highlight attributes first combines foreground/background colors and <em>only after that</em> applies <code>reverse</code>. It will keep the same visuals if there is no highlighting, but should also work with reasonable choices of <code>hl_group</code> and <code>kind_hlgroup</code> in completion items.</p>
+<hr>
+<p>If you are a color scheme author or a concerned user of one, I think making this change is worth it. You can use the test code example <a href="https://github.com/neovim/neovim/pull/30183">from PR to default color scheme</a>. Hope it helps.</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2024-08-29-psa-adjust-`pmenusel`.html</guid>
+  <pubDate>Wed, 28 Aug 2024 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>You can remove padding around Neovim instance with this one simple trick…</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2024-08-01-remove-padding-around-neovim-instance.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/1ehidxy/you_can_remove_padding_around_neovim_instance/">posted on Reddit</a></em></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://echasnovski.com/blog/2024-08-01-remove-padding-around-neovim-instance/demo.png" class="img-fluid figure-img"></p>
+<figcaption>Left: with "frame" from terminal emulator; Right: without that "frame"</figcaption>
+</figure>
+</div>
+<p>(Sorry for a slightly clickbait-y title. Always wanted to use one of those :) )</p>
+<p>If you have different background color in your terminal emulator and Neovim, then chances are that you experience this weird “frame” around your Neovim instance. Like the one shown in the left part of the picture.</p>
+<p>This is because CLI programs occupy screen estate based on the cell grid with cells having same width and height. If pixel dimension(s) of terminal emulator’s window are not multiple of cell pixel dimension(s), there is a gap between edge(s) of rendered CLI program and window edge(s).</p>
+<p>Usual answers to this issue are:</p>
+<ul>
+<li>Use same background color in Neovim and terminal emulator. Works, but is too restrictive.</li>
+<li>Adjust window dimensions or DPI. Works, but is too restrictive.</li>
+<li>Use GUI (like Neovide). Works, but… you get the idea.</li>
+</ul>
+<hr>
+<p>As it turns out, this can be solved by keeping terminal background’s color in sync with Neovim’s background color. This is possible thanks to a dark magic called <a href="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands">“Operating System Commands XTerm Control Sequences”</a> or OSC control sequences for short. In particular, OSC 11 and OSC 111, which your terminal should support (most modern feature rich ones do: Kitty, WezTerm, Alacritty, etc.).</p>
+<p>Just add the following snippet to your ‘init.lua’ (credit to u/gpanders from <a href="https://github.com/neovim/neovim/issues/16572#issuecomment-1954420136">this comment</a>):</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"UIEnter"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"ColorScheme"</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb1-2">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb1-3">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">normal</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_get_hl<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Normal"</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb1-4">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">not</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">normal</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">bg</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-5">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">io.write</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">string.format</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\027</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">]11;#%06x</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\027\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">normal</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">bg</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">))</span></span>
+<span id="cb1-6">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb1-7"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb1-8"></span>
+<span id="cb1-9"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"UILeave"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb1-10">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">io.write</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\027</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">]111</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\027\\</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb1-11"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div>
+<p>And that’s it. It synchronizes on every enter/exit Neovim instance and after loading new color scheme. And it even works with <code>&lt;C-z&gt;</code> and later <code>fg</code>! Couple of caveats, though:</p>
+<ul>
+<li>Make sure to have this executed <strong>before</strong> you load color scheme. Otherwise there will be no event for it to sync. Alternatively, add an explicit call to the first <code>callback</code> function and it should work as is.</li>
+<li>It will not sync if you manually set <code>Normal</code> highlight group. It must be followed by the <code>ColorScheme</code> event.</li>
+</ul>
+<hr>
+<p>Also, if you want a slightly more robust, maintained, and tested version, there is now a new <a href="https://github.com/nvim-mini/mini.nvim/blob/74e6b722c91113bc70d4bf67249ed8de0642b20e/doc/mini-misc.txt#L171">setup_termbg_sync()</a> in ‘mini.misc’ module of ‘mini.nvim’. It also checks if OSC 11 is supported by terminal emulator, uses only it without OSC 111, and synchronizes immediately.</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2024-08-01-remove-padding-around-neovim-instance.html</guid>
+  <pubDate>Wed, 31 Jul 2024 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Neovim now has built-in commenting</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2024-04-05-neovim-now-has-builtin-commenting.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/1bwlvrt/neovim_now_has_builtin_commenting/">posted on Reddit</a></em></p>
+<p><a href="https://github.com/neovim/neovim/pull/28176">The PR for built-in commenting</a> has been merged into Nightly builds. There is more info in the initial PR comment and <a href="https://github.com/neovim/neovim/blob/73de98256cf3932dca156fbfd0c82c1cc10d487e/runtime/doc/various.txt#L561-L597">help entry</a>, but for the lazy:</p>
+<ul>
+<li><p>All it does is out of the box mappings:</p>
+<ul>
+<li><code>gc</code> operator (Normal and Visual mode) to toggle comments.</li>
+<li><code>gc</code> textobject (Operator-pending mode) as operator target.</li>
+<li><code>gcc</code> for toggling comments in current line (basically a convenient <code>gc_</code> remap).</li>
+</ul>
+<p>Also, of course, dot-repeat, <code>[count]</code> support, etc.</p></li>
+<li><p>This is basically a simplified version of <a href="https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-comment.md">‘mini.commment’</a> with <em>mostly</em> default config.</p>
+<p>The <code>pad_comment_parts</code> is <code>false</code> meaning that ‘commentstring’ option is taken as is, without forcing single space padding. This is planned to be addressed by adjusting default ‘commentstring’ values some time later (at least after 0.10.0 release) or can be done by users themselves in their configs.</p></li>
+<li><p>On the surface it is quite close to ‘tpope/vim-commentary’, but with some difference in how it handles blank lines: blank lines are commented but do not affect the toggle action decision. See example in <a href="https://github.com/neovim/neovim/pull/28176#issuecomment-2039299762">this comment</a>.</p></li>
+</ul>
+<p>So if you are using only basics of ‘mini.comment’ (no custom hooks, options, or callable ‘commentstring’s) or ’tpope/vim-commentary’, you might find the new built-in commenting on Nightly to be enough.</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2024-04-05-neovim-now-has-builtin-commenting.html</guid>
+  <pubDate>Thu, 04 Apr 2024 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Exactly 10 years ago Neovim had its first commit</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2024-01-31-neovim-10-year-anniversary.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/1afi21p/exactly_10_years_ago_neovim_had_its_first_commit/">posted on Reddit</a></em></p>
+<p><a href="https://github.com/neovim/neovim/commit/72cf89bce8e4230dbc161dc5606f48ef9884ba70">A link to first commit</a>.</p>
+<p>To celebrate this, Neovim team created an official store: <a href="https://store.neovim.io">https://store.neovim.io</a>. It should be live now. All profit will go to benefit Neovim project.</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2024-01-31-neovim-10-year-anniversary.html</guid>
+  <pubDate>Tue, 30 Jan 2024 22:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Neovim now has its own default color scheme</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2023-12-03-neovim-now-has-its-own-default-color-scheme.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/189nw6r/neovim_now_has_its_own_default_color_scheme/">posted on Reddit</a></em></p>
+<p><img src="https://echasnovski.com/blog/2023-12-03-neovim-now-has-its-own-default-color-scheme/demo-dark.png" class="img-fluid"> <img src="https://echasnovski.com/blog/2023-12-03-neovim-now-has-its-own-default-color-scheme/demo-light.png" class="img-fluid"></p>
+<p>See <a href="https://github.com/neovim/neovim/pull/26334">this PR</a> for more details.</p>
+<p>And if you think you’ll miss magenta floating windows and completion menu, there is <code>colorscheme vim</code>.</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2023-12-03-neovim-now-has-its-own-default-color-scheme.html</guid>
+  <pubDate>Sat, 02 Dec 2023 22:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Floating windows in Neovim can now have footer</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2023-08-26-floating-windows-in-neovim-can-now-have-footer.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/1621k2m/floating_windows_can_now_have_footer/">posted on Reddit</a></em></p>
+<p><img src="https://echasnovski.com/blog/2023-08-26-floating-windows-in-neovim-can-now-have-footer/demo.png" class="img-fluid"></p>
+<p>After merging <a href="https://github.com/neovim/neovim/pull/24739">this PR</a>, <code>nvim_open_win()</code> now supports <code>footer</code> and <code>footer_pos</code> options. They are symmetrical to <code>title</code> and <code>title_pos</code> options, but affect the bottom part of floating window border.</p>
+<p><strong>Important</strong>: this is a part of Neovim 0.10, not current stable Neovim 0.9.1. Will also be available in next Nightly build.</p>
+<p>I am excited to see how Neovm community can leverage this. It seems like an appropriate place to show some help data alongside usual title. I have a few ideas for ‘mini.nvim’ myself :)</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2023-08-26-floating-windows-in-neovim-can-now-have-footer.html</guid>
+  <pubDate>Fri, 25 Aug 2023 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Average Neovim color scheme</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2023-04-24-average-color-scheme.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/12xg27j/have_you_ever_wondered_how_average_popular_neovim/">posted on Reddit</a></em></p>
+<p><img src="https://echasnovski.com/blog/2023-04-24-average-color-scheme/demo-dark.png" class="img-fluid"></p>
+<p><img src="https://echasnovski.com/blog/2023-04-24-average-color-scheme/demo-light.png" class="img-fluid"></p>
+<p>Hello, Neovim users!</p>
+<p>For quite some time I was wondering how would “average popular Neovim color scheme” look like. I mean, it would certainly contain much purple and blue, but <strong>how much exactly</strong>? It is not a trivial thing to compute.</p>
+<p>Thankfully, the recent release of <a href="https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-colors.md">‘mini.colors’</a> makes this task much more manageable.</p>
+<p>I decided that general approach to averaging color schemes would be as follows:</p>
+<ul>
+<li>Highlight group will be present in output if it is present (explicitly defined and differs from Neovim’s built-in values) in <strong>all</strong> reference color schemes.</li>
+<li>Attribute of highlight group (like <code>foreground</code>, <code>background</code>, <code>underline</code>, etc.) is present if it is present in <strong>all</strong> reference color schemes.</li>
+</ul>
+<p>Of course, there are other ways to tackle this problem, but such a strict approach will ensure that output palette is as consistent as possible. Otherwise output will contain many different but similar colors, which doesn’t seem good.</p>
+<p>For reference color schemes I decided to go through <a href="https://github.com/rockerBOO/awesome-neovim">awesome-neovim</a> and pick top 5 Lua implemented color schemes with most stars. Here is the final list (as of 2023-04-20):</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Color scheme</th>
+<th>Stargazers</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://github.com/folke/tokyonight.nvim">folke/tokyonight.nvim</a></td>
+<td>3476 stars</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/catppuccin/nvim">catppuccin/nvim</a></td>
+<td>2639 stars</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/rebelot/kanagawa.nvim">rebelot/kanagawa.nvim</a></td>
+<td>2219 stars</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/EdenEast/nightfox.nvim">EdenEast/nightfox.nvim</a></td>
+<td>2055 stars</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/projekt0n/github-nvim-theme">projekt0n/github-nvim-theme</a></td>
+<td>1379 stars</td>
+</tr>
+</tbody>
+</table>
+<p>(Full disclosure: initially I wanted to go with “top 5 Neovim color schemes” which would have included <a href="https://github.com/sainnhe/everforest">sainnhe/everforest</a> as fifth one. But although its colors are sooooooo nice, it is quite different in terms of which attributes it defines for certain highlight groups. Including it instead of ‘projekt0n/github-nvim-theme’ resulted in not very coherent output. So in the end it was decided to take “top 5 <strong>Lua</strong> color schemes”.)</p>
+<p>The result is in the post. Yes, it is blue-purple-ish, as expected. Also in my opinion it does have a quality of “looks like tokyonight/catppuccin/kanagawa, but not quite”.</p>
+<p><a href="https://gist.github.com/echasnovski/283c6676bd7b29124d56b0b262b09c69">Here is a gist</a> with colorscheme files for average dark and light variants (put any of them into <code>~/.config/nvim/colors</code> and use <code>:colorscheme</code> command as usual) along with a script used to create them. Please don’t expect much from actually applying color scheme files, as they define only basic highlight groups with very limited advanced support like many plugins, tree-sitter, semantic tokens, etc.</p>
+<p>Besides fulfilling general curiosity, I also plan to use this result to make a data-driven decisions for a new upcoming color scheme generator in ‘mini.nvim’.</p>
+<p>Hope you enjoyed reading this!</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2023-04-24-average-color-scheme.html</guid>
+  <pubDate>Sun, 23 Apr 2023 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>You don’t need ‘vim-rooter’ (usually) or How to set up smart autochange of current directory</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2022-12-29-you-dont-need-vimrooter-usually.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/zy5s0l/you_dont_need_vimrooter_usually_or_how_to_set_up/">posted on Reddit</a></em></p>
+<p>Hello, Neovim users!</p>
+<p>The <a href="https://github.com/airblade/vim-rooter">airblade/vim-rooter</a> plugin is an essential part of my Neovim workflow. It automatically changes current directory (<code>:h current-directory</code>) for every buffer to a more natural one (like to path of its Git repository). For me this has the following benefits:</p>
+<ul>
+<li>Most file explorers open closer to the file of current buffer and not inside directory in which Neovim was started.</li>
+<li>Searching files with Telescope is more natural.</li>
+<li>Built-in terminal opens in directory I usually want it to open: in root based on current buffer file.</li>
+</ul>
+<p>However, starting from Neovim 0.8 ‘vim-rooter’ is (almost) obsolete. Using an amazing <code>vim.fs</code> module you can set up basic autochange of current directory using these lines of code (call them somewhere during your Neovim startup):</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- Array of file names indicating root directory. Modify to your liking.</span></span>
+<span id="cb1-2"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_names</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'.git'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'Makefile'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span>
+<span id="cb1-3"></span>
+<span id="cb1-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- Cache to use for speed up (at cost of possibly outdated results)</span></span>
+<span id="cb1-5"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_cache</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{}</span></span>
+<span id="cb1-6"></span>
+<span id="cb1-7"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">set_root</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb1-8">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- Get directory path to start search from</span></span>
+<span id="cb1-9">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">path</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_buf_get_name<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb1-10">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">path</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">''</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-11">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">path</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">fs</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>dirname<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">path</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb1-12"></span>
+<span id="cb1-13">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- Try cache and resort to searching upward for root directory</span></span>
+<span id="cb1-14">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_cache</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">path</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span></span>
+<span id="cb1-15">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">nil</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span></span>
+<span id="cb1-16">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_file</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">fs</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>find<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_names</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">path</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">path</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">upward</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span></span>
+<span id="cb1-17">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_file</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">nil</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-18">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">fs</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>dirname<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_file</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb1-19">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_cache</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">[</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">path</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root</span></span>
+<span id="cb1-20">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-21"></span>
+<span id="cb1-22">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- Set current directory</span></span>
+<span id="cb1-23">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">fn</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>chdir<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb1-24"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-25"></span>
+<span id="cb1-26"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_augroup</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_augroup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'MyAutoRoot'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{})</span></span>
+<span id="cb1-27"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'BufEnter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">group</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">root_augroup</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">set_root</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div>
+<p>Of course this implementation has certain limitations: - The main one is a lack of ability to use glob patterns to find root directory. However, although solvable, I think the most common use case is to define root based on some pre-determined set of actual file names, so this shouldn’t be a big issue. - It caches results to speed up computations with a downside of result possibly being outdated. Usually not an issue, though. Remove all cache related code to not do that.</p>
+<p>Initially I planned to make a separate ‘mini.root’ module, but realized that it would mostly be a reimplementation of <code>vim.fs</code>. So instead I decided to add <a href="https://github.com/nvim-mini/mini.nvim/blob/bd6d1f3fd2da7741140510c2b37e2de7901b03fb/doc/mini-misc.txt#L95"><code>setup_auto_root()</code></a> function to <a href="https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-misc.md">mini.misc</a>. If you want a more tested and documented solution, check it out and tell me what you think. Thanks!</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2022-12-29-you-dont-need-vimrooter-usually.html</guid>
+  <pubDate>Wed, 28 Dec 2022 22:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Results of “Neovim built-in options survey”</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2022-12-08-results-of-neovim-builtin-options-survey.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/zg44mm/results_of_neovim_builtin_options_survey_more_in/">posted on Reddit</a></em></p>
+<p><img src="https://echasnovski.com/blog/2022-12-08-results-of-neovim-builtin-options-survey/chart.png" class="img-fluid"></p>
+<p>Hello, Neovim users!</p>
+<p>Around two weeks ago I decided to make a <a href="../blog/2022-11-22-neovim-builtin-options-survey-needs-your-contribution.html">Neovim built-in options survey</a>. Now it is closed, as it doesn’t seem to have an intensive answer supply (last one was more than 24 hours ago).</p>
+<p>There were total 227 legible answers. Not as many as I had hoped starting it, but it is what it is.</p>
+<p>Main summary of basic options are in the post image. To answer questions in the survey announcement:</p>
+<ul>
+<li><code>What Leader key is used the most?</code> - Space.</li>
+<li><code>Tabs or spaces?</code> - Spaces (based on 82% of <code>expandtab=true</code>)</li>
+<li><code>Absolute, relative, or no line numbers?</code> - Seems like both absolute and relative. But probably more absolute ones, based on 86% of <code>number=true</code>.</li>
+<li><code>Traditional or global statusline?</code> - Global, but with a tight margin.</li>
+<li><code>Permanent tabline or not?</code> - Not permanent, default one.</li>
+<li><code>Use persistent undo or not?</code> - Yes to persistent undo</li>
+<li><code>showmode or noshowmode?</code> - <code>noshowmode</code></li>
+<li><code>wrap or nowrap?</code> - <code>wrap</code>.</li>
+</ul>
+<p>Here is <a href="https://gist.github.com/echasnovski/fa70dc75c475369747d2a485a13303fb">a gist with full results</a> along with description of how to read them and scripts used</p>
+<p>I also created a <a href="https://github.com/neovim/neovim/issues/21342">GitHub issue in Neovim repository</a> to discuss possibility of default values change. If you agree with changing options which reached 80% for some non-default value (as per <a href="https://www.reddit.com/r/neovim/comments/z1tmjg/comment/ixfp0gn/?utm_source=share&amp;utm_medium=web2x&amp;context=3">commentary of Justin M. Keys</a>), please upvote initial issue message.</p>
+<p>Thanks for reading and participating!</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2022-12-08-results-of-neovim-builtin-options-survey.html</guid>
+  <pubDate>Wed, 07 Dec 2022 22:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Neovim built-in options survey needs your contribution</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2022-11-22-neovim-builtin-options-survey-needs-your-contribution.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/z1tmjg/neovim_builtin_options_survey_needs_your/">posted on Reddit</a></em></p>
+<p>Hello, Neovim users!</p>
+<p><strong>Update from 2022-12-08</strong>. Survey is closed. Here is a <a href="../blog/2022-12-08-results-of-neovim-builtin-options-survey.html">post with results</a>.</p>
+<p>For a long time I have been curious about how other people use built-in Neovim settings. For example, I am almost sure that most of you set <code>termguicolors</code> to leverage modern color schemes, but I have nothing to back it up.</p>
+<p>So I decided to make a survey and it needs your contribution! <strong>Here is the link to <a href="https://forms.gle/ciFiJ6z1VaQe8iN56">Google form</a>.</strong> It lists all steps needed to take part which should take at most 5 minutes of your time. Basically:</p>
+<ul>
+<li>You’d need to download and execute my custom script (<a href="https://gist.github.com/echasnovski/493329c67050e9dcc5546815f31179d0">with this source code</a>) inside your day-to-day Neovim config (needs at least Neovim 0.7.0). It will produce a formatted scratch buffer with all non-default values of built-in options.</li>
+<li>Review content for sensible information (paths, etc.).</li>
+<li>Copy all lines from created buffer and paste them into a single survey question.</li>
+<li>Click “Submit”. That’s it!</li>
+</ul>
+<p><strong>It doesn’t require logging into your Google account and won’t track your email address</strong>. However, please, submit your results only once. I solely rely on your honesty here.</p>
+<p>Other possible interesting questions this survey will help answer:</p>
+<ul>
+<li>What <code>Leader</code> key is used the most?</li>
+<li>Tabs or spaces?</li>
+<li>Absolute, relative, or no line numbers?</li>
+<li>Traditional or global statusline?</li>
+<li>Permanent tabline or not?</li>
+<li>Use persistent undo or not?</li>
+<li><code>showmode</code> or <code>noshowmode</code>?</li>
+<li><code>wrap</code> or <code>nowrap</code>?</li>
+<li>And maybe more…</li>
+</ul>
+<p>What I plan to do with results: - The summary of results will be released in some way, shape, or form after survey is closed (at least two weeks from now when there is a 24 hours without new entries). It will be announced in this sub. - Possibly use the most commonly set non-default settings to power a Neovim variant, crowd-sourced version of <a href="https://github.com/tpope/vim-sensible">tpope/vim-sensible</a>.</p>
+<p>Please, spread a word about this survey to make it more objective. I will consider this survey as passable if at least 100 people will take part. Thanks!</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2022-11-22-neovim-builtin-options-survey-needs-your-contribution.html</guid>
+  <pubDate>Mon, 21 Nov 2022 22:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Create and apply randomly generated Base16 color scheme</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2022-09-09-random-base16-color-scheme.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/x9r5zh/create_and_apply_randomly_generated_base16_color/">posted on Reddit</a></em></p>
+<div class="quarto-video"><video id="video_shortcode_videojs_video1" class="video-js vjs-default-skin vjs-fluid" controls="" preload="auto" data-setup="{}" title=""><source src="2022-09-09-random-base16-color-scheme/demo.mp4"></video></div>
+<p>Hello, Neovim users!</p>
+<p>I decided to share a bit silly, but fun way to choose a color scheme you like. Maybe even have this in your startup config, if you feel particularly adventurous :)</p>
+<p>It uses <a href="https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-base16.md">mini.base16</a> module of <a href="https://github.com/nvim-mini/mini.nvim">mini.nvim</a> for both palette generation and color scheme application. Granted, results are not <em>that</em> different from one another (mainly because they share same highlight group definitions and idea behind making distinctive accent colors), but vary quite a bit.</p>
+<p>Here is a <a href="https://gist.github.com/echasnovski/2adeb8ca809126ce35ec644918fce413">gist with code</a>. It has the instructions of how to use it.</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2022-09-09-random-base16-color-scheme.html</guid>
+  <pubDate>Thu, 08 Sep 2022 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Usage of ‘after/ftplugin’ directory for filetype-specific configuration</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2022-09-02-usage-of-after-ftplugin-directory.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/x3zp6t/usage_of_afterftplugin_directory_for/">posted on Reddit</a></em></p>
+<p>Do you create any configuration that is specific to a certain file type (like setting local options or buffer-local variables, creating local mappings, running some function, etc.)?</p>
+<ul>
+<li><strong>No</strong>. Sooner or later you probably will. So let’s pretend that the answer is…</li>
+<li><strong>Yes</strong>. Do you use autocommands with <code>FileType</code> event for this?
+<ul>
+<li><strong>No</strong>. Good. There is probably nothing valuable for you to read here. Sorry for taking your time.</li>
+<li><strong>Yes</strong>. Although totally doable, there is another approach which is not popularized much. You can create ‘after/ftplugin’ directory within your configuration and put filetype-named files to be sourced for this file type. As a bonus, this is technically a way to create a “filetype plugin”, so you can now say that you are a plugin author and maintainer. Example: ‘after/ftplugin/lua.lua’ will be sourced for ‘lua’ file types (specifically, every time <code>filetype</code> buffer option is set to ‘lua’). Don’t forget to use local variants of setting options (<code>:setlocal</code> or <code>vim.opt_local</code>) and creating mappings (<code>vim.api.nvim_buf_set_keymap()</code>).</li>
+</ul></li>
+</ul>
+<p>This is meant as a Friday post to make more people aware of ‘after/ftplugin’ directory, because I find this approach really more structured than using autocommands. For reference, here is <a href="https://github.com/echasnovski/nvim/tree/master/after/ftplugin">how I do it</a>.</p>
+<p>Some further reading:</p>
+<ul>
+<li><code>:h ftplugin</code> (more in-depth about this approach; not really needed for simple use cases)</li>
+<li><code>:h ftplugin-special</code> (notes about special things to use in these files)</li>
+<li><code>:h lua-vim-setlocal</code> (use <code>vim.opt_local</code> to set option locally)</li>
+<li><code>:h after-directory</code> (use ‘after’ directory so that these options are not overridden by defaults)</li>
+</ul>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2022-09-02-usage-of-after-ftplugin-directory.html</guid>
+  <pubDate>Thu, 01 Sep 2022 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>I contributed to (mostly) 14 top-rated Neovim color schemes. Here are some observations</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2022-07-20-i-contributed-to-toprated-neovim-color-schemes.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/w3jhuc/i_contributed_to_mostly_14_toprated_neovim_color/">posted on Reddit</a></em></p>
+<p>Some time ago I decided to improve user experience for my <a href="https://github.com/nvim-mini/mini.nvim">mini.nvim</a> plugin by adding its explicit support to popular color schemes. Although out of the box experience should be pretty good (most coloring is done by linking to carefully selected builtin highlight groups), having them tailored to color scheme choices is certainly better.</p>
+<p>So I went to <a href="https://github.com/rockerBOO/awesome-neovim#colorscheme">rockerBoo/awesome-neovim</a> and selected a handful of color schemes subjectively judging by the number of Github stars, time since latest commit, and language of plugin (Lua preferred). It was not a very scientifically rigorous process which lead to 14 chosen color schemes.</p>
+<p>Here is a table of how those contributions went. Now, I want to state right away that this is no way, shape, or form should be used to judge how actively those maintainers watch for their projects. Everyone is different and has limited amount of time in a day. This is only a data about my experience at some point in past.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Color scheme PR</th>
+<th>Language</th>
+<th>Time to first reaction</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://github.com/bluz71/vim-moonfly-colors/pull/22">bluz71/vim-moonfly-colors</a></td>
+<td>Vimscript</td>
+<td>~ 1 day</td>
+<td>Revised and accepted</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/bluz71/vim-nightfly-guicolors/pull/33">bluz71/vim-nightfly-guicolors</a></td>
+<td>Vimscript</td>
+<td>~ 1 day</td>
+<td>Revised and accepted</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/catppuccin/nvim/pull/166">catppuccin/nvim</a></td>
+<td>Lua</td>
+<td>~ 6 days</td>
+<td>Merged</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/EdenEast/nightfox.nvim/pull/174">EdenEast/nightfox.nvim</a></td>
+<td>Lua</td>
+<td>~ 1 day</td>
+<td>Merged</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/folke/tokyonight.nvim/pull/179">folke/tokyonight.nvim</a></td>
+<td>Lua</td>
+<td>&gt; 14 days (no reaction yet)</td>
+<td>Open</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/marko-cerovac/material.nvim/pull/103">marko-cerovac/material.nvim</a></td>
+<td>Lua</td>
+<td>~ 3 days</td>
+<td>Merged</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/navarasu/onedark.nvim/pull/87">navarasu/onedark.nvim</a></td>
+<td>Lua</td>
+<td>~ 1 day</td>
+<td>Merged</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/projekt0n/github-nvim-theme/pull/194">projekt0n/github-nvim-theme</a></td>
+<td>Lua</td>
+<td>~ 1 day</td>
+<td>Merged</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/rebelot/kanagawa.nvim/pull/57">rebelot/kanagawa.nvim</a></td>
+<td>Lua</td>
+<td>~ 7 days</td>
+<td>Waiting for approval</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/sainnhe/edge/pull/59">sainnhe/edge</a></td>
+<td>Vimscript</td>
+<td>~ 1 day</td>
+<td>Merged</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/sainnhe/everforest/pull/69">sainnhe/everforest</a></td>
+<td>Vimscript</td>
+<td>~ 1 day</td>
+<td>Merged</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/sainnhe/gruvbox-material/pull/133">sainnhe/gruvbox-material</a></td>
+<td>Vimscript</td>
+<td>~ 1 day</td>
+<td>Merged</td>
+</tr>
+<tr class="odd">
+<td><a href="https://github.com/sainnhe/sonokai/pull/65">sainnhe/sonokai</a></td>
+<td>Vimscript</td>
+<td>~ 1 day</td>
+<td>Merged</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/shaunsingh/nord.nvim/pull/99">shaunsingh/nord.nvim</a></td>
+<td>Lua</td>
+<td>~ 1 day</td>
+<td>Merged</td>
+</tr>
+</tbody>
+</table>
+<p>Some personal observations after all this was done:</p>
+<ul>
+<li><p>Having the easily found documentation about how to add plugin support is really useful. Most of contributions were pretty straightforward, but I did end up searching for commits to get a sense of preferred workflow.</p></li>
+<li><p>Having the ability to link new highlight groups to existing ones makes contributing considerably easier. I understand its possible absence, but nevertheless.</p></li>
+<li><p>Having explicit support for many plugins really helps with adding new ones. It adds more information about design principles of color scheme.</p></li>
+<li><p>My two personal favorites from aesthetic point of view are ‘Terafox’ from ‘EdenEast/nightfox.nvim’ and ‘sainnhe/everforest’. This even prompted me to create a new color scheme for ‘mini.nvim’ which I am currently testing.</p></li>
+</ul>
+<p>Hope it was interesting. Also, please consider adding similar ‘mini.nvim’ explicit support for other color schemes (yours or ones you are using). Thanks!</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2022-07-20-i-contributed-to-toprated-neovim-color-schemes.html</guid>
+  <pubDate>Tue, 19 Jul 2022 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>StyLua now supports collapsing simple statements</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2022-07-07-stylua-now-supports-collapsing-simple-statements.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/vtdmry/stylua_now_supports_collapsing_simple_statements/">posted on Reddit</a></em></p>
+<p>Starting from version 0.14.0, <a href="https://github.com/JohnnyMorganz/StyLua">StyLua</a> (<em>the</em> Lua code formatter in Neovim world) implements option <code>collapse_simple_statement</code>. From release notes:</p>
+<blockquote class="blockquote">
+<p>It can take the values <code>Never</code> (default), <code>FunctionOnly</code>, <code>ConditionalOnly</code> or <code>Always</code>. When enabled, “simple” functions or if statements (ones where they only return a value or have a simple statement such as a function call) will be collapsed onto a single line where possible.</p>
+</blockquote>
+<p>So now with <code>collapse_simple_statement = "Always"</code> instead of this …</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">f</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb1-2">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span></span>
+<span id="cb1-3"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-4"></span>
+<span id="cb1-5"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">g</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb1-6">  f<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb1-7"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-8"></span>
+<span id="cb1-9"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">is_bad</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span></span>
+<span id="cb1-10">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span></span>
+<span id="cb1-11"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-12"></span>
+<span id="cb1-13"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">is_good</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span></span>
+<span id="cb1-14">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">a</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span></span>
+<span id="cb1-15"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span></code></pre></div>
+<p>… it will be formatted as …</p>
+<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">f</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb2-2"></span>
+<span id="cb2-3"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">g</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> f<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb2-4"></span>
+<span id="cb2-5"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">is_bad</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb2-6"></span>
+<span id="cb2-7"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">is_good</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">a</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span></code></pre></div>
+<p>This is great news for Neovim plugin authors and general users as this type of code is very common. Having it on single line improves readability (in my opinion).</p>
+<p>I happily switched to this option. Although using 120 width seems to be quite high sometimes in these cases, so I might start using 100 or even 80.</p>
+<p>(Note: I am not an author, <a href="https://github.com/JohnnyMorganz">JohnnyMorganz</a> is. He is a thoughtful creator and maintainer of StyLua.).</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2022-07-07-stylua-now-supports-collapsing-simple-statements.html</guid>
+  <pubDate>Wed, 06 Jul 2022 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Useful functions to explore Lua objects</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2021-08-20-useful-functions-to-explore-lua-objects.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/p84iu2/useful_functions_to_explore_lua_objects/">posted on Reddit</a></em></p>
+<p>To look at contents of Lua object <code>a</code> you can execute <code>:lua print(vim.inspect(a))</code>. This will print content inside command line. Following <a href="https://github.com/nanotee/nvim-lua-guide#tips-3">nvim-lua-guide’s tip</a> (<strong>edit</strong>: after making PR to nvim-lua-guide, it is currently in sync with edited version of this post), this can be wrapped into <code>_G.dump()</code> function and become <code>:lua dump(a)</code> (and even <code>:lua dump(a, b)</code>). However, in most cases it doesn’t print <code>nil</code>, which is a shame. This can be solved by sticking with single argument instead of <code>...</code>, but it proved useful in certain cases. So I came up with alternative implementation and decided to share with everyone (<strong>edit</strong>: renamed previous <code>dump</code> for a somewhat more pleasant name):</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">_G</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>put<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(...)</span></span>
+<span id="cb1-2">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">objects</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{}</span></span>
+<span id="cb1-3">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">i</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'#'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">...)</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">do</span></span>
+<span id="cb1-4">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">v</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">i</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">...)</span></span>
+<span id="cb1-5">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">table.insert</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">objects</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>inspect<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">v</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">))</span></span>
+<span id="cb1-6">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb1-7"></span>
+<span id="cb1-8">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">print</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">table.concat</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">objects</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">))</span></span>
+<span id="cb1-9">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">...</span></span>
+<span id="cb1-10"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span></code></pre></div>
+<p>Now <code>:lua put(nil)</code> will actually print <code>nil</code> instead of just doing nothing. Also <code>:lua put(nil, 1, nil)</code> will print <code>nil</code>, <code>1</code>, <code>nil</code> on separate lines (instead of <code>nil 1</code>).</p>
+<p>But there is more. Sometimes you want to explore a big nested table (like LSP related stuff). It would be nicer to explore as regular text. And so <code>put_text()</code> was born:</p>
+<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">_G</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>put_text<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(...)</span></span>
+<span id="cb2-2">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">objects</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{}</span></span>
+<span id="cb2-3">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">for</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">i</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'#'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">...)</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">do</span></span>
+<span id="cb2-4">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">v</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">select</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">i</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">...)</span></span>
+<span id="cb2-5">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">table.insert</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">objects</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>inspect<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">v</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">))</span></span>
+<span id="cb2-6">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb2-7"></span>
+<span id="cb2-8">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">lines</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>split<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">table.concat</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">objects</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">),</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">\n</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb2-9">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">lnum</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_win_get_cursor<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)[</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">]</span></span>
+<span id="cb2-10">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">fn</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>append<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">lnum</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">lines</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb2-11">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">...</span></span>
+<span id="cb2-12"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span></code></pre></div>
+<p>When called, this will try to add inspection content under the current cursor position. So now if you want to conveniently explore all fields of <code>vim.loop</code>, just execute <code>:lua put_text(vim.loop)</code>.</p>
+<p>Hope this will help somebody.</p>
+<p>P.S.: To use <code>put()</code> and <code>put_text()</code> inside Neovim session, you need to source this Lua code. Easiest way is to put it inside Lua files sourced on startup (‘init.lua’, for example), and you are good to go.</p>
+
+
+
+ ]]></description>
+  <category>neovim</category>
+  <category>reddit</category>
+  <guid>https://echasnovski.com/blog/2021-08-20-useful-functions-to-explore-lua-objects.html</guid>
+  <pubDate>Thu, 19 Aug 2021 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Count bounces in table tennis world record</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2020-05-11-count-bounces-in-table-tennis-world-record.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<section id="prologue" class="level1">
+<h1>Prologue</h1>
+<p>Dan Ives is no stranger to participating in “prolonged” table tennis activities and capturing it on camera. He once <a href="https://www.youtube.com/watch?v=6mt4_8Rd5tg">said “table tennis” 100,000 times</a>, which took him about 15 hours. With his father Peter he also set a <a href="https://www.youtube.com/watch?v=cfp5SEV3Bns">world record for the longest table tennis rally</a> which lasted for 8 hours, 40 minutes, and 10 seconds (8h40m10s as a shorter description of time period).</p>
+<p>On May 7th 2020 Dan made a successful attempt to beat a world record for the <a href="https://www.guinnessworldrecords.com/world-records/table-tennis-bat-and-ball-control-duration?fb_comment_id=784092958310554_1433556316697545">longest duration to control a table tennis ball with a bat</a>. He surpassed current record duration of 5h2m37s by 18 minutes and 27 seconds for a total of 5h21m4s. He also live streamed the event on his <a href="https://www.youtube.com/channel/UC_368FANcHhkhZ7oVqkW86A">“TableTennisDaily” YouTube channel</a>, which later <a href="https://www.youtube.com/watch?v=nkgzLeNocb0">was uploaded</a> (important note for the future: this video is a result of live stream and not a “shot and uploaded” one). During cheering for Dan in real time I got curious about actual number of bounces he made.</p>
+<p><strong>And thus the quest begins</strong>.</p>
+<p>As counting manually is error-prone and extremely boring, I decided to do this programmatically. The idea of solution is straightforward: somehow extract audio from the world record video, detect bounces (as they have distinctive sound) and count them.</p>
+<p>This post consists from two parts (if you just want to know a total count, skip right to Epilogue):</p>
+<ul>
+<li><strong>Detecting</strong> section describes technical details about how I approached the task of detecting bounces.</li>
+<li><strong>Counting</strong> section describes difficulties I had to overcome to produce a (reasonably accurate) count of bounces.</li>
+</ul>
+<p>For more technical details you can look at <a href="https://github.com/echasnovski/curiosity-projects/tree/master/ttd-world-record">this project’s Git repository</a>.</p>
+</section>
+<section id="detecting" class="level1">
+<h1>Detecting</h1>
+<p>Detecting was done in two steps: get audio of world record and detect bounces.</p>
+<p>I used the following tools on Ubuntu 18.04 (in order of their usage; Python packages probably best to be installed in a separate environment):</p>
+<ul>
+<li><a href="https://github.com/soimort/you-get">you-get</a> to download video with the lowest video quality.</li>
+<li><a href="https://www.ffmpeg.org/">ffmpeg</a> to extract audio from downloaded video and split it into 1 hour chunks (except the last one). Splitting was done because of insufficient amount of RAM I have in order to analyze the whole audio file. <strong>Note</strong> that having these splits means that some bounces on the joints between consecutive audio-chunks won’t be detected.</li>
+<li><a href="https://github.com/librosa/librosa">librosa</a> to detect beats that were in the period from 00:01:14 to 05:20:15 (times of first and last bounces). Timestamps of those beats were considered to be timestamps of bounces.</li>
+</ul>
+</section>
+<section id="counting" class="level1">
+<h1>Counting</h1>
+<p>So the total number of <strong>detected</strong> bounces is 49923 with an average tempo of ~156.5 bounces per minute. Ant <strong>note</strong> that this doesn’t include possibly missing bounces due to splitting audio in 1 hour chunks, which introduced 5 joints between them.</p>
+<p>However, YouTube footage is not a “preshot and uploaded” one, but is a direct output of live stream. This resulted into some missing footage. Total time of record based on video footage is 5h19m1s (from 00:01:14 to 05:20:15 video timestamps). On the other hand, tablet, responsible for time tracking, shows total time of 5h21m4s (from 00:00:03 to 05:21:07 at corresponding video timestamps). So there is missing 2m3s of actual bouncing. They were results of video jumps due to, most probably, internet connection issues (I encourage everyone to believe in Dan’s honesty):</p>
+<ul>
+<li><a href="https://youtu.be/nkgzLeNocb0?t=9144">From 02:32:24 to 02:32:25</a> in footage time there is a jump in “tablet time” from 02:31:13 to 02:31:24. This is a gap of 10 seconds.</li>
+<li><a href="https://youtu.be/nkgzLeNocb0?t=9161">From 02:32:41 to 02:32:42</a> - tablet jumps from 02:31:41 to 02:32:12. Gap of 30 seconds.</li>
+<li><a href="https://youtu.be/nkgzLeNocb0?t=10157">From 02:49:17 to 02:49:18</a> - tablet jumps from 02:48:48 to 02:48:59. Gap of 10 seconds.</li>
+<li><a href="https://youtu.be/nkgzLeNocb0?t=10169">From 02:49:29 to 02:49:30</a> - tablet jumps from 02:49:10 to 02:49:41. Gap of 30 seconds.</li>
+<li><a href="https://youtu.be/nkgzLeNocb0?t=10529">From 02:55:29 to 02:55:30</a> - tablet jumps from 02:55:41 to 02:55:52. Gap of 10 seconds.</li>
+<li><a href="https://youtu.be/nkgzLeNocb0?t=10537">From 02:55:37 to 02:55:38</a> - tablet jumps from 02:55:59 to 02:56:30. Gap of 30 seconds.</li>
+<li>The rest 3 seconds seems to be the result of my rounding and possibly some very small jumps.</li>
+</ul>
+<p>Close video timestamps and systematic length of jumps are another indicators of internet connection issues.</p>
+<p>Knowing that there is 2m3s of footage missing and that average tempo was ~156.5 bounces per minute, we can add 321 bounces to detected ones.</p>
+<p>Finally, the <strong>total number of bounces in Dan Ives world record can be estimated as 50244 bounces</strong> (error should be less than 100 bounces for sure).</p>
+<p><strong>And thus the quest ends</strong>.</p>
+</section>
+<section id="epilogue" class="level1">
+<h1>Epilogue</h1>
+<ul>
+<li>Tools such as ‘you-get’, ‘ffmpeg’, and ‘librosa’ (and Python language in general) make a task as abstract as “count number of table tennis ball bounces in 5 and a half hour long YouTube video” reasonably easy.</li>
+<li>During his 5 hours, 21 minutes, and 4 seconds of world record, Dan Ives made around 50244 bounces (with error less than 100 bounces in either side).</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+sessionInfo()
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<pre><code>## R version 4.0.0 (2020-04-24)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 18.04.4 LTS
+##
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas/libblas.so.3
+## LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so
+##
+## locale:
+##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C
+##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8
+##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8
+##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C
+## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C
+##
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base
+##
+## loaded via a namespace (and not attached):
+##  [1] compiler_4.0.0  magrittr_1.5    bookdown_0.18   tools_4.0.0
+##  [5] htmltools_0.4.0 yaml_2.2.1      Rcpp_1.0.4.6    stringi_1.4.6
+##  [9] rmarkdown_2.1   blogdown_0.18   knitr_1.28      stringr_1.4.0
+## [13] digest_0.6.25   xfun_0.13       rlang_0.4.6     evaluate_0.14</code></pre>
+</div>
+</div>
+</div>
+
+
+</section>
+
+ ]]></description>
+  <category>python</category>
+  <category>curiosity-project</category>
+  <category>questionflow</category>
+  <guid>https://echasnovski.com/blog/2020-05-11-count-bounces-in-table-tennis-world-record.html</guid>
+  <pubDate>Sun, 10 May 2020 21:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Statistical uncertainty with R and pdqr</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<!-- ```{r setup, include = FALSE} -->
+<!-- # Helper data -->
+<!-- n_aut_cars <- sum(mtcars$am == 0) -->
+<!-- n_man_cars <- sum(mtcars$am == 1) -->
+<!-- ``` -->
+<section id="prologue" class="level1">
+<h1>Prologue</h1>
+<p>I am glad to announce that my latest, long written R package <a href="https://echasnovski.github.io/pdqr/">‘pdqr’</a> is <a href="https://CRAN.R-project.org/package=pdqr">accepted to CRAN</a>. It provides tools for creating, transforming and summarizing custom random variables with distribution functions (as base R ‘p*()’, ‘d*()’, ‘q*()’, and ‘r*()’ functions). You can read a brief overview in <a href="http://www.questionflow.org/2019/08/01/announcing-pdqr/#package-overview">one of my previous posts</a>.</p>
+<p>We will need the following setup:</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(pdqr)</span>
+<span id="cb1-2"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">library</span>(magrittr)</span>
+<span id="cb1-3"></span>
+<span id="cb1-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># For the sake of reproducibility</span></span>
+<span id="cb1-5"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">20191111</span>)</span></code></pre></div>
+</section>
+<section id="statistical-uncertainty" class="level1">
+<h1>Statistical uncertainty</h1>
+<section id="general-description" class="level2">
+<h2 class="anchored" data-anchor-id="general-description">General description</h2>
+<p>Statistical estimation usually has the following setup. There is a sample (<em>observed, usually randomly chosen, set</em> of values of measurable quantities) from some general population (<em>whole set</em> of values of the same measurable quantities). <em>We need to make conclusions about the general population based on a sample</em>. This is done by computing summary values (called <strong>statistics</strong>) of a sample, and making reasonable assumptions (with process usually called <strong>inference</strong>) about how these values are close to values that <em>potentially can be computed based on whole general population</em>. Thus, summary value based on a sample (<strong>sample statistic</strong>) is an <em>estimation</em> of potential summary value based on a general population (true value).</p>
+<p>How can we make inference about quality of this estimation? This question itself describes <strong>statistical uncertainty</strong> and can be unfolded into a deep philosophical question about probability, nature, and life in general. Basically, the answer depends on assumptions about the relation between sample, general population, and statistic.</p>
+<p>For me, the most beautiful inferential approach is <strong><a href="https://en.wikipedia.org/wiki/Bootstrapping_(statistics)">bootstrap</a></strong>. It has the following key assumption: <em>process of producing samples from general population can be simulated by doing random sampling with replacement from present sample</em>. In other words, we agree (and practice often agrees with us) that random sampling with replacement from current sample (sometimes called <em>bootstrap sampling</em>) has a “close enough” behavior to the “true nature” of how initial sample was created. Numerical estimation of “how close” is also an interesting problem, but it is a more complicated topic.</p>
+</section>
+<section id="computation-with-pdqr" class="level2">
+<h2 class="anchored" data-anchor-id="computation-with-pdqr">Computation with pdqr</h2>
+<p>Natural way of computing bootstrap quantities is straightforward: produce <img src="https://latex.codecogs.com/png.latex?B"> random bootstrap samples, for each one compute value of statistic under question, and summarize <em>sample of statistic values</em> with numerical quantity (usually with some center and spread values).</p>
+<p>There are many ways of performing bootstrap in R, like <a href="https://rdrr.io/cran/boot/man/boot.html">boot::boot()</a>, <a href="https://tidymodels.github.io/rsample/reference/bootstraps.html">rsample::bootstraps()</a>, and others. In turn, ‘pdqr’ offers its own way of describing and doing bootstrap inference for one-dimensional numeric sample(s):</p>
+<ul>
+<li><strong>Create</strong> a random variable (in the form of pdqr-function with <code>new_*()</code> family) based on initial sample. This random variable already describes a general population with “bootstrap assumption”: it will produce values based on initial sample. <a href="https://echasnovski.github.io/pdqr/reference/meta.html#pdqr-type">Type</a> of this variable determines the type of bootstrap:
+<ul>
+<li>Type <code>"discrete"</code> describes ordinary bootstrap. Only values from initial sample can be produced.</li>
+<li>Type <code>"continuous"</code> describes <a href="https://en.wikipedia.org/wiki/Bootstrapping_(statistics)#Smooth_bootstrap">smooth bootstrap</a>. Initial sample is smoothed by doing kernel density estimation with <a href="https://rdrr.io/r/stats/density.html">density()</a> function and random variable produces values from distribution with that density.</li>
+</ul></li>
+<li><strong>Transform</strong> created random variable into one that produces statistic values obtained with bootstrap. Sometimes this can be done with basic mathematical operations like <code>+</code>, <code>min</code>, etc. But usually this is done with <a href="https://echasnovski.github.io/pdqr/reference/form_estimate.html">form_estimate()</a> function: it creates many (10000 by default) bootstrap samples, for each computes statistic value, and creates its own random variable in the form of pdqr-function (<a href="https://echasnovski.github.io/pdqr/reference/meta.html#pdqr-class">class</a> and type are preserved from supplied random variable, but this can be adjusted). It needs at least three arguments:
+<ul>
+<li><code>f</code>: pdqr-function representing random variable. In described setup it is created as a result of “Create” step.</li>
+<li><code>stat</code>: statistic function that accepts numeric vector of size <code>sample_size</code> and returns single numeric or logical output.</li>
+<li><code>sample_size</code>: Size of a sample that each bootstrap draw should produce. In described setup it <em>should be equal</em> to number of elements in initial sample.</li>
+</ul></li>
+<li><strong>Summarize</strong> distribution of statistic. Usually this is point measure of center or spread, or interval.</li>
+</ul>
+<section id="example-1-single-numerical-estimate" class="level3">
+<h3 class="anchored" data-anchor-id="example-1-single-numerical-estimate">Example 1: single numerical estimate</h3>
+<p>Mean value of ‘mpg’ variable in <code>mtcars</code> dataset is 20.090625. However, having in mind statistical uncertainty, we can ask how precise is this estimation? This can, and should, be reformulated in the following question: <strong>if we repeat sampling sets of 32 cars from general population of all cars, how close their ‘mpg’ sample means will be to each other?</strong> This can be answered by computing bootstrap distribution of sample means (pipe <a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a> function from ‘magrittr’ package is used to simplify notation):</p>
+<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Using ordinary bootstrap</span></span>
+<span id="cb2-2">d_mpg_dis_mean <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>mpg <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb2-3">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"discrete"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb2-4">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_estimate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">nrow</span>(mtcars))</span>
+<span id="cb2-5"></span>
+<span id="cb2-6">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Spread of this bootstrap distribution describes the precision of estimation:</span></span>
+<span id="cb2-7">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># bigger values indicate lower precision</span></span>
+<span id="cb2-8"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summ_sd</span>(d_mpg_dis_mean)</span>
+<span id="cb2-9"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 1.04067</span></span>
+<span id="cb2-10"></span>
+<span id="cb2-11">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># This discrete distribution has the following d-function</span></span>
+<span id="cb2-12"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">plot</span>(</span>
+<span id="cb2-13">  d_mpg_dis_mean,</span>
+<span id="cb2-14">  <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Ordinary bootstrap distribution of 'mpg' sample mean"</span></span>
+<span id="cb2-15">)</span></code></pre></div>
+<p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_discrete-1.png" class="img-fluid"></p>
+<p>If modeling assumption about continuous nature of ‘mpg’ variable is reasonable (which it seems so), you can use “smooth bootstrap” by changing type of initial pdqr-function:</p>
+<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Using smooth bootstrap with `type = "continuous"`</span></span>
+<span id="cb3-2">d_mpg_con_mean <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>mpg <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb3-3">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"continuous"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb3-4">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_estimate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">nrow</span>(mtcars))</span>
+<span id="cb3-5"></span>
+<span id="cb3-6">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Spread is higher in this case because kernel density estimation with</span></span>
+<span id="cb3-7">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># `density()` function extends support during creation of pdqr-function on the</span></span>
+<span id="cb3-8">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># bootstrap step</span></span>
+<span id="cb3-9"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summ_sd</span>(d_mpg_con_mean)</span>
+<span id="cb3-10"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 1.153957</span></span>
+<span id="cb3-11"></span>
+<span id="cb3-12"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">plot</span>(</span>
+<span id="cb3-13">  d_mpg_con_mean,</span>
+<span id="cb3-14">  <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Smooth bootstrap distribution of 'mpg' sample mean"</span></span>
+<span id="cb3-15">)</span></code></pre></div>
+<p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_continuous-1.png" class="img-fluid"></p>
+<p>One can also do ordinary bootstrap but represent bootstrap distribution of sample mean with continuous random variable:</p>
+<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Using ordinary bootstrap, but treating sample mean as continuous</span></span>
+<span id="cb4-2">d_mpg_con_mean_2 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>mpg <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb4-3">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"discrete"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb4-4">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_estimate</span>(</span>
+<span id="cb4-5">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">nrow</span>(mtcars),</span>
+<span id="cb4-6">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Create continuous pdqr-function from bootstrap sample means</span></span>
+<span id="cb4-7">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">args_new =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">list</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"continuous"</span>)</span>
+<span id="cb4-8">  )</span>
+<span id="cb4-9"></span>
+<span id="cb4-10"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summ_sd</span>(d_mpg_con_mean_2)</span>
+<span id="cb4-11"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 1.063524</span></span>
+<span id="cb4-12"></span>
+<span id="cb4-13"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">plot</span>(</span>
+<span id="cb4-14">  d_mpg_con_mean_2,</span>
+<span id="cb4-15">  <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Ordinary bootstrap distribution of 'mpg' continuous sample mean"</span></span>
+<span id="cb4-16">)</span></code></pre></div>
+<p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_both-1.png" class="img-fluid"></p>
+<p>In this case, sample mean has standard deviation from 1.04067 to 1.1539572 (depends on assumptions about data generating process).</p>
+</section>
+<section id="example-2-single-logical-estimate" class="level3">
+<h3 class="anchored" data-anchor-id="example-2-single-logical-estimate">Example 2: single logical estimate</h3>
+<p>Share of 4-cylinder cars in <code>mtcars</code> is equal to 0.34375. However, it might happen that we don’t care about actual value, but only if it is bigger 0.3 or not. In present data it is bigger, but how sure we can be about that? In other words: <strong>if we repeat sampling sets of 32 cars from general population of all cars, which part of it will have share of 4-cylinder cars bigger than 0.3?</strong>. Here is the way of computing that with ‘pdqr’:</p>
+<div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># If statistic returns logical value (indicating presence of some feature in</span></span>
+<span id="cb5-2"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># sample), output estimate pdqr-function is "boolean": "discrete" type function</span></span>
+<span id="cb5-3"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># with elements being exactly 0 (indicating `FALSE`) and 1 (indicating `TRUE`).</span></span>
+<span id="cb5-4">d_cyl_lgl <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>cyl <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb5-5">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"discrete"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb5-6">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_estimate</span>(</span>
+<span id="cb5-7">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">stat =</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(x) {<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">mean</span>(x <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">4</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0.3</span>},</span>
+<span id="cb5-8">    <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">nrow</span>(mtcars)</span>
+<span id="cb5-9">  )</span>
+<span id="cb5-10"></span>
+<span id="cb5-11">d_cyl_lgl</span>
+<span id="cb5-12"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## Probability mass function of discrete type</span></span>
+<span id="cb5-13"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## Support: [0, 1] (2 elements, probability of 1: 0.7113)</span></span>
+<span id="cb5-14"></span>
+<span id="cb5-15">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># To extract certain probability from boolean pdqr-function, use</span></span>
+<span id="cb5-16">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># `summ_prob_*()` functions</span></span>
+<span id="cb5-17"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summ_prob_true</span>(d_cyl_lgl)</span>
+<span id="cb5-18"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 0.7113</span></span>
+<span id="cb5-19"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summ_prob_false</span>(d_cyl_lgl)</span>
+<span id="cb5-20"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 0.2887</span></span></code></pre></div>
+<p>In this case, estimated probability that share of 4-cylinder cars in general population is more than 0.3 is 0.7113.</p>
+</section>
+<section id="example-3-comparison-of-estimates" class="level3">
+<h3 class="anchored" data-anchor-id="example-3-comparison-of-estimates">Example 3: comparison of estimates</h3>
+<p>In <code>mtcars</code> there are 19 cars with automatic transmission (‘am’ variable is 0) and 13 with manual (‘am’ variable is 1). We might be concerned with the following question: <strong>are cars with automatic transmission heavier than cars with manual transmission?</strong> This is an example of question where reformulating is very crucial, because it leads to completely different methodologies. Basically, it is all about dealing with statistical uncertainty and how to measure that one numerical set is bigger than the other.</p>
+<p>First, rather verbose, way of expanding this question is this one: <strong>if we randomly choose a car with automatic transmission (uniformly on set of all cars with automatic transmission) and a car with manual (uniformly on set of all cars with manual transmission), what is the probability that weight of the first one is bigger than the second one?</strong>. With ‘pdqr’ this can be computed straightforwardly by comparing two random variables (which is implemented exactly like the question above; read more <a href="https://echasnovski.github.io/pdqr/reference/methods-group-generic.html#ops">here</a>):</p>
+<div class="sourceCode" id="cb6" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Seems reasonable to treat weight as continuous random variable. Note that this</span></span>
+<span id="cb6-2"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># means use of kernel density estimation, which can lead to random variable that</span></span>
+<span id="cb6-3"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># returns negative values. As weight can be only positive, it is a good idea to</span></span>
+<span id="cb6-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># ensure that. Package 'pdqr' has `form_resupport()` function for that.</span></span>
+<span id="cb6-5">d_wt_am0 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>wt[mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>am <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>] <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span></span>
+<span id="cb6-6">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"continuous"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb6-7">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Ensure that returned values are only positive</span></span>
+<span id="cb6-8">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_resupport</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>))</span>
+<span id="cb6-9">d_wt_am1 <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>wt[mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>am <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>] <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span></span>
+<span id="cb6-10">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"continuous"</span>) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb6-11">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_resupport</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>))</span>
+<span id="cb6-12"></span>
+<span id="cb6-13"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Comparing two pdqr-functions with `&gt;=` results into boolean pdqr-function</span></span>
+<span id="cb6-14"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summ_prob_true</span>(d_wt_am0 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;=</span> d_wt_am1)</span>
+<span id="cb6-15"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 0.9209063</span></span></code></pre></div>
+<p>So in this case the answer is that probability of “automatic” cars being heavier than “manual” ones is around 0.921.</p>
+<p>Second way of understanding question about comparing is the following: <strong>is average weight of “automatic” cars bigger than of “manual”?</strong>. This type of questions are more widespread in statistical practice. Having to deal with statistical uncertainty, this should be reformulated: <strong>if we repeat sampling (in parallel pairs) sets of 19 “automatic” cars and of 13 “manual” cars, which part of the set pairs will have mean weight of “automatic” cars bigger?</strong> This question implies creating bootstrap distribution of sample means for “automatic” and “manual” cars with the following comparing:</p>
+<div class="sourceCode" id="cb7" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1">d_wt_am0_mean <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> d_wt_am0 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb7-2">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_estimate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>am <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb7-3">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Ensure "positiveness" of random variable</span></span>
+<span id="cb7-4">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_resupport</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>))</span>
+<span id="cb7-5">d_wt_am1_mean <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> d_wt_am1 <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb7-6">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_estimate</span>(<span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">sum</span>(mtcars<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">$</span>am <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)) <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">%&gt;%</span> </span>
+<span id="cb7-7">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">form_resupport</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">NA</span>))</span>
+<span id="cb7-8"></span>
+<span id="cb7-9"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Comparing two random variables representing sample means</span></span>
+<span id="cb7-10"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">summ_prob_true</span>(d_wt_am0_mean <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&gt;=</span> d_wt_am1_mean)</span>
+<span id="cb7-11"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 1</span></span></code></pre></div>
+<p>So in this case the answer is that probability of “automatic” cars being heavier than “manual” ones is 1.</p>
+<p>Computed results can have decisively different outcomes. If researcher sets a standard 0.95 rule, first variant would imply that conclusion ‘“automatic” cars are heavier than “manual”’ isn’t significant, while the second would imply otherwise.</p>
+</section>
+</section>
+</section>
+<section id="epilogue" class="level1">
+<h1>Epilogue</h1>
+<ul>
+<li>Basic knowledge about statistical uncertainty is crucial to understand the process of statistical inference.</li>
+<li>One of the most popular methodologies for doing statistical inference is bootstrap. There are at least two kinds of it: ordinary and smooth.</li>
+<li>Package ‘pdqr’ offers extensive functionality for describing and estimating statistical uncertainty. Core functions here are <a href="https://echasnovski.github.io/pdqr/reference/new-pdqr.html"><code>new_*()</code> family</a>, <a href="https://echasnovski.github.io/pdqr/reference/form_estimate.html"><code>form_estimate()</code></a>, and <a href="https://echasnovski.github.io/pdqr/reference/methods-group-generic.html#ops">comparison operators</a>.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+sessionInfo()
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<pre><code>## R version 3.6.1 (2019-07-05)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 18.04.3 LTS
+## 
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas/libblas.so.3
+## LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so
+## 
+## locale:
+##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8    
+##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8   
+##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] magrittr_1.5 pdqr_0.2.0  
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_1.0.2      bookdown_0.13   crayon_1.3.4    digest_0.6.21  
+##  [5] evaluate_0.14   blogdown_0.15   pillar_1.4.2    rlang_0.4.0    
+##  [9] stringi_1.4.3   rmarkdown_1.15  tools_3.6.1     stringr_1.4.0  
+## [13] xfun_0.9        yaml_2.2.0      compiler_3.6.1  htmltools_0.3.6
+## [17] knitr_1.25</code></pre>
+</div>
+</div>
+</div>
+
+
+</section>
+
+ ]]></description>
+  <category>rstats</category>
+  <category>pdqr</category>
+  <category>questionflow</category>
+  <guid>https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr.html</guid>
+  <pubDate>Sun, 10 Nov 2019 22:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>Local randomness in R</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2019-08-13-local-randomness-in-r.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<section id="prologue" class="level1">
+<h1>Prologue</h1>
+<p>Let’s say we have a deterministic (non-random) problem for which one of the solutions involves randomness. One very common example of such problem is a function minimization on certain interval: it can be solved non-randomly (like in most methods of <a href="https://rdrr.io/r/stats/optim.html">optim()</a>), or randomly (the simplest approach being to generate random set of points on interval and to choose the one with the lowest function value).</p>
+<p>What is a “clean” way of writing a function to solve the problem? The issue with direct usage of randomness inside a function is that it affects the state of outer random number generation:</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Demo problem solving function</span></span>
+<span id="cb1-2">minimize_f <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(f, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">from =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">to =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">n =</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e3</span>) {</span>
+<span id="cb1-3">  points <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">runif</span>(n, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">min =</span> from, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">max =</span> to)</span>
+<span id="cb1-4"></span>
+<span id="cb1-5">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">invisible</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">min</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">f</span>(points)))</span>
+<span id="cb1-6">}</span>
+<span id="cb1-7"></span>
+<span id="cb1-8"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Reference random number output</span></span>
+<span id="cb1-9"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">101</span>)</span>
+<span id="cb1-10"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">runif</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb1-11"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 0.3721984</span></span>
+<span id="cb1-12"></span>
+<span id="cb1-13"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Test random number output is different from reference one. But we want it to</span></span>
+<span id="cb1-14"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># be the same.</span></span>
+<span id="cb1-15"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">101</span>)</span>
+<span id="cb1-16"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">minimize_f</span>(sin)</span>
+<span id="cb1-17"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">runif</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb1-18"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 0.1016229</span></span></code></pre></div>
+<p>So how can we get “more clean” implementation which does not affect outer state? This short post is inspired by the following sources: <a href="https://stackoverflow.com/questions/23090958/isolate-randomness-of-a-local-environment-from-the-global-r-process">this StackOverflow question</a> by Yihui Xie and <a href="http://www.cookbook-r.com/Numbers/Saving_the_state_of_the_random_number_generator/">this cookbook advice</a>.</p>
+</section>
+<section id="local-randomness" class="level1">
+<h1>Local randomness</h1>
+<p>The state of random number generation is stored in <a href="https://rdrr.io/r/base/Random.html">.Random.seed</a> variable, which is “an integer vector” and it “can be saved and restored, but should not be altered by the user”. This gives us a very big hint about how to implement “local randomness”: capture state at the start of the function, make necessary computations, and restore state at the end. Bad news is, this also means that we enter here the dark realm of variables and their environments.</p>
+<p><strong>How to “save state”?</strong> In help page there is a note: “The object <code>.Random.seed</code> is only looked for in the user’s workspace”. Here “user’s workspace” seems to mean global environment, which should be addressed with variable <code>.GlobalEnv</code>. So, to “save state” we need to get a value of <code>.Random.seed</code> variable inside global environment. This is a job for <a href="https://rdrr.io/r/base/exists.html">get0()</a>:</p>
+<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1">get_rand_state <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>() {</span>
+<span id="cb2-2">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Using `get0()` here to have `NULL` output in case object doesn't exist.</span></span>
+<span id="cb2-3">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Also using `inherits = FALSE` to get value exactly from global environment</span></span>
+<span id="cb2-4">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># and not from one of its parent.</span></span>
+<span id="cb2-5">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">get0</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">".Random.seed"</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">envir =</span> .GlobalEnv, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">inherits =</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>)</span>
+<span id="cb2-6">}</span></code></pre></div>
+<p><strong>How to “restore state”?</strong> We need to assign certain value (of previously saved state) to a <code>.Random.seed</code> variable in global environment. This is a job for <a href="https://rdrr.io/r/base/assign.html">assign()</a>:</p>
+<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1">set_rand_state <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(state) {</span>
+<span id="cb3-2">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Assigning `NULL` state might lead to unwanted consequences</span></span>
+<span id="cb3-3">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> (<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">!</span><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">is.null</span>(state)) {</span>
+<span id="cb3-4">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">assign</span>(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">".Random.seed"</span>, state, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">envir =</span> .GlobalEnv, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">inherits =</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">FALSE</span>)</span>
+<span id="cb3-5">  }</span>
+<span id="cb3-6">}</span></code></pre></div>
+<p><strong>How to make “local randomness”?</strong> We can now save and restore random state. The final peace of a puzzle is to make restoration at the end of computations inside a function. This is a job for <a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a>: call for <code>set_rand_state()</code> should be wrapped in <code>on.exit()</code> to perform restoration exactly at the moment when function ends all operations it is supposed to do.</p>
+<p><strong>Notes</strong> about positioning of calls inside a function:</p>
+<ul>
+<li>Call to <code>get_rand_state()</code> should be done right at the beginning of a function body to capture the state just before the function was called.</li>
+<li>Simply positioning call to <code>set_rand_state()</code> inside function body right before returning result might be not enough, because previous lines of code can terminate earlier (for example, with error). Function <code>on.exit()</code> guarantees execution of expression.</li>
+</ul>
+<p>Giving all that, the “clean” way of implementing “local randomness” is the following:</p>
+<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1">my_f <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>() {</span>
+<span id="cb4-2">  old_state <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">get_rand_state</span>()</span>
+<span id="cb4-3">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">on.exit</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">set_rand_state</span>(old_state))</span>
+<span id="cb4-4"></span>
+<span id="cb4-5">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># The rest of the code</span></span>
+<span id="cb4-6">}</span></code></pre></div>
+<p>Let’s check this solution on practice:</p>
+<div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1">minimize_f_clean <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span>(f, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">from =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">to =</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">n =</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e3</span>) {</span>
+<span id="cb5-2">  old_state <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">get_rand_state</span>()</span>
+<span id="cb5-3">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">on.exit</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">set_rand_state</span>(old_state))</span>
+<span id="cb5-4"></span>
+<span id="cb5-5">  points <span class="ot" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">runif</span>(n, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">min =</span> from, <span class="at" style="color: #657422;
+background-color: null;
+font-style: inherit;">max =</span> to)</span>
+<span id="cb5-6"></span>
+<span id="cb5-7">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">invisible</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">min</span>(<span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">f</span>(points)))</span>
+<span id="cb5-8">}</span>
+<span id="cb5-9"></span>
+<span id="cb5-10"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Reference random number output (repeated for reading convenience)</span></span>
+<span id="cb5-11"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">101</span>)</span>
+<span id="cb5-12"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">runif</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb5-13"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 0.3721984</span></span>
+<span id="cb5-14"></span>
+<span id="cb5-15"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># Output of `runif(1)` is the same as reference one, which was the goal</span></span>
+<span id="cb5-16"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">101</span>)</span>
+<span id="cb5-17"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">minimize_f_clean</span>(sin)</span>
+<span id="cb5-18"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">runif</span>(<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>)</span>
+<span id="cb5-19"><span class="do" style="color: #5E5E5E;
+background-color: null;
+font-style: italic;">## [1] 0.3721984</span></span></code></pre></div>
+</section>
+<section id="epilogue" class="level1">
+<h1>Epilogue</h1>
+<ul>
+<li>Creating a function with “local randomness” although requires some dark R magic (with <code>get0()</code>, <code>assign()</code>, and <code>on.exit()</code> usage), is pretty straightforward.</li>
+<li>If you have some non-trivial R problem, there is a good chance that Yihui Xie has already posted a question on StackOverflow about it.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+sessionInfo()
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<pre><code>## R version 3.6.1 (2019-07-05)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 18.04.3 LTS
+##
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas/libblas.so.3
+## LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so
+##
+## locale:
+##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C
+##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8
+##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8
+##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C
+## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C
+##
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base
+##
+## loaded via a namespace (and not attached):
+##  [1] compiler_3.6.1  magrittr_1.5    bookdown_0.11   tools_3.6.1
+##  [5] htmltools_0.3.6 yaml_2.2.0      Rcpp_1.0.1      stringi_1.4.3
+##  [9] rmarkdown_1.13  blogdown_0.12   knitr_1.23      stringr_1.4.0
+## [13] digest_0.6.19   xfun_0.7        evaluate_0.14</code></pre>
+</div>
+</div>
+</div>
+
+
+</section>
+
+ ]]></description>
+  <category>rstats</category>
+  <category>questionflow</category>
+  <guid>https://echasnovski.com/blog/2019-08-13-local-randomness-in-r.html</guid>
+  <pubDate>Mon, 12 Aug 2019 21:00:00 GMT</pubDate>
+</item>
+</channel>
+</rss>

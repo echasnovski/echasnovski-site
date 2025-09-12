@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.33">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Evgeni Chasnovski">
+<meta name="dcterms.date" content="2019-08-01">
+<meta name="description" content="Announcing ‘pdqr’: package for working with custom distribution functions">
+
+<title>Announcing pdqr – Evgeni Chasnovski</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../assets/EC2_256x256.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8a39431a021621ceac456dfcd09fb292.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-d4933f3589c24838ee12c9f858e4b426.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-aba4b5dbf84275d834ee1f7188d18b2d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-d7bdbb233ae4c8ace8d947e75cddd8fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<meta property="og:title" content="Announcing pdqr – Evgeni Chasnovski">
+<meta property="og:description" content="Announcing ‘pdqr’: package for working with custom distribution functions">
+<meta property="og:image" content="https://echasnovski.com/blog/2019-08-01-announcing-pdqr/new_discrete-1.png">
+<meta property="og:site_name" content="Evgeni Chasnovski">
+<meta property="og:locale" content="en_US">
+<meta property="og:image:height" content="1056">
+<meta property="og:image:width" content="1728">
+<meta name="twitter:title" content="Announcing pdqr – Evgeni Chasnovski">
+<meta name="twitter:description" content="Announcing ‘pdqr’: package for working with custom distribution functions">
+<meta name="twitter:image" content="https://echasnovski.com/blog/assets/EC2.png">
+<meta name="twitter:creator" content="@echasnovski">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Evgeni Chasnovski</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../projects.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../blog.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../talks.html"> 
+<span class="menu-text">Talks</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/echasnovski"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/echasnovski.bsky.social"> <i class="bi bi-bluesky" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.youtube.com/@echasnovski"> <i class="bi bi-youtube" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../blog.xml"> <i class="bi bi-rss-fill" role="img" aria-label="RSS">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#prologue" id="toc-prologue" class="nav-link active" data-scroll-target="#prologue">Prologue</a></li>
+  <li><a href="#package-overview" id="toc-package-overview" class="nav-link" data-scroll-target="#package-overview">Package overview</a></li>
+  <li><a href="#custom-distributions" id="toc-custom-distributions" class="nav-link" data-scroll-target="#custom-distributions">Custom distributions</a>
+  <ul class="collapse">
+  <li><a href="#estimate-distribution-from-sample" id="toc-estimate-distribution-from-sample" class="nav-link" data-scroll-target="#estimate-distribution-from-sample">Estimate distribution from sample</a></li>
+  <li><a href="#estimate-distribution-of-positive-values" id="toc-estimate-distribution-of-positive-values" class="nav-link" data-scroll-target="#estimate-distribution-of-positive-values">Estimate distribution of positive values</a></li>
+  <li><a href="#generate-sample-similar-to-input" id="toc-generate-sample-similar-to-input" class="nav-link" data-scroll-target="#generate-sample-similar-to-input">Generate sample similar to input</a></li>
+  </ul></li>
+  <li><a href="#common-distributions" id="toc-common-distributions" class="nav-link" data-scroll-target="#common-distributions">Common distributions</a>
+  <ul class="collapse">
+  <li><a href="#compute-sum-of-random-variables" id="toc-compute-sum-of-random-variables" class="nav-link" data-scroll-target="#compute-sum-of-random-variables">Compute sum of random variables</a></li>
+  <li><a href="#compute-mixture" id="toc-compute-mixture" class="nav-link" data-scroll-target="#compute-mixture">Compute mixture</a></li>
+  </ul></li>
+  <li><a href="#summaries" id="toc-summaries" class="nav-link" data-scroll-target="#summaries">Summaries</a>
+  <ul class="collapse">
+  <li><a href="#compute-winsorized-sample-mean" id="toc-compute-winsorized-sample-mean" class="nav-link" data-scroll-target="#compute-winsorized-sample-mean">Compute winsorized sample mean</a></li>
+  <li><a href="#compute-mode" id="toc-compute-mode" class="nav-link" data-scroll-target="#compute-mode">Compute mode</a></li>
+  <li><a href="#compute-highest-density-region" id="toc-compute-highest-density-region" class="nav-link" data-scroll-target="#compute-highest-density-region">Compute highest density region</a></li>
+  <li><a href="#compute-separation-threshold" id="toc-compute-separation-threshold" class="nav-link" data-scroll-target="#compute-separation-threshold">Compute separation threshold</a></li>
+  <li><a href="#compute-probability-of-being-greater" id="toc-compute-probability-of-being-greater" class="nav-link" data-scroll-target="#compute-probability-of-being-greater">Compute probability of being greater</a></li>
+  <li><a href="#compute-distance-between-distributions" id="toc-compute-distance-between-distributions" class="nav-link" data-scroll-target="#compute-distance-between-distributions">Compute distance between distributions</a></li>
+  </ul></li>
+  <li><a href="#epilogue" id="toc-epilogue" class="nav-link" data-scroll-target="#epilogue">Epilogue</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Announcing pdqr</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">rstats</div>
+    <div class="quarto-category">pdqr</div>
+    <div class="quarto-category">questionflow</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Announcing ‘pdqr’: package for working with custom distribution functions
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Evgeni Chasnovski </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 1, 2019</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="prologue" class="level1">
+<h1>Prologue</h1>
+<p>I have been working on <a href="https://echasnovski.github.io/pdqr">‘pdqr’</a> package for quite some time now. Initially it was intended only for creating custom distribution functions (analogues of base “p”, “d”, “q”, and “r” functions) from numeric sample. However, after couple of breakthrough ideas, it also became a set of tools for transforming and summarizing distributions.</p>
+<p>Now I would like to <strong>make it public with hope to get any feedback about the package</strong>: its general design, function and argument names, numerical issues, etc. Please, feel free to <a href="https://twitter.com/echasnovski">tweet</a> your thoughts (preferably with <em>#pdqr</em> hashtag). If you have any suggestions or found a bug, don’t hesitate to <a href="https://github.com/echasnovski/pdqr/issues">create an issue</a>.</p>
+<p>This announcement post will be in form of a short cookbook for most common distribution problems, preceding with a little intro to package core structure. For more details go to these resources:</p>
+<ul>
+<li>Package <a href="https://echasnovski.github.io/pdqr/index.html">README</a> contains more thorough overview of package structure.</li>
+<li><a href="https://echasnovski.github.io/pdqr/articles/">Vignettes</a> represent deeper dive into package’s main families of functions.</li>
+</ul>
+<p>We’ll need the following setup:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Currently can only be installed from Github</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pdqr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magrittr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Make reproducible randomness</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">101</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="package-overview" class="level1">
+<h1>Package overview</h1>
+<p>The main structure unit of the package is <strong>pdqr-function</strong>: an actual function which represents distribution with finite support and finite values of probability/density. Distributions with infinite support and/or density are approximated.</p>
+<p>Two types of distributions are supported, which will be called <a href="https://echasnovski.github.io/pdqr/reference/meta.html#pdqr-type"><strong>pdqr types</strong></a>:</p>
+<ul>
+<li><strong>Type “discrete”</strong>: random variable has <em>finite number of output values</em>. Pdqr-function is explicitly defined by the collection of its values with their corresponding probabilities. Usually used when underlying distribution is discrete (even if in theory there are infinite number of output values).</li>
+<li><strong>Type “continuous”</strong>: random variable has <em>infinite number of output values in the form of continuous random variable</em>. It is explicitly defined by piecewise-linear density function with finite support and values. Usually used when underlying distribution is continuous (even if in theory it has infinite support and/or density values).</li>
+</ul>
+<p>Pdqr-function can represent distribution in 4 different ways which resemble base R design. These ways are determined by its <a href="https://echasnovski.github.io/pdqr/reference/meta.html#pdqr-class"><strong>pdqr class</strong></a>:</p>
+<ul>
+<li><em>P-function</em> (pdqr-functions of class “p”) returns value of cumulative distribution function (probability of random variable being not more than certain value) at points <code>q</code> (its numeric vector input).</li>
+<li><em>D-function</em> returns value of probability mass or density function (depending on pdqr type) at points <code>x</code> (its numeric vector input).</li>
+<li><em>Q-function</em> returns value of quantile function at points <code>p</code> (its numeric vector input).</li>
+<li><em>R-function</em> generates random sample of size <code>n</code> (its single number input) from distribution.</li>
+</ul>
+<p>Package ‘pdqr’ has the following main families of functions:</p>
+<ul>
+<li><a href="https://echasnovski.github.io/pdqr/reference/new-pdqr.html">new_*()</a> functions for creating pdqr-functions of specific class.</li>
+<li><a href="https://echasnovski.github.io/pdqr/reference/as-pdqr.html">as_*()</a> functions for changing class of pdqr-functions.</li>
+<li><a href="https://echasnovski.github.io/pdqr/reference/index.html#section-transform">form_*()</a> functions for transforming pdqr-functions and underlying distributions. Transformations also can be done with common base mathematical operations, like <code>+</code>, <code>*</code>, <code>exp</code>, <code>&gt;</code> etc.</li>
+<li><a href="https://echasnovski.github.io/pdqr/reference/index.html#section-summarize">summ_*()</a> functions for summarizing distributions.
+<ul>
+<li><a href="https://echasnovski.github.io/pdqr/reference/index.html#section-regions">region_*()</a> functions to work with special type of summary called “region”.</li>
+</ul></li>
+</ul>
+<p><strong>Note</strong> that implemented approaches often emphasize approximate and numerical solutions:</p>
+<ul>
+<li>All distributions assume <strong>finite support</strong> (output values are bounded from below and above) and <strong>finite values of density function</strong> (density function in case of “continuous” type can’t go to infinity).</li>
+<li>Some methods implemented with <strong>simulation techniques</strong>.</li>
+</ul>
+</section>
+<section id="custom-distributions" class="level1">
+<h1>Custom distributions</h1>
+<section id="estimate-distribution-from-sample" class="level2">
+<h2 class="anchored" data-anchor-id="estimate-distribution-from-sample">Estimate distribution from sample</h2>
+<p><strong>Problem</strong> Create a pdqr-function representing an estimation of sample’s distribution.</p>
+<p><strong>Solution</strong> The most important decision here is about distribution’s type: discrete or continuous. In first case, any <code>new_*()</code> function will use unique values of sample as distribution’s outcomes, and probabilities will be estimated by tabulating and normalizing:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Any pdqr class can be used to represent distribution</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>mpg_dis <span class="ot">&lt;-</span> <span class="fu">new_d</span>(mtcars<span class="sc">$</span>mpg, <span class="at">type =</span> <span class="st">"discrete"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Pdqr-functions have `print()` methods with concise summary</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>mpg_dis</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Probability mass function of discrete type</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="do">## Support: [10.4, 33.9] (25 elements)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># To visually inspect pdqr-function, use `plot()`</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mpg_dis)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>For continuous type, <a href="https://rdrr.io/r/stats/density.html">density()</a> function will be used to estimate distribution’s density (if sample has 2 or more elements). <strong>Note</strong> that arguments of <code>density()</code> will affect greatly the output distribution (as always with kernel density estimation).</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>mpg_con <span class="ot">&lt;-</span> <span class="fu">new_d</span>(mtcars<span class="sc">$</span>mpg, <span class="at">type =</span> <span class="st">"continuous"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>mpg_con</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Density function of continuous type</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Support: ~[2.96996, 41.33004] (511 intervals)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mpg_con)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-01-announcing-pdqr/new_discrete-1.png" class="img-fluid"></p>
+<p>These newly created functions can be used to obtain probability or density of any point:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Probabilities</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mpg_dis</span>(<span class="dv">20</span><span class="sc">:</span><span class="dv">25</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 0.0000 0.0625 0.0000 0.0000 0.0000 0.0000</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Density values</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">mpg_con</span>(<span class="dv">20</span><span class="sc">:</span><span class="dv">25</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 0.06469730 0.06040205 0.05394401 0.04591992 0.03759639 0.03029240</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-01-announcing-pdqr/new_continuous-1.png" class="img-fluid"></p>
+</section>
+<section id="estimate-distribution-of-positive-values" class="level2">
+<h2 class="anchored" data-anchor-id="estimate-distribution-of-positive-values">Estimate distribution of positive values</h2>
+<p><strong>Problem</strong> Create a pdqr-function representing an estimation of sample’s distribution with assumption that it can produce only positive values.</p>
+<p><strong>Solution</strong> This common task is done in two steps:</p>
+<ul>
+<li>Estimate sample distribution, as in previous step. It can result into unwanted distribution properties, like producing negative values. This is a known issue of boundary problem in kernel density estimation.</li>
+<li>Modify distribution to have only positive support with <a href="https://echasnovski.github.io/pdqr/reference/form_resupport.html">form_resupport()</a>. It has several methods with default one (<code>"reflect"</code>) recommended to deal with boundary correction. It “reflects” density tails “inside” of a desired support interval. Its output for bounded distributions is usually a closer estimation of “true distribution”.</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Exponential distribution can have only positive values</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>exp_sample <span class="ot">&lt;-</span> <span class="fu">rexp</span>(<span class="dv">100</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>d_exp <span class="ot">&lt;-</span> <span class="fu">new_d</span>(exp_sample, <span class="at">type =</span> <span class="st">"continuous"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Use `NA` to indicate that certain edge of support should remain unchanged</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>d_exp_corr <span class="ot">&lt;-</span> <span class="fu">form_resupport</span>(d_exp, <span class="at">support =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="cn">NA</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Original kernel density estimation</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  d_exp, <span class="at">main =</span> <span class="st">"Different estimations of exponential distribution"</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Corrected density</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(d_exp_corr, <span class="at">col =</span> <span class="st">"blue"</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Reference distribution</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">6</span>, <span class="at">by =</span> <span class="fl">0.01</span>), <span class="fu">dexp</span>(<span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">6</span>, <span class="at">by =</span> <span class="fl">0.01</span>)), <span class="at">col =</span> <span class="st">"red"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-01-announcing-pdqr/estimate-positive-1.png" class="img-fluid"></p>
+</section>
+<section id="generate-sample-similar-to-input" class="level2">
+<h2 class="anchored" data-anchor-id="generate-sample-similar-to-input">Generate sample similar to input</h2>
+<p><strong>Problem</strong> Generate sample of certain size from distribution that is an estimate to original sample’s distribution.</p>
+<p><strong>Solution</strong> R-functions are used for generating samples. There are two ways of creating them:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create new r-function from sample</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>r_mpg_dis <span class="ot">&lt;-</span> <span class="fu">new_r</span>(mtcars<span class="sc">$</span>mpg, <span class="at">type =</span> <span class="st">"discrete"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">r_mpg_dis</span>(<span class="at">n =</span> <span class="dv">10</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="do">##  [1] 15.2 15.2 10.4 16.4 15.5 30.4 18.1 21.5 30.4 15.2</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert existing pdqr-function to be r-function</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>r_mpg_con <span class="ot">&lt;-</span> <span class="fu">as_r</span>(mpg_con)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">r_mpg_con</span>(<span class="at">n =</span> <span class="dv">10</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="do">##  [1] 18.68990 20.91834 20.22863 15.94346 15.12797 35.04418 12.48795</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="do">##  [8] 28.79146 15.24957 24.35035</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="common-distributions" class="level1">
+<h1>Common distributions</h1>
+<section id="compute-sum-of-random-variables" class="level2">
+<h2 class="anchored" data-anchor-id="compute-sum-of-random-variables">Compute sum of random variables</h2>
+<p><strong>Problem</strong> Compute pdqr-function representing sum of two independent random variables (for example, both being standard normal distributions).</p>
+<p><strong>Solution</strong> First, you need to create pdqr-functions for random variables. Here standard normal distribution will be used. This can be done by converting base R distribution functions to be pdqr-functions. After that, using <code>+</code> gives distribution of sum of two random variables:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>(d_norm <span class="ot">&lt;-</span> <span class="fu">as_d</span>(dnorm))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="do">## Density function of continuous type</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Support: ~[-4.75342, 4.75342] (10000 intervals)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>(d_norm_sum <span class="ot">&lt;-</span> d_norm <span class="sc">+</span> d_norm)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="do">## Density function of continuous type</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Support: ~[-5.69484, 6.37105] (511 intervals)</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(d_norm_sum, <span class="at">main =</span> <span class="st">"Sum of two standard normal distributions"</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># "True" sum of two independent normal random variables</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">as_d</span>(dnorm, <span class="at">sd =</span> <span class="fu">sqrt</span>(<span class="dv">2</span>)), <span class="at">col =</span> <span class="st">"red"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-01-announcing-pdqr/sum-norm-1.png" class="img-fluid"></p>
+<p>Here you can see two very important features of ‘pdqr’:</p>
+<ul>
+<li>Normal distribution is approximated with piecewise-linear density on finite support (10000 intervals are used by default).</li>
+<li>Distribution of sum of random variables is computed with simulation: large samples are drawn from both distributions, sums of their values are computed (resulting in a sample from sum of random variables), and target distribution is created using one of <code>new_*()</code> functions.</li>
+</ul>
+</section>
+<section id="compute-mixture" class="level2">
+<h2 class="anchored" data-anchor-id="compute-mixture">Compute mixture</h2>
+<p><strong>Problem</strong> Compute mixture of distributions with different weights.</p>
+<p><strong>Solution</strong> Specifically for this task, there is a <a href="https://echasnovski.github.io/pdqr/reference/form_mix.html">form_mix()</a> function. It takes a list of pdqr-functions with, possibly, a vector of their weights in mixture:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>d_norm_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">as_d</span>(dnorm), <span class="fu">as_d</span>(dnorm, <span class="at">mean =</span> <span class="dv">3</span>, <span class="at">sd =</span> <span class="fl">0.7</span>))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>(d_norm_mix <span class="ot">&lt;-</span> <span class="fu">form_mix</span>(d_norm_list, <span class="at">weights =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.8</span>)))</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Density function of continuous type</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Support: ~[-4.75342, 6.3274] (20003 intervals)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(d_norm_mix)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-01-announcing-pdqr/mixture-1.png" class="img-fluid"></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># As with other pdqr-functions, it can be used for obtaining values</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">d_norm_mix</span>(<span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>, <span class="at">by =</span> <span class="fl">0.2</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="do">##  [1] 0.04839424 0.05793842 0.06664505 0.07365417 0.07822190 0.07983544</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="do">##  [7] 0.07836164 0.07411459 0.06792242 0.06120445 0.05609038</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="summaries" class="level1">
+<h1>Summaries</h1>
+<p>Usual workflow for computing summaries is as follows:</p>
+<ul>
+<li>Estimate all necessary distributions by creating pdqr-functions.</li>
+<li>Make transformations appropriate for summary, which will result into one distribution.</li>
+<li>Compute summary of distribution.</li>
+</ul>
+<p><strong>Notes</strong>:</p>
+<ul>
+<li>Although this approach is very flexible in terms of computed summaries, it doesn’t take care of possible bias when estimating from a sample.</li>
+<li>When initially dealing with one distribution, this task can be conveniently written with <a href="https://magrittr.tidyverse.org/">magrittr</a>’s pipe operator <code>%&gt;%</code>.</li>
+</ul>
+<section id="compute-winsorized-sample-mean" class="level2">
+<h2 class="anchored" data-anchor-id="compute-winsorized-sample-mean">Compute winsorized sample mean</h2>
+<p><strong>Problem</strong> Compute 10% <a href="https://en.wikipedia.org/wiki/Winsorized_mean">winsorized sample mean</a>.</p>
+<p><strong>Solution</strong> This can be done by purposefully separating task into three steps:</p>
+<ul>
+<li>Estimate sample distribution. It can have any type, depending on problem. Type “discrete” is better suited to emulate traditional sample estimates.</li>
+<li>Transform distribution by winsorizing tails. There is a <a href="https://echasnovski.github.io/pdqr/reference/form_tails.html">form_tails()</a> functions, which takes pdqr-function and returns pdqr-function for distribution with modified tails (based on supplied method).</li>
+<li>Compute mean of winsorized distribution. <strong>Note</strong> that in case of other statistic (like variance, skewness, etc.) no bias correction is done: output is a summary of distribution created on previous step(s).</li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>mtcars<span class="sc">$</span>mpg <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">new_d</span>(<span class="at">type =</span> <span class="st">"discrete"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">form_tails</span>(<span class="at">level =</span> <span class="fl">0.1</span>, <span class="at">method =</span> <span class="st">"winsor"</span>, <span class="at">direction =</span> <span class="st">"both"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summ_mean</span>()</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 20.19375</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="compute-mode" class="level2">
+<h2 class="anchored" data-anchor-id="compute-mode">Compute mode</h2>
+<p><strong>Problem</strong> Compute mode of distribution based on its sample.</p>
+<p><strong>Solution</strong> Use <a href="https://echasnovski.github.io/pdqr/reference/summ_center.html">summ_mode()</a>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>mtcars<span class="sc">$</span>mpg <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Using "continuous" type will smooth input to get mode of density curve.</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># With type "discrete" the most frequent input value is returned.</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">new_d</span>(<span class="at">type =</span> <span class="st">"continuous"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summ_mode</span>()</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 17.90862</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="compute-highest-density-region" class="level2">
+<h2 class="anchored" data-anchor-id="compute-highest-density-region">Compute highest density region</h2>
+<p><strong>Problem</strong> Compute 90% <a href="https://stats.stackexchange.com/a/148475">highest density region</a> (HDR) of a distribution.</p>
+<p><strong>Solution</strong> There is a <a href="https://echasnovski.github.io/pdqr/reference/summ_hdr.html">summ_hdr()</a> function for this task. On a one dimensional line, HDR can only be a union of disjoint intervals. So the output of <code>summ_hdr()</code> is a <em>region</em> - data frame with rows representing different intervals of the union and two columns “left” and “right” for left and right ends of intervals.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>norm_mix <span class="ot">&lt;-</span> <span class="fu">form_mix</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="fu">as_d</span>(dnorm), <span class="fu">as_d</span>(dnorm, <span class="at">mean =</span> <span class="dv">5</span>)),</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights =</span> <span class="fu">c</span>(<span class="fl">0.3</span>, <span class="fl">0.7</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>(norm_mix_hdr <span class="ot">&lt;-</span> <span class="fu">summ_hdr</span>(norm_mix, <span class="at">level =</span> <span class="fl">0.9</span>))</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="do">##        left    right</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="do">## 1 -1.342624 1.348071</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="do">## 2  3.119697 6.870090</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>There is a <a href="https://echasnovski.github.io/pdqr/reference/region.html">region_*()</a> family of functions to work with regions. Here are several examples:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test if number is inside region</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">region_is_in</span>(norm_mix_hdr, <span class="at">x =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">10</span>))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] FALSE  TRUE FALSE FALSE</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute region width (sum of widths of all disjoint intervals)</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">region_width</span>(norm_mix_hdr)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 6.441087</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Draw regions</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(norm_mix)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="fu">region_draw</span>(norm_mix_hdr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><img src="2019-08-01-announcing-pdqr/regions-1.png" class="img-fluid"></p>
+</section>
+<section id="compute-separation-threshold" class="level2">
+<h2 class="anchored" data-anchor-id="compute-separation-threshold">Compute separation threshold</h2>
+<p><strong>Problem</strong> Compute a numerical threshold that optimally separates two distributions.</p>
+<p><strong>Solution</strong> There is a <a href="https://echasnovski.github.io/pdqr/reference/summ_separation.html">summ_separation()</a> function designed specifically for this type of problem. It has several methods with default one being “KS” (short for “Kolmogorov-Smirnov”): optimal separation is done at point where two CDFs differ the most.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">100</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">100</span>, <span class="at">mean =</span> <span class="dv">2</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Here "true optimal" is 1</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summ_separation</span>(<span class="at">f =</span> <span class="fu">new_d</span>(x, <span class="st">"continuous"</span>), <span class="at">g =</span> <span class="fu">new_d</span>(y, <span class="st">"continuous"</span>))</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 0.9763479</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="compute-probability-of-being-greater" class="level2">
+<h2 class="anchored" data-anchor-id="compute-probability-of-being-greater">Compute probability of being greater</h2>
+<p><strong>Problem</strong> Compute a probability that random draw from one distribution is greater than random draw from another distribution.</p>
+<p><strong>Solution</strong> These type of summaries are usually done in two steps:</p>
+<ul>
+<li>Compute a <strong>boolean pdqr-function</strong> that represents a result of comparison between mentioned two random draws. It is a special kind of discrete distribution: it only has values 0 and 1 representing estimated relation being false and true respectively. Usually, they are the output of base R comparison operators: <a href="https://echasnovski.github.io/pdqr/reference/methods-group-generic.html#ops">&gt;, &lt;, ==</a>, etc.</li>
+<li>Extract a probability of a relation being true.</li>
+</ul>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>d_norm <span class="ot">&lt;-</span> <span class="fu">as_d</span>(dnorm)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>d_unif <span class="ot">&lt;-</span> <span class="fu">as_d</span>(dunif)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The output of `&gt;` is a boolean pdqr-function. For convenience, printing</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># displays also a probability of 1, which is a probability of relation being</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># true. In this case, it should be read as "probability that random draw from</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># first distribution is greater than a random draw from second one".</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>(norm_geq_unif <span class="ot">&lt;-</span> d_norm <span class="sc">&gt;</span> d_unif)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="do">## Probability mass function of discrete type</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="do">## Support: [0, 1] (2 elements, probability of 1: ~0.31563)</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract desired probability</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="fu">summ_prob_true</span>(norm_geq_unif)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 0.3156265</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="compute-distance-between-distributions" class="level2">
+<h2 class="anchored" data-anchor-id="compute-distance-between-distributions">Compute distance between distributions</h2>
+<p><strong>Problem</strong> Compute distance between two distributions: positive value indicating “how far” two distributions are from each other. This is usually needed when comparing random outcomes of two (or more) options.</p>
+<p><strong>Solution</strong> There is a <a href="https://echasnovski.github.io/pdqr/reference/summ_distance.html">summ_distance()</a> function with many methods.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Default method is "KS" (short for "Kolmogorov-Smirnov"): the biggest</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># absolute difference between two CDFs</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summ_distance</span>(d_norm, d_unif, <span class="at">method =</span> <span class="st">"KS"</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 0.5</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co"># There is also "wass" method (short for "Wasserstein"): average path density</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co"># point should go while transforming from one into another</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">summ_distance</span>(d_norm, d_unif, <span class="at">method =</span> <span class="st">"wass"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="do">## [1] 0.7006094</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="epilogue" class="level1">
+<h1>Epilogue</h1>
+<ul>
+<li>Package ‘pdqr’ provides many tools for working with custom distribution functions.</li>
+<li>Consider using this package for solving your practical problems. Please feel free to share your feedback, ideas, and suggestions.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+sessionInfo()
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<pre><code>## R version 3.6.1 (2019-07-05)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 18.04.2 LTS
+##
+## Matrix products: default
+## BLAS:   /usr/lib/x86_64-linux-gnu/openblas/libblas.so.3
+## LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so
+##
+## locale:
+##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C
+##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8
+##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8
+##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C
+## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C
+##
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base
+##
+## other attached packages:
+## [1] magrittr_1.5    pdqr_0.1.0.9000
+##
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_1.0.1      bookdown_0.11   crayon_1.3.4    digest_0.6.19
+##  [5] evaluate_0.14   blogdown_0.12   pillar_1.4.1    rlang_0.3.4
+##  [9] stringi_1.4.3   rmarkdown_1.13  tools_3.6.1     stringr_1.4.0
+## [13] xfun_0.7        yaml_2.2.0      compiler_3.6.1  htmltools_0.3.6
+## [17] knitr_1.23</code></pre>
+</div>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/echasnovski\.com");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© Evgeni Chasnovski, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

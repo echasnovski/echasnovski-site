@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.33">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Evgeni Chasnovski">
+<meta name="dcterms.date" content="2018-04-09">
+<meta name="description" content="Notes about creation of Harry Potter Books Survey. It is not over, I need your help">
+
+<title>Struggle with Harry Potter Data – Evgeni Chasnovski</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../assets/EC2_256x256.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8a39431a021621ceac456dfcd09fb292.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-d4933f3589c24838ee12c9f858e4b426.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-aba4b5dbf84275d834ee1f7188d18b2d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-d7bdbb233ae4c8ace8d947e75cddd8fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<meta property="og:title" content="Struggle with Harry Potter Data – Evgeni Chasnovski">
+<meta property="og:description" content="Notes about creation of Harry Potter Books Survey. It is not over, I need your help">
+<meta property="og:site_name" content="Evgeni Chasnovski">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:title" content="Struggle with Harry Potter Data – Evgeni Chasnovski">
+<meta name="twitter:description" content="Notes about creation of Harry Potter Books Survey. It is not over, I need your help">
+<meta name="twitter:image" content="https://echasnovski.com/blog/assets/EC2.png">
+<meta name="twitter:creator" content="@echasnovski">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed quarto-dark"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = true;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Evgeni Chasnovski</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../projects.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../blog.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../talks.html"> 
+<span class="menu-text">Talks</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/echasnovski"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://bsky.app/profile/echasnovski.bsky.social"> <i class="bi bi-bluesky" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.youtube.com/@echasnovski"> <i class="bi bi-youtube" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../blog.xml"> <i class="bi bi-rss-fill" role="img" aria-label="RSS">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#prologue" id="toc-prologue" class="nav-link active" data-scroll-target="#prologue">Prologue</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#decision-about-the-source" id="toc-decision-about-the-source" class="nav-link" data-scroll-target="#decision-about-the-source">Decision about the source</a></li>
+  <li><a href="#survey-design" id="toc-survey-design" class="nav-link" data-scroll-target="#survey-design">Survey design</a></li>
+  <li><a href="#implementation" id="toc-implementation" class="nav-link" data-scroll-target="#implementation">Implementation</a></li>
+  <li><a href="#conclusions" id="toc-conclusions" class="nav-link" data-scroll-target="#conclusions">Conclusions</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Struggle with Harry Potter Data</h1>
+  <div class="quarto-categories">
+    <div class="quarto-category">rstats</div>
+    <div class="quarto-category">questionflow</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Notes about creation of Harry Potter Books Survey. It is not over, I need your help
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Evgeni Chasnovski </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 9, 2018</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="prologue" class="level1">
+<h1>Prologue</h1>
+<p>Right now I am in the final stage of developing two packages devoted to results of abstract competitions (still not perfectly ready, so use with caution):</p>
+<ul>
+<li><a href="https://github.com/echasnovski/comperes">comperes</a> - infrastructure package for dealing with different formats of competition results and summarising them.</li>
+<li><a href="https://github.com/echasnovski/comperank">comperank</a> - package which implements some rating and ranking algorithms. Inspired and driven by insightful book <a href="https://www.amazon.com/Whos-1-Science-Rating-Ranking/dp/069116231X">Who’s #1?: The Science of Rating and Ranking</a> by Amy N. Langville and Carl D. Meyer.</li>
+</ul>
+<p>Understanding of <strong>competition</strong> is quite general: it is a set of <strong>games</strong> (abstract event) in which <strong>players</strong> (abstract entity) gain some abstract <strong>scores</strong> (typically numeric).</p>
+<p>Both packages use example data set called <code>ncaa2005</code> which is results of an isolated group of Atlantic Coast Conference teams provided in “Who’s #1”. In order to demonstrate abstract nature of term “competition” I decided to find another data set, not from the world of sports. I thought it would be easy…</p>
+</section>
+<section id="overview" class="level1">
+<h1>Overview</h1>
+<p>This post describes my struggle with and process of creating Harry Potter Data with results of “competition” between seven original Harry Potter books. Long story short, I didn’t find suitable existing data and decided to make my own survey. The struggle hasn’t ended yet and I need your help. <strong>Please, take part in the survey at this <a href="https://goo.gl/siBtSy">link</a></strong>. It is a fairly standard <a href="https://www.google.com/intl/en/forms/about/">Google Form</a> with two questions: first one simulates picking random subset of books (read about that later); second offers rating choices. And that’s it. Please, note the following:</p>
+<ul>
+<li><em>It is assumed that you’ve read all seven original J. K. Rowling Harry Potter books and are willing to give an honest feedback about your impressions</em>.</li>
+<li><em>In order to answer you have to sign in your Google account</em>. This is done to ensure that one person participates in the survey only once. Your personal data won’t become public because I will not track it.</li>
+</ul>
+<p>This post has the following structure:</p>
+<ul>
+<li><strong>Decision about the source</strong> describes how I ended up with conducting my own survey.</li>
+<li><strong>Survey design</strong> has my thoughts about how I approached creating the survey.</li>
+<li><strong>Implementation</strong> describes technical details about creating a survey using Google Forms and JavaScript.</li>
+</ul>
+</section>
+<section id="decision-about-the-source" class="level1">
+<h1>Decision about the source</h1>
+<p>After all sorts of games, the process of people rating common items is, probably, the most common example of competition. Here items can be considered as “players”. “Game” is a person that reviews a set of items by rating them with numerical “score” (stars, points, etc.). To produce this data set I need data in the following format (called “long” in terminology of aforementioned packages):</p>
+<ul>
+<li><strong>Person identifier</strong> (anonymized). It will serve as game identifier.</li>
+<li><strong>Item identifier</strong> which this person rated.</li>
+<li><strong>Numeric score</strong> of item’s rating by person.</li>
+</ul>
+<p>One person can rate multiple items but only once, to avoid bias in the output.</p>
+<p>After some thought I picked seven original J.K. Rowling “Harry Potter” books as items. Besides being interesting and popular books, I figured that it won’t be hard to find a data set with information I need. It wasn’t quite right because all available data sets don’t seem to have suitable license:</p>
+<ul>
+<li>There are rating on Amazon but I didn’t find an easy way to even get the data.</li>
+<li>My second candidate, <a href="https://www.goodreads.com/">Goodreads</a> site, has an API which provides data exactly I need. However, their <a href="https://www.goodreads.com/api/terms">Developer Terms of Service</a> doesn’t look “R package with MIT license” friendly.</li>
+<li>There is also Kaggle’s <a href="https://www.kaggle.com/zygmunt/goodbooks-10k">goodbooks-10k</a> data set. This comes as close to my needs as I could find. Nevertheless, it is still Goodreads data, so I am not sure about it.</li>
+</ul>
+<p>All this led me to conducting my own survey. The good news is that this way I am the full owner of the data set with no license issues. The bad news - I should conduct the survey…</p>
+</section>
+<section id="survey-design" class="level1">
+<h1>Survey design</h1>
+<p>The freedom in creating your own survey is overwhelming. Basically, you can do whatever you like and can wish to obtain any data you want. In grim reality, there are a couple of things to consider:</p>
+<ul>
+<li><strong>Survey should collect data that will actually help to fulfill its goals</strong>. It should be designed in a way that minimizes the chance of misinterpretation by respondents.</li>
+<li><strong>Survey should be implemented and conducted in the form that is accessible to people as much as possible</strong>. This is needed to collect more data with less efforts.</li>
+</ul>
+<p>The goal of my Harry Potter Survey can be formulated as follows: <em>collect data enough to rank Harry Potter books from worst to best</em>. The most common way to do that is to mimic rating process from various online marketplaces. In more scientific language it means to <em>ask a question using <a href="https://en.wikipedia.org/wiki/Likert_scale">Likert scale</a></em>. That is, an answer to some question should be chosen from some ordinal scale. Very helpful advice can be found in this <a href="https://www.surveymonkey.com/mp/likert-scale/">SurveyMonkey article</a>. The most common Likert scales can be found <a href="http://www.marquette.edu/dsa/assessment/documents/Sample-Likert-Scales.pdf">here</a>.</p>
+<p>Unfortunately, I decided to read about how to conduct survey not in the beginning of constructing my own. Its core is a question that asks to associate Harry Potter Books with some numerical ratings. Evolution of this question was as follows:</p>
+<ul>
+<li><strong>Stage 1</strong>.
+<ul>
+<li><em>Question</em>: ‘Rate these BOOKS (not movies) from 1 (“very poor book”) to 7 (“exceptional book”)’. As you can see, this isn’t actually a question because at first I planned to give a <em>task</em>. Also I was trying to highly indicate that the books are of interest and not movies.</li>
+<li><em>Scale</em>: numeric, from 1 to 7. This seemed logical as numeric scores will be actually used in analysis.</li>
+</ul></li>
+<li><strong>Stage 2</strong>. After reading SurveyMonkey article and other sources, drastic transformation was made. I decided to actually ask a question about satisfaction after reading the book. This makes it a personal and, for my opinion, clear question.
+<ul>
+<li><em>Question</em>: ‘How did you like these BOOKS?’. One thing to consider here is whether it is better to use past or present tense. At this stage I decided to go with past tense because [in my opinion] it questions a fixed moment in time “just after reading a book”. Unfortunately, it wasn’t the case.</li>
+<li><em>Scale</em>: combined, from 1 to 5. It is fairly standard bipolar “Satisfaction” scale: “1 - Very dissatisfied”; “2 - Dissatisfied”; “3 - Neutral”; “4 - Satisfied”; “5 - Very satisfied”. I decided to move to 5 point scale as it is more common and should provide more reliable data. Its downside is smaller <a href="https://www.surveymonkey.com/curiosity/methodology-variance/">variance</a>. I also preserved numbers for extra indication of implied linear scale.</li>
+</ul></li>
+<li><strong>Stage 3</strong>. After some thought and practical testing I decided not to invent the wheel and stick with more common “Quality” scale. This has an advantage of being more or less standard, which should provide more robust data.
+<ul>
+<li><em>Question</em>: ‘What is your impression of these Harry Potter BOOKS?’. Added explicit indication about Harry Potter to be able to shorten books’ names. Changed to present tense because I had mixed feedback about previous question and which moment in the past it referred to. Of course, I can add explicit reference but it might overcomplicate the question. Also, question in present tense should be easier to answer.</li>
+<li><em>Scale</em>: combined, from 1 to 5. It is fairly standard unipolar “Quality” scale: “1 - Poor”, “2 - Fair”, “3 - Good”, “4 - Very Good”, “5 - Excellent”.</li>
+</ul></li>
+</ul>
+<p>After designing the basic question, there are couple of other things to consider:</p>
+<ul>
+<li><strong>Item names should be understandable</strong>. With seven Harry Potter books it might be confusing if they are presented only by title. So I decided to add book’s number in the series after its title. Also, explicit indication of “Harry Potter” in the title seems overcomplicating a survey, as it doesn’t add extra necessary information, so I decided to shorten it to “HP”. The resulting books are named “HP and the Philosopher’s (Sorcerer’s) Stone (#1)”, “HP and the Chamber of Secrets (#2)”, “HP and the Prisoner of Azkaban (#3)”, “HP and the Goblet of Fire (#4)”, “HP and the Order of the Phoenix (#5)”, “HP and the Half-Blood Prince (#6)”, “HP and the Deathly Hallows (#7)”.</li>
+<li><strong>Actual set of items can affect the outcome</strong>. For example, if person’s favourite book is present in the list, he/she might anchor his/her other ratings to this book. This can be solved by randomizing set of books asked to rate.</li>
+<li><strong>Actual order of items can affect the outcome</strong>. The reasoning is similar to previous note. This can be solved by randomizing the order of books presented.</li>
+</ul>
+<p>So here is the final design of a survey. Respondent is asked a question “What is your impression of these Harry Potter BOOKS?” and presented with random subset (in random order) of names of seven Harry Potter books (presented above) which should be rated on pretty standard Likert “Quality” scale (with present numeric scores).</p>
+<p>About the desired number of respondents I think that hitting 100 will produce fairly usable output data set. But the more the better.</p>
+<p>After exhausting process of survey design I hoped that implementation should be easy. I again wasn’t quite right…</p>
+</section>
+<section id="implementation" class="level1">
+<h1>Implementation</h1>
+<p>The main obstacle in implementing the intended survey is randomization of presented items. Also I had to keep in mind that answering process should be as easy as possible and that one person should be able to answer only once.</p>
+<p>After some Internet surfing, it seemed that the most optimal way of conducting a survey is with Google Forms. It can provide an option to participate in survey only once with a downside: one should have and be logged into a Google account. It can possibly scare off potential respondents. However, Google Forms has an option to not track user data, which I gladly used. It also has a feature to randomly shuffle the order of the items used in question, which is very helpful.</p>
+<p>The biggest trouble with Google Forms is that it can’t randomly generate questions. I decided to work around this problem the following way:</p>
+<ul>
+<li>Create many variants of question for all possible subsets of books. There are total of 127 non-empty subsets for 7 books. Items in every question should be shuffled.</li>
+<li>Create dummy question (to be put first) which has a list of numbers - pointers to subsets of books. This list will be randomly shuffled for every respondent. Picking the first item from the list simulates generating random subset of books.</li>
+</ul>
+<p>All this can be done manually. And I’ve actually done that… However, after deciding to change the question and scale (move from “Stage 1” to “Stage 2” in question evolution), I realized that it would be better to program Form creation. As it turns out, this can be done with <a href="https://developers.google.com/apps-script/">Google Apps Script</a> which accepts JavaScript code. After learning language basics and with great support of Internet, I came up with this solution:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Function to generate all non-empty subsets of array</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">generatePowerSet</span>(array) {</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> result <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (<span class="kw">var</span> i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> i <span class="op">&lt;</span> (<span class="dv">1</span> <span class="op">&lt;&lt;</span> array<span class="op">.</span><span class="at">length</span>)<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> subset <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">var</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> array<span class="op">.</span><span class="at">length</span><span class="op">;</span> j<span class="op">++</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (i <span class="op">&amp;</span> (<span class="dv">1</span> <span class="op">&lt;&lt;</span> j))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>      subset<span class="op">.</span><span class="fu">push</span>(array[j])<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span><span class="fu">push</span>(subset)<span class="op">;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> result<span class="op">;</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">// Function to create target survey</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">createHPSurvey</span>() {</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> form <span class="op">=</span> FormApp<span class="op">.</span><span class="fu">create</span>(<span class="st">'Harry Potter Books Survey'</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                    <span class="op">.</span><span class="fu">setAllowResponseEdits</span>(<span class="kw">false</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                    <span class="op">.</span><span class="fu">setCollectEmail</span>(<span class="kw">false</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>                    <span class="op">.</span><span class="fu">setLimitOneResponsePerUser</span>(<span class="kw">true</span>)<span class="op">;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Add select list</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> selectList <span class="op">=</span> form<span class="op">.</span><span class="fu">addListItem</span>()</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>                       <span class="op">.</span><span class="fu">setTitle</span>(<span class="st">'Choose first listed number'</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>                       <span class="op">.</span><span class="fu">setHelpText</span>(<span class="st">'This simulates random subsetting of books.'</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>                       <span class="op">.</span><span class="fu">setRequired</span>(<span class="kw">true</span>)<span class="op">;</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Initialize main questions data</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> questionSingular <span class="op">=</span> <span class="st">'What is your impression of this Harry Potter BOOK?'</span><span class="op">;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> questionPlural   <span class="op">=</span> <span class="st">'What is your impression of these Harry Potter BOOKS?'</span><span class="op">;</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> likertScale <span class="op">=</span> [<span class="st">'1 - Poor'</span><span class="op">,</span> <span class="st">'2 - Fair'</span><span class="op">,</span> <span class="st">'3 - Good'</span><span class="op">,</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'4 - Very Good'</span><span class="op">,</span> <span class="st">'5 - Excellent'</span>]<span class="op">;</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> books <span class="op">=</span> [<span class="st">"HP and the Philosopher's (Sorcerer's) Stone (#1)"</span><span class="op">,</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>               <span class="st">"HP and the Chamber of Secrets (#2)"</span><span class="op">,</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>               <span class="st">"HP and the Prisoner of Azkaban (#3)"</span><span class="op">,</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>               <span class="st">"HP and the Goblet of Fire (#4)"</span><span class="op">,</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>               <span class="st">"HP and the Order of the Phoenix (#5)"</span><span class="op">,</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>               <span class="st">"HP and the Half-Blood Prince (#6)"</span><span class="op">,</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>               <span class="st">"HP and the Deathly Hallows (#7)"</span>]<span class="op">;</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> allSubsets <span class="op">=</span> <span class="fu">generatePowerSet</span>(books)<span class="op">;</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Create pages with all subsets</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> pages <span class="op">=</span> []<span class="op">;</span> <span class="co">// for collecting the choices in the list item</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (<span class="kw">var</span> n <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> n <span class="op">&lt;</span> allSubsets<span class="op">.</span><span class="at">length</span><span class="op">;</span> n<span class="op">++</span>) {</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Make a section for current subset</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> newPage <span class="op">=</span> form<span class="op">.</span><span class="fu">addPageBreakItem</span>()</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>                      <span class="op">.</span><span class="fu">setTitle</span>(<span class="st">'Rate books'</span>)<span class="op">;</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Set the section to submit after completing (rather than next subset section)</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    newPage<span class="op">.</span><span class="fu">setGoToPage</span>(FormApp<span class="op">.</span><span class="at">PageNavigationType</span><span class="op">.</span><span class="at">SUBMIT</span>)</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Add question for current subset with scale</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> question <span class="op">=</span> form<span class="op">.</span><span class="fu">addGridItem</span>()</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>                       <span class="op">.</span><span class="fu">setRows</span>(allSubsets[n])</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>                       <span class="op">.</span><span class="fu">setColumns</span>(likertScale)</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>                       <span class="op">.</span><span class="fu">setRequired</span>(<span class="kw">true</span>)<span class="op">;</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (allSubsets[n]<span class="op">.</span><span class="at">length</span> <span class="op">==</span> <span class="dv">1</span>) {</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>      question<span class="op">.</span><span class="fu">setTitle</span>(questionSingular)<span class="op">;</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>      question<span class="op">.</span><span class="fu">setTitle</span>(questionPlural)<span class="op">;</span></span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Push our choice to the list select</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>    pages<span class="op">.</span><span class="fu">push</span>(selectList<span class="op">.</span><span class="fu">createChoice</span>(n <span class="op">+</span> <span class="dv">1</span><span class="op">,</span> newPage))<span class="op">;</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Add all subsets to select list</span></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>  selectList<span class="op">.</span><span class="fu">setChoices</span>(pages)<span class="op">;</span></span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>This code should be run into Google Apps Script project. It creates a Google Form named “Harry Potter Books Survey” and stores it on Google Drive.</p>
+<p>Unfortunately, I didn’t find option of adding shuffling programmatically for every question, so I did it manually… one by one. I thought for a while about creating questions not only for every subset but also for its every permutation. This doesn’t really the same way of randomizing because questions with more permutations will be chosen more frequently at the first step.</p>
+<p>Very helpful sources I used to implement this:</p>
+<ul>
+<li><a href="https://mashe.hawksey.info/2018/03/creating-custom-branching-in-google-forms-with-google-apps-script/">Basic code for “branching” form</a></li>
+<li><a href="https://developers.google.com/apps-script/reference/forms/">Official Google Apps Script Reference for Forms</a></li>
+<li><a href="https://stackoverflow.com/a/42774138/7360839">Generating all subsets in JavaScript</a> (modified to not include empty subset)</li>
+</ul>
+</section>
+<section id="conclusions" class="level1">
+<h1>Conclusions</h1>
+<ul>
+<li>Creating your own data set is hard. But very rewarding.</li>
+<li>Designing a survey is hard. But very insightful.</li>
+<li>Implementing a dynamic survey in Google Forms is hard. But very JavaScript.</li>
+<li>I still need your help. <strong>Please, take part in the survey at this <a href="https://goo.gl/siBtSy">link</a></strong>.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/echasnovski\.com");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© Evgeni Chasnovski, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
