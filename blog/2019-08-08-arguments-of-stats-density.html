@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.33">
+<meta name="generator" content="quarto-1.8.24">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -71,16 +71,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../assets/EC2_256x256.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8a39431a021621ceac456dfcd09fb292.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-d4933f3589c24838ee12c9f858e4b426.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90a3fe7128b4a7bbcc446d44c884fec5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f02add0dffcdec21d3284ee72a750fbe.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-aba4b5dbf84275d834ee1f7188d18b2d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-d7bdbb233ae4c8ace8d947e75cddd8fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-b698475982fa43ea5081bf3c1e7b0e82.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9d3ebe8080303907f109ee0081d6722c.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -298,6 +299,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
     <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">Evgeni Chasnovski</span>
     </a>
@@ -439,7 +442,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Animate evolution of density curves as argument value changes from first to last.</li>
 </ul>
 <p>We’ll need the following setup (including main helper function <code>density_anim()</code> for creating animations):</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gganimate)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rlang, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -494,7 +497,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">18</span>))</span>
 <span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">animate</span>(anim, <span class="at">duration =</span> duration, <span class="at">fps =</span> <span class="dv">12</span>, <span class="at">start_pause =</span> <span class="dv">6</span>, <span class="at">end_pause =</span> <span class="dv">6</span>)</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="estimation-parameters" class="level1">
 <h1>Estimation parameters</h1>
@@ -503,25 +506,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="bandwidth-bw">Bandwidth <code>bw</code></h2>
 <p>Argument <code>bw</code> is responsible for computing <a href="https://en.wikipedia.org/wiki/Kernel_density_estimation#Bandwidth_selection">bandwith</a> of kernel density estimation: one of the main parameters that greatly affect the output. It can be specified as either algorithm of computation or directly as number. Because actual bandwidth is computed as <code>adjust*bw</code> (<code>adjust</code> is another <code>density()</code> argument, which is explored in the next section), here we will see how different algorithms compute bandwidths, and the effect of changing numeric value of bandwidth will be shown in section about <code>adjust</code>.</p>
 <p>There are 5 available algorithms: “nrd0”, “nrd”, “ucv”, “bcv”, “SJ”. Here is an animation of their effect:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">bw =</span> <span class="fu">c</span>(<span class="st">"nrd0"</span>, <span class="st">"nrd"</span>, <span class="st">"ucv"</span>, <span class="st">"bcv"</span>, <span class="st">"SJ"</span>), <span class="at">duration =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">bw =</span> <span class="fu">c</span>(<span class="st">"nrd0"</span>, <span class="st">"nrd"</span>, <span class="st">"ucv"</span>, <span class="st">"bcv"</span>, <span class="st">"SJ"</span>), <span class="at">duration =</span> <span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2019-08-08-arguments-of-stats-density/arg_bw-1.gif" class="img-fluid"></p>
 <p>As you can see, density curve changes, but not drastically. At least the whole shape seems to be somewhat preserved.</p>
 </section>
 <section id="adjusting-bandwidth-adjust" class="level2">
 <h2 class="anchored" data-anchor-id="adjusting-bandwidth-adjust">Adjusting bandwidth <code>adjust</code></h2>
 <p>To easily “specify values like ‘half the default’ bandwidth”, there is an argument <code>adjust</code>. Bigger values indicate greater bandwidth that is actually used. Zero results into zero bandwidth (so never should be used), one (default) - into originally computed by chosen algorithm.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">adjust =</span> <span class="fu">seq</span>(<span class="fl">0.1</span>, <span class="dv">2</span>, <span class="at">by =</span> <span class="fl">0.05</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">adjust =</span> <span class="fu">seq</span>(<span class="fl">0.1</span>, <span class="dv">2</span>, <span class="at">by =</span> <span class="fl">0.05</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2019-08-08-arguments-of-stats-density/arg_adjust-1.gif" class="img-fluid"></p>
 <p>Changing <code>adjust</code> leads to very noticeable changes in output shape of density curve: bigger values give smoother curves.</p>
 </section>
 <section id="kernel-type-kernel" class="level2">
 <h2 class="anchored" data-anchor-id="kernel-type-kernel">Kernel type <code>kernel</code></h2>
 <p>Argument <code>kernel</code> defines the shape of kernel which will be used. There are 7 possible kernels in total which are shown in the following animation:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">kernel =</span> <span class="fu">c</span>(<span class="st">"gaussian"</span>, <span class="st">"epanechnikov"</span>, <span class="st">"rectangular"</span>, <span class="st">"triangular"</span>,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>             <span class="st">"biweight"</span>, <span class="st">"cosine"</span>, <span class="st">"optcosine"</span>),</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">duration =</span> <span class="dv">7</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2019-08-08-arguments-of-stats-density/arg_kernel-1.gif" class="img-fluid"></p>
 <p>Choice of kernel function also considerably affects the output shape of density curve, but not as greatly as <code>adjust</code>. Most notable difference from default “gaussian” kernel is with “rectangular” kernel: result, unsurprisingly, is “more rectangular”.</p>
 </section>
@@ -529,13 +532,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="observation-importance-weights">Observation importance <code>weights</code></h2>
 <p>Argument <code>weights</code> should be used if some observations are considered to be “more important” and are “more reference” than the other ones. It should be a numeric vector with the same length as input sample <code>x</code>. <strong>Note</strong> that for output to be a true density plot, sum of <code>weights</code> should be 1.</p>
 <p>To illustrate its effect, lets construct a sequence of <code>weights</code> each of which makes one observation having 10 times more weight than any other (that contribute equally). Order of those observations we will choose so that they progress from the smallest to the biggest.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>weights_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">order</span>(mtcars<span class="sc">$</span>mpg), <span class="cf">function</span>(i) {</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>weights_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">order</span>(mtcars<span class="sc">$</span>mpg), <span class="cf">function</span>(i) {</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>, <span class="at">times =</span> i<span class="dv">-1</span>), <span class="dv">10</span>, <span class="fu">rep</span>(<span class="dv">1</span>, <span class="at">times =</span> <span class="fu">length</span>(mtcars<span class="sc">$</span>mpg)<span class="sc">-</span>i))</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  res <span class="sc">/</span> <span class="fu">sum</span>(res)</span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">weights =</span> weights_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">weights =</span> weights_list)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2019-08-08-arguments-of-stats-density/arg_weights-1.gif" class="img-fluid"></p>
 <p>As expected from <code>weights_list</code> construction, one can see a “spike” that “travels” from left to right, indicating the position of “most important” observation.</p>
 </section>
@@ -546,25 +549,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="number-of-points-n" class="level2">
 <h2 class="anchored" data-anchor-id="number-of-points-n">Number of points <code>n</code></h2>
 <p><code>n</code> is responsible for number of returned x-y points. They are equally spaced on the specified range (see next sections). Default value is 512 (taken as a power of two for performance reasons of <a href="https://rdrr.io/r/stats/fft.html">fft()</a>), but to illustrate its effect on output lets use sequence from 2 to 50.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">n =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">50</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">n =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">50</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2019-08-08-arguments-of-stats-density/arg_n-1.gif" class="img-fluid"></p>
 <p>As you can see, in this case values higher than 40 already give considerably small errors (compared to “true curve” when <code>n</code> is infinity). However, if the underlying curve isn’t that smooth (for example, in case of low <code>adjust</code>) it is a good idea to use more points with default 512 being enough for most practical situations.</p>
 </section>
 <section id="left-edge-from" class="level2">
 <h2 class="anchored" data-anchor-id="left-edge-from">Left edge <code>from</code></h2>
 <p>If specified, <code>from</code> defines a left edge of sequence of “x” points, at which density curve is evaluated. For illustration, lets use sequence from minimum to maximum values of <code>mtcars$mpg</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>from_vec <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fu">min</span>(mtcars<span class="sc">$</span>mpg), <span class="at">to =</span> <span class="fu">max</span>(mtcars<span class="sc">$</span>mpg), <span class="at">length.out =</span> <span class="dv">20</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>from_vec <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fu">min</span>(mtcars<span class="sc">$</span>mpg), <span class="at">to =</span> <span class="fu">max</span>(mtcars<span class="sc">$</span>mpg), <span class="at">length.out =</span> <span class="dv">20</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">from =</span> <span class="fu">round</span>(from_vec, <span class="at">digits =</span> <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">from =</span> <span class="fu">round</span>(from_vec, <span class="at">digits =</span> <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2019-08-08-arguments-of-stats-density/arg_from-1.gif" class="img-fluid"></p>
 <p>Note that when <code>from</code> is equal to the smallest value of input numeric vector, it is still greater than left edge of default density curve. For explanation of this “extending property” of default curve, see section about <code>cut</code>.</p>
 </section>
 <section id="right-edge-to" class="level2">
 <h2 class="anchored" data-anchor-id="right-edge-to">Right edge <code>to</code></h2>
 <p>Argument <code>to</code> has the same nature as <code>from</code>, but defines right edge of points.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>to_vec <span class="ot">&lt;-</span> <span class="fu">rev</span>(from_vec)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>to_vec <span class="ot">&lt;-</span> <span class="fu">rev</span>(from_vec)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">to =</span> <span class="fu">round</span>(to_vec, <span class="at">digits =</span> <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">to =</span> <span class="fu">round</span>(to_vec, <span class="at">digits =</span> <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2019-08-08-arguments-of-stats-density/arg_to-1.gif" class="img-fluid"></p>
 <p>Note again, that value of <code>to</code> equal to maximum of input numeric vector is not enough to see the default behavior.</p>
 </section>
@@ -575,7 +578,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Equally spaced grid of <code>n</code> “x” points is computed between <code>from</code> and <code>to</code> which by default are computed as being “<code>cut*bw</code> outside of <code>range(x)</code>”. In other words, default range is extended to left and right of <code>range(x)</code> by the amount of “canonical bandwidth” (computed by <code>bw</code> algorithm) multiplied by argument <code>cut</code> (default being 3).</li>
 <li>“Y” points are taken from “true curve” of kernel density estimate.</li>
 </ul>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">cut =</span> <span class="fu">seq</span>(<span class="dv">3</span>, <span class="dv">0</span>, <span class="at">by =</span> <span class="sc">-</span><span class="fl">0.2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">density_anim</span>(<span class="at">cut =</span> <span class="fu">seq</span>(<span class="dv">3</span>, <span class="dv">0</span>, <span class="at">by =</span> <span class="sc">-</span><span class="fl">0.2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2019-08-08-arguments-of-stats-density/arg_cut-1.gif" class="img-fluid"></p>
 <p>When <code>cut</code> changes from 3 to 0, range of computed points shrinks from default one to range of input numeric vector. Default call to <code>density()</code> computes set of points outside of original range. I call this behavior an “extending property” of <code>density()</code>. <strong>Note</strong> that <code>cut</code> can also be negative, which means reduced input range.</p>
 <p>So by default, <code>density()</code> extends range of input vector. The problem is that it can contradict natural constraints on input. For example, what if you want to estimate density for probability distribution of <em>value that can only be positive</em>? Dealing with boundary values during kernel density estimation is an important topic and it is called a boundary correction problem. One of possible solutions is to use <a href="https://echasnovski.github.io/pdqr/reference/form_resupport.html">form_resupport()</a> function from ‘pdqr’ package.</p>
@@ -588,12 +591,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Using <a href="https://gganimate.com/">‘gganimate’</a> for creating animated illustrations is fun.</li>
 </ul>
 <div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-sessionInfo()
+<span class="screen-reader-only">Note</span>sessionInfo()
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
@@ -717,13 +720,14 @@ sessionInfo()
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy

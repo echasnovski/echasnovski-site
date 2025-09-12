@@ -9,8 +9,8 @@
 <link>https://echasnovski.com/blog.html</link>
 <atom:link href="https://echasnovski.com/blog.xml" rel="self" type="application/rss+xml"/>
 <description>Personal website of Evgeni Chasnovski</description>
-<generator>quarto-1.7.33</generator>
-<lastBuildDate>Thu, 03 Jul 2025 21:00:00 GMT</lastBuildDate>
+<generator>quarto-1.8.24</generator>
+<lastBuildDate>Fri, 04 Jul 2025 00:00:00 GMT</lastBuildDate>
 <item>
   <title>Neovim now has built-in plugin manager</title>
   <dc:creator>Evgeni Chasnovski</dc:creator>
@@ -40,7 +40,7 @@
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html</guid>
-  <pubDate>Thu, 03 Jul 2025 21:00:00 GMT</pubDate>
+  <pubDate>Fri, 04 Jul 2025 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Neovim + mini.pick + nushell = CLI fuzzy picker. Why? Because why not.</title>
@@ -86,7 +86,7 @@
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2025-06-20-neovim-minipick-nushell-cli-fuzzy-picker.html</guid>
-  <pubDate>Thu, 19 Jun 2025 21:00:00 GMT</pubDate>
+  <pubDate>Fri, 20 Jun 2025 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>PSA for color scheme authors: you might want to adjust PmenuSel</title>
@@ -130,7 +130,7 @@ hi PmenuMatchSel guifg=#bebebe guibg=#8b008b gui=reverse cterm=reverse</code></p
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2024-08-29-psa-adjust-`pmenusel`.html</guid>
-  <pubDate>Wed, 28 Aug 2024 21:00:00 GMT</pubDate>
+  <pubDate>Thu, 29 Aug 2024 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>You can remove padding around Neovim instance with this one simple trick…</title>
@@ -161,7 +161,7 @@ hi PmenuMatchSel guifg=#bebebe guibg=#8b008b gui=reverse cterm=reverse</code></p
 <hr>
 <p>As it turns out, this can be solved by keeping terminal background’s color in sync with Neovim’s background color. This is possible thanks to a dark magic called <a href="https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands">“Operating System Commands XTerm Control Sequences”</a> or OSC control sequences for short. In particular, OSC 11 and OSC 111, which your terminal should support (most modern feature rich ones do: Kitty, WezTerm, Alacritty, etc.).</p>
 <p>Just add the following snippet to your ‘init.lua’ (credit to u/gpanders from <a href="https://github.com/neovim/neovim/issues/16572#issuecomment-1954420136">this comment</a>):</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="va" style="color: #111111;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="va" style="color: #111111;
 background-color: null;
 font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
 background-color: null;
@@ -335,7 +335,7 @@ background-color: null;
 font-style: inherit;">,</span></span>
 <span id="cb1-11"><span class="op" style="color: #5E5E5E;
 background-color: null;
-font-style: inherit;">})</span></span></code></pre></div>
+font-style: inherit;">})</span></span></code></pre></div></div>
 <p>And that’s it. It synchronizes on every enter/exit Neovim instance and after loading new color scheme. And it even works with <code>&lt;C-z&gt;</code> and later <code>fg</code>! Couple of caveats, though:</p>
 <ul>
 <li>Make sure to have this executed <strong>before</strong> you load color scheme. Otherwise there will be no event for it to sync. Alternatively, add an explicit call to the first <code>callback</code> function and it should work as is.</li>
@@ -350,7 +350,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2024-08-01-remove-padding-around-neovim-instance.html</guid>
-  <pubDate>Wed, 31 Jul 2024 21:00:00 GMT</pubDate>
+  <pubDate>Thu, 01 Aug 2024 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Neovim now has built-in commenting</title>
@@ -384,7 +384,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2024-04-05-neovim-now-has-builtin-commenting.html</guid>
-  <pubDate>Thu, 04 Apr 2024 21:00:00 GMT</pubDate>
+  <pubDate>Fri, 05 Apr 2024 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Exactly 10 years ago Neovim had its first commit</title>
@@ -406,7 +406,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2024-01-31-neovim-10-year-anniversary.html</guid>
-  <pubDate>Tue, 30 Jan 2024 22:00:00 GMT</pubDate>
+  <pubDate>Wed, 31 Jan 2024 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Neovim now has its own default color scheme</title>
@@ -429,7 +429,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2023-12-03-neovim-now-has-its-own-default-color-scheme.html</guid>
-  <pubDate>Sat, 02 Dec 2023 22:00:00 GMT</pubDate>
+  <pubDate>Sun, 03 Dec 2023 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Floating windows in Neovim can now have footer</title>
@@ -453,7 +453,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2023-08-26-floating-windows-in-neovim-can-now-have-footer.html</guid>
-  <pubDate>Fri, 25 Aug 2023 21:00:00 GMT</pubDate>
+  <pubDate>Sat, 26 Aug 2023 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Average Neovim color scheme</title>
@@ -520,7 +520,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2023-04-24-average-color-scheme.html</guid>
-  <pubDate>Sun, 23 Apr 2023 21:00:00 GMT</pubDate>
+  <pubDate>Mon, 24 Apr 2023 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>You don’t need ‘vim-rooter’ (usually) or How to set up smart autochange of current directory</title>
@@ -541,7 +541,7 @@ font-style: inherit;">})</span></span></code></pre></div>
 <li>Built-in terminal opens in directory I usually want it to open: in root based on current buffer file.</li>
 </ul>
 <p>However, starting from Neovim 0.8 ‘vim-rooter’ is (almost) obsolete. Using an amazing <code>vim.fs</code> module you can set up basic autochange of current directory using these lines of code (call them somewhere during your Neovim startup):</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">-- Array of file names indicating root directory. Modify to your liking.</span></span>
 <span id="cb1-2"><span class="kw" style="color: #003B4F;
@@ -868,7 +868,7 @@ font-style: inherit;">=</span> <span class="va" style="color: #111111;
 background-color: null;
 font-style: inherit;">set_root</span> <span class="op" style="color: #5E5E5E;
 background-color: null;
-font-style: inherit;">})</span></span></code></pre></div>
+font-style: inherit;">})</span></span></code></pre></div></div>
 <p>Of course this implementation has certain limitations: - The main one is a lack of ability to use glob patterns to find root directory. However, although solvable, I think the most common use case is to define root based on some pre-determined set of actual file names, so this shouldn’t be a big issue. - It caches results to speed up computations with a downside of result possibly being outdated. Usually not an issue, though. Remove all cache related code to not do that.</p>
 <p>Initially I planned to make a separate ‘mini.root’ module, but realized that it would mostly be a reimplementation of <code>vim.fs</code>. So instead I decided to add <a href="https://github.com/nvim-mini/mini.nvim/blob/bd6d1f3fd2da7741140510c2b37e2de7901b03fb/doc/mini-misc.txt#L95"><code>setup_auto_root()</code></a> function to <a href="https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-misc.md">mini.misc</a>. If you want a more tested and documented solution, check it out and tell me what you think. Thanks!</p>
 
@@ -878,7 +878,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2022-12-29-you-dont-need-vimrooter-usually.html</guid>
-  <pubDate>Wed, 28 Dec 2022 22:00:00 GMT</pubDate>
+  <pubDate>Thu, 29 Dec 2022 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Results of “Neovim built-in options survey”</title>
@@ -916,7 +916,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2022-12-08-results-of-neovim-builtin-options-survey.html</guid>
-  <pubDate>Wed, 07 Dec 2022 22:00:00 GMT</pubDate>
+  <pubDate>Thu, 08 Dec 2022 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Neovim built-in options survey needs your contribution</title>
@@ -961,7 +961,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2022-11-22-neovim-builtin-options-survey-needs-your-contribution.html</guid>
-  <pubDate>Mon, 21 Nov 2022 22:00:00 GMT</pubDate>
+  <pubDate>Tue, 22 Nov 2022 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Create and apply randomly generated Base16 color scheme</title>
@@ -986,7 +986,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2022-09-09-random-base16-color-scheme.html</guid>
-  <pubDate>Thu, 08 Sep 2022 21:00:00 GMT</pubDate>
+  <pubDate>Fri, 09 Sep 2022 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Usage of ‘after/ftplugin’ directory for filetype-specific configuration</title>
@@ -1023,7 +1023,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2022-09-02-usage-of-after-ftplugin-directory.html</guid>
-  <pubDate>Thu, 01 Sep 2022 21:00:00 GMT</pubDate>
+  <pubDate>Fri, 02 Sep 2022 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>I contributed to (mostly) 14 top-rated Neovim color schemes. Here are some observations</title>
@@ -1150,7 +1150,7 @@ font-style: inherit;">})</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2022-07-20-i-contributed-to-toprated-neovim-color-schemes.html</guid>
-  <pubDate>Tue, 19 Jul 2022 21:00:00 GMT</pubDate>
+  <pubDate>Wed, 20 Jul 2022 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>StyLua now supports collapsing simple statements</title>
@@ -1168,7 +1168,7 @@ font-style: inherit;">})</span></span></code></pre></div>
 <p>It can take the values <code>Never</code> (default), <code>FunctionOnly</code>, <code>ConditionalOnly</code> or <code>Always</code>. When enabled, “simple” functions or if statements (ones where they only return a value or have a simple statement such as a function call) will be collapsed onto a single line where possible.</p>
 </blockquote>
 <p>So now with <code>collapse_simple_statement = "Always"</code> instead of this …</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
 font-style: inherit;">local</span> <span class="va" style="color: #111111;
@@ -1251,9 +1251,9 @@ font-style: inherit;">1</span></span>
 <span id="cb1-15"><span class="cf" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
-font-style: inherit;">end</span></span></code></pre></div>
+font-style: inherit;">end</span></span></code></pre></div></div>
 <p>… it will be formatted as …</p>
-<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
 font-style: inherit;">local</span> <span class="va" style="color: #111111;
@@ -1328,7 +1328,7 @@ background-color: null;
 font-style: inherit;">1</span> <span class="cf" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
-font-style: inherit;">end</span></span></code></pre></div>
+font-style: inherit;">end</span></span></code></pre></div></div>
 <p>This is great news for Neovim plugin authors and general users as this type of code is very common. Having it on single line improves readability (in my opinion).</p>
 <p>I happily switched to this option. Although using 120 width seems to be quite high sometimes in these cases, so I might start using 100 or even 80.</p>
 <p>(Note: I am not an author, <a href="https://github.com/JohnnyMorganz">JohnnyMorganz</a> is. He is a thoughtful creator and maintainer of StyLua.).</p>
@@ -1339,7 +1339,7 @@ font-style: inherit;">end</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2022-07-07-stylua-now-supports-collapsing-simple-statements.html</guid>
-  <pubDate>Wed, 06 Jul 2022 21:00:00 GMT</pubDate>
+  <pubDate>Thu, 07 Jul 2022 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Useful functions to explore Lua objects</title>
@@ -1353,7 +1353,7 @@ font-style: inherit;">end</span></span></code></pre></div>
 
 <p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/p84iu2/useful_functions_to_explore_lua_objects/">posted on Reddit</a></em></p>
 <p>To look at contents of Lua object <code>a</code> you can execute <code>:lua print(vim.inspect(a))</code>. This will print content inside command line. Following <a href="https://github.com/nanotee/nvim-lua-guide#tips-3">nvim-lua-guide’s tip</a> (<strong>edit</strong>: after making PR to nvim-lua-guide, it is currently in sync with edited version of this post), this can be wrapped into <code>_G.dump()</code> function and become <code>:lua dump(a)</code> (and even <code>:lua dump(a, b)</code>). However, in most cases it doesn’t print <code>nil</code>, which is a shame. This can be solved by sticking with single argument instead of <code>...</code>, but it proved useful in certain cases. So I came up with alternative implementation and decided to share with everyone (<strong>edit</strong>: renamed previous <code>dump</code> for a somewhat more pleasant name):</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
 font-style: inherit;">function</span> <span class="cn" style="color: #8f5902;
@@ -1470,10 +1470,10 @@ font-style: inherit;">...</span></span>
 <span id="cb1-10"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
-font-style: inherit;">end</span></span></code></pre></div>
+font-style: inherit;">end</span></span></code></pre></div></div>
 <p>Now <code>:lua put(nil)</code> will actually print <code>nil</code> instead of just doing nothing. Also <code>:lua put(nil, 1, nil)</code> will print <code>nil</code>, <code>1</code>, <code>nil</code> on separate lines (instead of <code>nil 1</code>).</p>
 <p>But there is more. Sometimes you want to explore a big nested table (like LSP related stuff). It would be nicer to explore as regular text. And so <code>put_text()</code> was born:</p>
-<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
 font-style: inherit;">function</span> <span class="cn" style="color: #8f5902;
@@ -1652,7 +1652,7 @@ font-style: inherit;">...</span></span>
 <span id="cb2-12"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-weight: bold;
-font-style: inherit;">end</span></span></code></pre></div>
+font-style: inherit;">end</span></span></code></pre></div></div>
 <p>When called, this will try to add inspection content under the current cursor position. So now if you want to conveniently explore all fields of <code>vim.loop</code>, just execute <code>:lua put_text(vim.loop)</code>.</p>
 <p>Hope this will help somebody.</p>
 <p>P.S.: To use <code>put()</code> and <code>put_text()</code> inside Neovim session, you need to source this Lua code. Easiest way is to put it inside Lua files sourced on startup (‘init.lua’, for example), and you are good to go.</p>
@@ -1663,7 +1663,7 @@ font-style: inherit;">end</span></span></code></pre></div>
   <category>neovim</category>
   <category>reddit</category>
   <guid>https://echasnovski.com/blog/2021-08-20-useful-functions-to-explore-lua-objects.html</guid>
-  <pubDate>Thu, 19 Aug 2021 21:00:00 GMT</pubDate>
+  <pubDate>Fri, 20 Aug 2021 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Count bounces in table tennis world record</title>
@@ -1723,12 +1723,12 @@ font-style: inherit;">end</span></span></code></pre></div>
 <li>During his 5 hours, 21 minutes, and 4 seconds of world record, Dan Ives made around 50244 bounces (with error less than 100 bounces in either side).</li>
 </ul>
 <div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-sessionInfo()
+<span class="screen-reader-only">Note</span>sessionInfo()
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
@@ -1770,7 +1770,7 @@ sessionInfo()
   <category>curiosity-project</category>
   <category>questionflow</category>
   <guid>https://echasnovski.com/blog/2020-05-11-count-bounces-in-table-tennis-world-record.html</guid>
-  <pubDate>Sun, 10 May 2020 21:00:00 GMT</pubDate>
+  <pubDate>Mon, 11 May 2020 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Statistical uncertainty with R and pdqr</title>
@@ -1791,7 +1791,7 @@ sessionInfo()
 <h1>Prologue</h1>
 <p>I am glad to announce that my latest, long written R package <a href="https://echasnovski.github.io/pdqr/">‘pdqr’</a> is <a href="https://CRAN.R-project.org/package=pdqr">accepted to CRAN</a>. It provides tools for creating, transforming and summarizing custom random variables with distribution functions (as base R ‘p*()’, ‘d*()’, ‘q*()’, and ‘r*()’ functions). You can read a brief overview in <a href="http://www.questionflow.org/2019/08/01/announcing-pdqr/#package-overview">one of my previous posts</a>.</p>
 <p>We will need the following setup:</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="fu" style="color: #4758AB;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="fu" style="color: #4758AB;
 background-color: null;
 font-style: inherit;">library</span>(pdqr)</span>
 <span id="cb1-2"><span class="fu" style="color: #4758AB;
@@ -1805,7 +1805,7 @@ font-style: inherit;"># For the sake of reproducibility</span></span>
 background-color: null;
 font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
 background-color: null;
-font-style: inherit;">20191111</span>)</span></code></pre></div>
+font-style: inherit;">20191111</span>)</span></code></pre></div></div>
 </section>
 <section id="statistical-uncertainty" class="level1">
 <h1>Statistical uncertainty</h1>
@@ -1836,7 +1836,7 @@ font-style: inherit;">20191111</span>)</span></code></pre></div>
 <section id="example-1-single-numerical-estimate" class="level3">
 <h3 class="anchored" data-anchor-id="example-1-single-numerical-estimate">Example 1: single numerical estimate</h3>
 <p>Mean value of ‘mpg’ variable in <code>mtcars</code> dataset is 20.090625. However, having in mind statistical uncertainty, we can ask how precise is this estimation? This can, and should, be reformulated in the following question: <strong>if we repeat sampling sets of 32 cars from general population of all cars, how close their ‘mpg’ sample means will be to each other?</strong> This can be answered by computing bootstrap distribution of sample means (pipe <a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a> function from ‘magrittr’ package is used to simplify notation):</p>
-<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><span class="co" style="color: #5E5E5E;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># Using ordinary bootstrap</span></span>
 <span id="cb2-2">d_mpg_dis_mean <span class="ot" style="color: #003B4F;
@@ -1890,10 +1890,10 @@ background-color: null;
 font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
 background-color: null;
 font-style: inherit;">"Ordinary bootstrap distribution of 'mpg' sample mean"</span></span>
-<span id="cb2-15">)</span></code></pre></div>
+<span id="cb2-15">)</span></code></pre></div></div>
 <p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_discrete-1.png" class="img-fluid"></p>
 <p>If modeling assumption about continuous nature of ‘mpg’ variable is reasonable (which it seems so), you can use “smooth bootstrap” by changing type of initial pdqr-function:</p>
-<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><span class="co" style="color: #5E5E5E;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># Using smooth bootstrap with `type = "continuous"`</span></span>
 <span id="cb3-2">d_mpg_con_mean <span class="ot" style="color: #003B4F;
@@ -1947,10 +1947,10 @@ background-color: null;
 font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
 background-color: null;
 font-style: inherit;">"Smooth bootstrap distribution of 'mpg' sample mean"</span></span>
-<span id="cb3-15">)</span></code></pre></div>
+<span id="cb3-15">)</span></code></pre></div></div>
 <p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_continuous-1.png" class="img-fluid"></p>
 <p>One can also do ordinary bootstrap but represent bootstrap distribution of sample mean with continuous random variable:</p>
-<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><span class="co" style="color: #5E5E5E;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># Using ordinary bootstrap, but treating sample mean as continuous</span></span>
 <span id="cb4-2">d_mpg_con_mean_2 <span class="ot" style="color: #003B4F;
@@ -2009,14 +2009,14 @@ background-color: null;
 font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
 background-color: null;
 font-style: inherit;">"Ordinary bootstrap distribution of 'mpg' continuous sample mean"</span></span>
-<span id="cb4-16">)</span></code></pre></div>
+<span id="cb4-16">)</span></code></pre></div></div>
 <p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_both-1.png" class="img-fluid"></p>
 <p>In this case, sample mean has standard deviation from 1.04067 to 1.1539572 (depends on assumptions about data generating process).</p>
 </section>
 <section id="example-2-single-logical-estimate" class="level3">
 <h3 class="anchored" data-anchor-id="example-2-single-logical-estimate">Example 2: single logical estimate</h3>
 <p>Share of 4-cylinder cars in <code>mtcars</code> is equal to 0.34375. However, it might happen that we don’t care about actual value, but only if it is bigger 0.3 or not. In present data it is bigger, but how sure we can be about that? In other words: <strong>if we repeat sampling sets of 32 cars from general population of all cars, which part of it will have share of 4-cylinder cars bigger than 0.3?</strong>. Here is the way of computing that with ‘pdqr’:</p>
-<div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><span class="co" style="color: #5E5E5E;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># If statistic returns logical value (indicating presence of some feature in</span></span>
 <span id="cb5-2"><span class="co" style="color: #5E5E5E;
@@ -2092,14 +2092,14 @@ background-color: null;
 font-style: inherit;">summ_prob_false</span>(d_cyl_lgl)</span>
 <span id="cb5-20"><span class="do" style="color: #5E5E5E;
 background-color: null;
-font-style: italic;">## [1] 0.2887</span></span></code></pre></div>
+font-style: italic;">## [1] 0.2887</span></span></code></pre></div></div>
 <p>In this case, estimated probability that share of 4-cylinder cars in general population is more than 0.3 is 0.7113.</p>
 </section>
 <section id="example-3-comparison-of-estimates" class="level3">
 <h3 class="anchored" data-anchor-id="example-3-comparison-of-estimates">Example 3: comparison of estimates</h3>
 <p>In <code>mtcars</code> there are 19 cars with automatic transmission (‘am’ variable is 0) and 13 with manual (‘am’ variable is 1). We might be concerned with the following question: <strong>are cars with automatic transmission heavier than cars with manual transmission?</strong> This is an example of question where reformulating is very crucial, because it leads to completely different methodologies. Basically, it is all about dealing with statistical uncertainty and how to measure that one numerical set is bigger than the other.</p>
 <p>First, rather verbose, way of expanding this question is this one: <strong>if we randomly choose a car with automatic transmission (uniformly on set of all cars with automatic transmission) and a car with manual (uniformly on set of all cars with manual transmission), what is the probability that weight of the first one is bigger than the second one?</strong>. With ‘pdqr’ this can be computed straightforwardly by comparing two random variables (which is implemented exactly like the question above; read more <a href="https://echasnovski.github.io/pdqr/reference/methods-group-generic.html#ops">here</a>):</p>
-<div class="sourceCode" id="cb6" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><span class="co" style="color: #5E5E5E;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># Seems reasonable to treat weight as continuous random variable. Note that this</span></span>
 <span id="cb6-2"><span class="co" style="color: #5E5E5E;
@@ -2187,10 +2187,10 @@ background-color: null;
 font-style: inherit;">&gt;=</span> d_wt_am1)</span>
 <span id="cb6-15"><span class="do" style="color: #5E5E5E;
 background-color: null;
-font-style: italic;">## [1] 0.9209063</span></span></code></pre></div>
+font-style: italic;">## [1] 0.9209063</span></span></code></pre></div></div>
 <p>So in this case the answer is that probability of “automatic” cars being heavier than “manual” ones is around 0.921.</p>
 <p>Second way of understanding question about comparing is the following: <strong>is average weight of “automatic” cars bigger than of “manual”?</strong>. This type of questions are more widespread in statistical practice. Having to deal with statistical uncertainty, this should be reformulated: <strong>if we repeat sampling (in parallel pairs) sets of 19 “automatic” cars and of 13 “manual” cars, which part of the set pairs will have mean weight of “automatic” cars bigger?</strong> This question implies creating bootstrap distribution of sample means for “automatic” and “manual” cars with the following comparing:</p>
-<div class="sourceCode" id="cb7" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1">d_wt_am0_mean <span class="ot" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1">d_wt_am0_mean <span class="ot" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">&lt;-</span> d_wt_am0 <span class="sc" style="color: #5E5E5E;
 background-color: null;
@@ -2266,7 +2266,7 @@ background-color: null;
 font-style: inherit;">&gt;=</span> d_wt_am1_mean)</span>
 <span id="cb7-11"><span class="do" style="color: #5E5E5E;
 background-color: null;
-font-style: italic;">## [1] 1</span></span></code></pre></div>
+font-style: italic;">## [1] 1</span></span></code></pre></div></div>
 <p>So in this case the answer is that probability of “automatic” cars being heavier than “manual” ones is 1.</p>
 <p>Computed results can have decisively different outcomes. If researcher sets a standard 0.95 rule, first variant would imply that conclusion ‘“automatic” cars are heavier than “manual”’ isn’t significant, while the second would imply otherwise.</p>
 </section>
@@ -2280,12 +2280,12 @@ font-style: italic;">## [1] 1</span></span></code></pre></div>
 <li>Package ‘pdqr’ offers extensive functionality for describing and estimating statistical uncertainty. Core functions here are <a href="https://echasnovski.github.io/pdqr/reference/new-pdqr.html"><code>new_*()</code> family</a>, <a href="https://echasnovski.github.io/pdqr/reference/form_estimate.html"><code>form_estimate()</code></a>, and <a href="https://echasnovski.github.io/pdqr/reference/methods-group-generic.html#ops">comparison operators</a>.</li>
 </ul>
 <div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-sessionInfo()
+<span class="screen-reader-only">Note</span>sessionInfo()
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
@@ -2331,7 +2331,7 @@ sessionInfo()
   <category>pdqr</category>
   <category>questionflow</category>
   <guid>https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr.html</guid>
-  <pubDate>Sun, 10 Nov 2019 22:00:00 GMT</pubDate>
+  <pubDate>Mon, 11 Nov 2019 00:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Local randomness in R</title>
@@ -2347,7 +2347,7 @@ sessionInfo()
 <h1>Prologue</h1>
 <p>Let’s say we have a deterministic (non-random) problem for which one of the solutions involves randomness. One very common example of such problem is a function minimization on certain interval: it can be solved non-randomly (like in most methods of <a href="https://rdrr.io/r/stats/optim.html">optim()</a>), or randomly (the simplest approach being to generate random set of points on interval and to choose the one with the lowest function value).</p>
 <p>What is a “clean” way of writing a function to solve the problem? The issue with direct usage of randomness inside a function is that it affects the state of outer random number generation:</p>
-<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># Demo problem solving function</span></span>
 <span id="cb1-2">minimize_f <span class="ot" style="color: #003B4F;
@@ -2425,14 +2425,14 @@ background-color: null;
 font-style: inherit;">1</span>)</span>
 <span id="cb1-18"><span class="do" style="color: #5E5E5E;
 background-color: null;
-font-style: italic;">## [1] 0.1016229</span></span></code></pre></div>
+font-style: italic;">## [1] 0.1016229</span></span></code></pre></div></div>
 <p>So how can we get “more clean” implementation which does not affect outer state? This short post is inspired by the following sources: <a href="https://stackoverflow.com/questions/23090958/isolate-randomness-of-a-local-environment-from-the-global-r-process">this StackOverflow question</a> by Yihui Xie and <a href="http://www.cookbook-r.com/Numbers/Saving_the_state_of_the_random_number_generator/">this cookbook advice</a>.</p>
 </section>
 <section id="local-randomness" class="level1">
 <h1>Local randomness</h1>
 <p>The state of random number generation is stored in <a href="https://rdrr.io/r/base/Random.html">.Random.seed</a> variable, which is “an integer vector” and it “can be saved and restored, but should not be altered by the user”. This gives us a very big hint about how to implement “local randomness”: capture state at the start of the function, make necessary computations, and restore state at the end. Bad news is, this also means that we enter here the dark realm of variables and their environments.</p>
 <p><strong>How to “save state”?</strong> In help page there is a note: “The object <code>.Random.seed</code> is only looked for in the user’s workspace”. Here “user’s workspace” seems to mean global environment, which should be addressed with variable <code>.GlobalEnv</code>. So, to “save state” we need to get a value of <code>.Random.seed</code> variable inside global environment. This is a job for <a href="https://rdrr.io/r/base/exists.html">get0()</a>:</p>
-<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1">get_rand_state <span class="ot" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1">get_rand_state <span class="ot" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
 background-color: null;
@@ -2458,9 +2458,9 @@ background-color: null;
 font-style: inherit;">inherits =</span> <span class="cn" style="color: #8f5902;
 background-color: null;
 font-style: inherit;">FALSE</span>)</span>
-<span id="cb2-6">}</span></code></pre></div>
+<span id="cb2-6">}</span></code></pre></div></div>
 <p><strong>How to “restore state”?</strong> We need to assign certain value (of previously saved state) to a <code>.Random.seed</code> variable in global environment. This is a job for <a href="https://rdrr.io/r/base/assign.html">assign()</a>:</p>
-<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1">set_rand_state <span class="ot" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1">set_rand_state <span class="ot" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
 background-color: null;
@@ -2489,7 +2489,7 @@ font-style: inherit;">inherits =</span> <span class="cn" style="color: #8f5902;
 background-color: null;
 font-style: inherit;">FALSE</span>)</span>
 <span id="cb3-5">  }</span>
-<span id="cb3-6">}</span></code></pre></div>
+<span id="cb3-6">}</span></code></pre></div></div>
 <p><strong>How to make “local randomness”?</strong> We can now save and restore random state. The final peace of a puzzle is to make restoration at the end of computations inside a function. This is a job for <a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a>: call for <code>set_rand_state()</code> should be wrapped in <code>on.exit()</code> to perform restoration exactly at the moment when function ends all operations it is supposed to do.</p>
 <p><strong>Notes</strong> about positioning of calls inside a function:</p>
 <ul>
@@ -2497,7 +2497,7 @@ font-style: inherit;">FALSE</span>)</span>
 <li>Simply positioning call to <code>set_rand_state()</code> inside function body right before returning result might be not enough, because previous lines of code can terminate earlier (for example, with error). Function <code>on.exit()</code> guarantees execution of expression.</li>
 </ul>
 <p>Giving all that, the “clean” way of implementing “local randomness” is the following:</p>
-<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1">my_f <span class="ot" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1">my_f <span class="ot" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
 background-color: null;
@@ -2517,9 +2517,9 @@ font-style: inherit;">set_rand_state</span>(old_state))</span>
 <span id="cb4-5">  <span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># The rest of the code</span></span>
-<span id="cb4-6">}</span></code></pre></div>
+<span id="cb4-6">}</span></code></pre></div></div>
 <p>Let’s check this solution on practice:</p>
-<div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1">minimize_f_clean <span class="ot" style="color: #003B4F;
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1">minimize_f_clean <span class="ot" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
 background-color: null;
@@ -2602,7 +2602,7 @@ background-color: null;
 font-style: inherit;">1</span>)</span>
 <span id="cb5-19"><span class="do" style="color: #5E5E5E;
 background-color: null;
-font-style: italic;">## [1] 0.3721984</span></span></code></pre></div>
+font-style: italic;">## [1] 0.3721984</span></span></code></pre></div></div>
 </section>
 <section id="epilogue" class="level1">
 <h1>Epilogue</h1>
@@ -2611,12 +2611,12 @@ font-style: italic;">## [1] 0.3721984</span></span></code></pre></div>
 <li>If you have some non-trivial R problem, there is a good chance that Yihui Xie has already posted a question on StackOverflow about it.</li>
 </ul>
 <div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-sessionInfo()
+<span class="screen-reader-only">Note</span>sessionInfo()
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
@@ -2657,7 +2657,7 @@ sessionInfo()
   <category>rstats</category>
   <category>questionflow</category>
   <guid>https://echasnovski.com/blog/2019-08-13-local-randomness-in-r.html</guid>
-  <pubDate>Mon, 12 Aug 2019 21:00:00 GMT</pubDate>
+  <pubDate>Tue, 13 Aug 2019 00:00:00 GMT</pubDate>
 </item>
 </channel>
 </rss>

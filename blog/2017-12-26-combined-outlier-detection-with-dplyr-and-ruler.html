@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.33">
+<meta name="generator" content="quarto-1.8.24">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -71,16 +71,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../assets/EC2_256x256.png" rel="icon" type="image/png">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8a39431a021621ceac456dfcd09fb292.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-d4933f3589c24838ee12c9f858e4b426.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90a3fe7128b4a7bbcc446d44c884fec5.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f02add0dffcdec21d3284ee72a750fbe.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-aba4b5dbf84275d834ee1f7188d18b2d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-d7bdbb233ae4c8ace8d947e75cddd8fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-b698475982fa43ea5081bf3c1e7b0e82.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-9d3ebe8080303907f109ee0081d6722c.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -123,7 +124,7 @@ const typesetMath = (el) => {
     var macros = [];
     for (var i = 0; i < mathElements.length; i++) {
       var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
         window.katex.render(texText.data, mathElements[i], {
           displayMode: mathElements[i].classList.contains('display'),
           throwOnError: false,
@@ -329,6 +330,8 @@ window.Quarto = {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    </a>
     <a class="navbar-brand" href="../index.html">
     <span class="navbar-title">Evgeni Chasnovski</span>
     </a>
@@ -487,10 +490,10 @@ window.Quarto = {
 <p>We will perform an analysis with the goal to find not typical diamonds listed in <a href="http://ggplot2.tidyverse.org/reference/diamonds.html">diamonds</a> dataset from <a href="http://ggplot2.tidyverse.org/">ggplot2</a> package. Here one observation represents one diamond and is stored as a row in data frame.</p>
 <p>The way we will do that is <strong>by combining different outlier detection techniques to identify rows which are “strong outliers”</strong>, i.e.&nbsp;which might by considered outliers based on several methods.</p>
 <p>Packages required for this analysis:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ruler)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ruler)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="outlier-detection-methods" class="level1">
 <h1>Outlier detection methods</h1>
@@ -500,40 +503,40 @@ window.Quarto = {
 <p><a href="https://en.wikipedia.org/wiki/Standard_score">Z-score</a>, also called a standard score, of an observation is [broadly speaking] a distance from the population center measured in number of normalization units. The default choice for center is sample mean and for normalization unit is standard deviation.</p>
 <p>⬛ <em>Observation is not an outlier based on z-score</em> if its absolute value of default z-score is lower then some threshold (popular choice is 3).</p>
 <p>Here is the function for identifying non-outliers based on z-score:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>isnt_out_z <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">thres =</span> <span class="dv">3</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) {</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>isnt_out_z <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">thres =</span> <span class="dv">3</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) {</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span>(x <span class="sc">-</span> <span class="fu">mean</span>(x, <span class="at">na.rm =</span> na.rm)) <span class="sc">&lt;=</span> thres <span class="sc">*</span> <span class="fu">sd</span>(x, <span class="at">na.rm =</span> na.rm)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>It takes a numeric vector as input and returns logical vector of the same length indicating whether input value is a non-outlier.</p>
 </section>
 <section id="z-score-with-mad" class="level2">
 <h2 class="anchored" data-anchor-id="z-score-with-mad">Z-score with MAD</h2>
 <p><a href="https://en.wikipedia.org/wiki/Median_absolute_deviation">Median Absolute Deviation</a> is a robust normalization unit based on median as a population center. In order to use MAD “as a consistent estimator for the estimation of the standard deviation” one takes its value multiplied by a factor. This way base R function <a href="https://www.rdocumentation.org/packages/stats/versions/3.4.3/topics/mad">mad</a> is implemented.</p>
 <p>⬛ <em>Observation is not an outlier based on MAD</em> if its absolute value of z-score with median as center and MAD as normalization unit is lower then some threshold (popular choice is 3).</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>isnt_out_mad <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">thres =</span> <span class="dv">3</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) {</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>isnt_out_mad <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">thres =</span> <span class="dv">3</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) {</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span>(x <span class="sc">-</span> <span class="fu">median</span>(x, <span class="at">na.rm =</span> na.rm)) <span class="sc">&lt;=</span> thres <span class="sc">*</span> <span class="fu">mad</span>(x, <span class="at">na.rm =</span> na.rm)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="tukeys-fences" class="level2">
 <h2 class="anchored" data-anchor-id="tukeys-fences">Tukey’s fences</h2>
 <p><a href="https://en.wikipedia.org/wiki/Outlier#Tukey's_fences">Tukey’s fences</a> is a technique used in box plots. The non-outlier range is defined with <span class="math inline">\([Q_1 - k(Q_3 - Q_1),~ Q_3 + k(Q_3 - Q_1)]\)</span>, where <span class="math inline">\(Q_1\)</span> and <span class="math inline">\(Q_3\)</span> are the lower and upper quartiles respectively, <span class="math inline">\(k\)</span> - some nonnegative constant (popular choice is 1.5).</p>
 <p>⬛ <em>Observation is not an outlier based on Tukey’s fences</em> if its value lies in non-outlier range.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>isnt_out_tukey <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">k =</span> <span class="fl">1.5</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) {</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>isnt_out_tukey <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">k =</span> <span class="fl">1.5</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) {</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  quar <span class="ot">&lt;-</span> <span class="fu">quantile</span>(x, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.25</span>, <span class="fl">0.75</span>), <span class="at">na.rm =</span> na.rm)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  iqr <span class="ot">&lt;-</span> <span class="fu">diff</span>(quar)</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  (quar[<span class="dv">1</span>] <span class="sc">-</span> k <span class="sc">*</span> iqr <span class="sc">&lt;=</span> x) <span class="sc">&amp;</span> (x <span class="sc">&lt;=</span> quar[<span class="dv">2</span>] <span class="sc">+</span> k <span class="sc">*</span> iqr)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="mahalanobis-distance" class="level2">
 <h2 class="anchored" data-anchor-id="mahalanobis-distance">Mahalanobis distance</h2>
 <p>All previous approaches were created for univariate numerical data. To detect outliers in multivariate case one can use <a href="https://en.wikipedia.org/wiki/Mahalanobis_distance">Mahalanobis distance</a> to reduce to univariate case and then apply known techniques.</p>
 <p>⬛ <em>Observation is not an outlier based on Mahalanobis distance</em> if its distance is not an outlier.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>maha_dist <span class="ot">&lt;-</span> . <span class="sc">%&gt;%</span> <span class="fu">select_if</span>(is.numeric) <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>maha_dist <span class="ot">&lt;-</span> . <span class="sc">%&gt;%</span> <span class="fu">select_if</span>(is.numeric) <span class="sc">%&gt;%</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mahalanobis</span>(<span class="at">center =</span> <span class="fu">colMeans</span>(.), <span class="at">cov =</span> <span class="fu">cov</span>(.))</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>isnt_out_maha <span class="ot">&lt;-</span> <span class="cf">function</span>(tbl, isnt_out_f, ...) {</span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  tbl <span class="sc">%&gt;%</span> <span class="fu">maha_dist</span>() <span class="sc">%&gt;%</span> <span class="fu">isnt_out_f</span>(...)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This function takes as input a data frame of interest (with possible non-numeric columns which are ignored) and function performing univariate outlier detection. It returns a logical vector of the same length as number of rows in input data frame.</p>
 <p>To read more about practical usefulness of Mahalanobis distance in detecting outliers go to <a href="https://www.steffenruefer.com/2016/12/outlier-detection-with-mahalanobis-distance/">Steffen’s very helpful post</a>.</p>
 </section>
@@ -549,11 +552,11 @@ window.Quarto = {
 <li><em>Row is not an outlier based on grouping</em> if it is a part of a non-outlier group [of rows]. A group [of rows] is not an outlier if its summary value is not an outlier among summary values of other groups.</li>
 </ol>
 <p><strong>Note</strong> that all listed approached depend on the choice of the univariate outlier detection method. We will use all three previously listed univariate techniques.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>isnt_out_funs <span class="ot">&lt;-</span> <span class="fu">funs</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>isnt_out_funs <span class="ot">&lt;-</span> <span class="fu">funs</span>(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">z =</span> isnt_out_z,</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">mad =</span> isnt_out_mad,</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">tukey =</span> isnt_out_tukey</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="implementation" class="level2">
 <h2 class="anchored" data-anchor-id="implementation">Implementation</h2>
@@ -561,7 +564,7 @@ window.Quarto = {
 <section id="column-based-non-outlier-rows" class="level3">
 <h3 class="anchored" data-anchor-id="column-based-non-outlier-rows">Column based non-outlier rows</h3>
 <p>For <code>diamonds</code> dataset rules for column based non-outlier rows can be defined based on 7 numeric columns and 3 presented univariate detection methods. There is a convenient way of computing all them at once using <a href="http://dplyr.tidyverse.org/reference/summarise_all.html">scoped variant</a> of <code>dplyr::transmute()</code>:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>diamonds <span class="sc">%&gt;%</span> <span class="fu">transmute_if</span>(is.numeric, isnt_out_funs)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>diamonds <span class="sc">%&gt;%</span> <span class="fu">transmute_if</span>(is.numeric, isnt_out_funs)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="do">## # A tibble: 53,940 x 21</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="do">##   carat_z depth_z table_z price_z   x_z   y_z   z_z carat_mad depth_mad</span></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="do">##     &lt;lgl&gt;   &lt;lgl&gt;   &lt;lgl&gt;   &lt;lgl&gt; &lt;lgl&gt; &lt;lgl&gt; &lt;lgl&gt;     &lt;lgl&gt;     &lt;lgl&gt;</span></span>
@@ -573,13 +576,13 @@ window.Quarto = {
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="do">## # ... with 5.394e+04 more rows, and 12 more variables: table_mad &lt;lgl&gt;,</span></span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="do">## #   price_mad &lt;lgl&gt;, x_mad &lt;lgl&gt;, y_mad &lt;lgl&gt;, z_mad &lt;lgl&gt;,</span></span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="do">## #   carat_tukey &lt;lgl&gt;, depth_tukey &lt;lgl&gt;, table_tukey &lt;lgl&gt;,</span></span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="do">## #   price_tukey &lt;lgl&gt;, x_tukey &lt;lgl&gt;, y_tukey &lt;lgl&gt;, z_tukey &lt;lgl&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="do">## #   price_tukey &lt;lgl&gt;, x_tukey &lt;lgl&gt;, y_tukey &lt;lgl&gt;, z_tukey &lt;lgl&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The result has outputs for 21 methods. Their names are of the form &lt;column name&gt;_&lt;method name&gt;. So the name ‘carat_z’ is interpreted as result of univariate method with name ‘z’ for column with name ‘carat’.</p>
 </section>
 <section id="mahalanobis-based-non-outlier-rows" class="level3">
 <h3 class="anchored" data-anchor-id="mahalanobis-based-non-outlier-rows">Mahalanobis based non-outlier rows</h3>
 <p>To define non-outlier rows based on Mahalanobis distance one should apply univariate method for distances computed for some subset of numeric columns. To simplify a little bit, we will one “subset” with all numeric columns and all listed methods:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>diamonds <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>diamonds <span class="sc">%&gt;%</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="at">maha =</span> <span class="fu">maha_dist</span>(.)) <span class="sc">%&gt;%</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute_at</span>(<span class="fu">vars</span>(<span class="at">maha =</span> maha), isnt_out_funs)</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="do">## # A tibble: 53,940 x 3</span></span>
@@ -590,13 +593,13 @@ window.Quarto = {
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="do">## 3   TRUE    FALSE      FALSE</span></span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="do">## 4   TRUE     TRUE       TRUE</span></span>
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="do">## 5   TRUE     TRUE       TRUE</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="do">## # ... with 5.394e+04 more rows</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="do">## # ... with 5.394e+04 more rows</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The result has outputs for 3 methods. Their names are considered as method names. <strong>Note</strong> that with this approach outlier rows are not only the ones far from multivariate center, but also the ones that are unnaturally close to it.</p>
 </section>
 <section id="group-based-non-outlier-rows" class="level3">
 <h3 class="anchored" data-anchor-id="group-based-non-outlier-rows">Group based non-outlier rows</h3>
 <p>Definition of non-outlier rows based on grouping depends on group summary function and univariate outlier detection method. As grouping column we will choose all non-numeric columns (<code>cut</code>, <code>color</code> and <code>clarity</code>) <a href="http://tidyr.tidyverse.org/reference/unite.html">united</a> into one called <code>group</code> (for later easier imputation of non-outlier rows). As reasonable summary functions we will choose mean value of some numeric column (total of 7 functions):</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="ot">&lt;-</span> diamonds <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="ot">&lt;-</span> diamonds <span class="sc">%&gt;%</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unite</span>(<span class="at">col =</span> <span class="st">"group"</span>, cut, color, clarity)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>compute_group_non_outliers <span class="ot">&lt;-</span> . <span class="sc">%&gt;%</span></span>
@@ -621,14 +624,14 @@ window.Quarto = {
 <span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="do">## # ... with 271 more rows, and 13 more variables: depth_mad &lt;lgl&gt;,</span></span>
 <span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="do">## #   table_mad &lt;lgl&gt;, price_mad &lt;lgl&gt;, x_mad &lt;lgl&gt;, y_mad &lt;lgl&gt;,</span></span>
 <span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="do">## #   z_mad &lt;lgl&gt;, carat_tukey &lt;lgl&gt;, depth_tukey &lt;lgl&gt;, table_tukey &lt;lgl&gt;,</span></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="do">## #   price_tukey &lt;lgl&gt;, x_tukey &lt;lgl&gt;, y_tukey &lt;lgl&gt;, z_tukey &lt;lgl&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="do">## #   price_tukey &lt;lgl&gt;, x_tukey &lt;lgl&gt;, y_tukey &lt;lgl&gt;, z_tukey &lt;lgl&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The result has outputs for 21 methods applied to the 276 groups. Their names are of the form &lt;column name for summary function&gt;_&lt;method name&gt;. So the name ‘carat_z’ is interpreted as result of method ‘z’ for summary function equal to mean value of ‘carat’ column. Column <code>group</code> defines names of the groupings.</p>
 </section>
 </section>
 <section id="exposure" class="level2">
 <h2 class="anchored" data-anchor-id="exposure">Exposure</h2>
 <p>Column and Mahalanobis based definition of non-outlier rows can be expressed with <a href="https://echasnovski.github.io/ruler/reference/row-pack.html">row packs</a> and group based - as <a href="https://echasnovski.github.io/ruler/reference/group-pack.html">group packs</a>.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>row_packs_isnt_out <span class="ot">&lt;-</span> <span class="fu">row_packs</span>(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>row_packs_isnt_out <span class="ot">&lt;-</span> <span class="fu">row_packs</span>(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Non-outliers based on some column</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">column =</span> . <span class="sc">%&gt;%</span> <span class="fu">transmute_if</span>(is.numeric, isnt_out_funs),</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Non-outliers based on Mahalanobis distance</span></span>
@@ -640,9 +643,9 @@ window.Quarto = {
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Non-outliers based on grouping</span></span>
 <span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">group =</span> compute_group_non_outliers,</span>
 <span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">.group_vars =</span> <span class="st">"group"</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Application of all those packs is called <a href="https://echasnovski.github.io/ruler/reference/expose.html">exposing process</a>. The result is an <a href="https://echasnovski.github.io/ruler/reference/exposure.html">exposure</a> from which we can extract <a href="https://echasnovski.github.io/ruler/reference/ruler-report.html">tidy data validation report</a> using <code>get_report</code>.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Don't remove obeyers to compute total number of applied rules</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Don't remove obeyers to compute total number of applied rules</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>full_report <span class="ot">&lt;-</span> data_tbl <span class="sc">%&gt;%</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expose</span>(row_packs_isnt_out, group_packs_isnt_out,</span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">.remove_obeyers =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
@@ -652,11 +655,11 @@ window.Quarto = {
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(pack, rule)</span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>breaker_report <span class="ot">&lt;-</span> full_report <span class="sc">%&gt;%</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(value <span class="sc">%in%</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(value <span class="sc">%in%</span> <span class="cn">TRUE</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><code>used_rules</code> contains data about all definitions of non-outlier rows applied to data. They are encoded with combination of columns <code>pack</code> and <code>rule</code>.</p>
 <p><code>breaker_report</code> contains data about data units that break certain rules. Packs <code>column</code> and <code>maha</code> has actual row numbers of <code>data_tbl</code> listed in <code>id</code> column of report (for rows which should be considered as outliers).</p>
 <p>On the other hand, pack <code>group</code> defines group pack and is represented in <code>breaker_report</code> with <code>id</code> 0. To obtain row outliers based on grouping we need to expand those rows with information about rows in the data that belong to those groups. This can be done using <code>dplyr::left_join()</code>:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>group_breakers <span class="ot">&lt;-</span> breaker_report <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>group_breakers <span class="ot">&lt;-</span> breaker_report <span class="sc">%&gt;%</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter group packs</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pack <span class="sc">==</span> <span class="st">"group"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Expand rows by matching group with its rows</span></span>
@@ -693,10 +696,10 @@ window.Quarto = {
 <span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="do">## 10 group   table_mad   920</span></span>
 <span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="do">## 11 group table_tukey     8</span></span>
 <span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a><span class="do">## 12 group     table_z     7</span></span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a><span class="do">## 13 group         z_z    23</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a><span class="do">## 13 group         z_z    23</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Tibble <code>outliers</code> contains data about outlier rows. Combination of columns <code>pack</code> and <code>rule</code> defines non-outlier/outlier definition approach and column <code>id</code> defines row number of input data frame that should be considered an outlier based on the definition.</p>
 <p>Definitions with most outliers are as follows:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>outliers <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>outliers <span class="sc">%&gt;%</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(pack, rule, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="do">## # A tibble: 37 x 3</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="do">##     pack        rule     n</span></span>
@@ -706,14 +709,14 @@ window.Quarto = {
 <span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="do">## 3 column   price_mad  5386</span></span>
 <span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="do">## 4 column price_tukey  3540</span></span>
 <span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="do">## 5 column   table_mad  2560</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="do">## # ... with 32 more rows</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="do">## # ... with 32 more rows</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Two out of three Mahalanobis based definition yielded the most row outliers.</p>
 </section>
 <section id="combination" class="level2">
 <h2 class="anchored" data-anchor-id="combination">Combination</h2>
 <p>Given <code>outliers</code> data frame, one can do whatever he/she wants to identify outliers. Here we will use the basic combination approach based on average score.</p>
 <p><em>Combined outlier detection score</em> for certain row can be defined as <strong>share of applied methods that tagged it as outlier</strong>. Alternatively one can define it just as number of those methods as it will only change absolute value of the result and not the order.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>outlier_score <span class="ot">&lt;-</span> outliers <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>outlier_score <span class="ot">&lt;-</span> outliers <span class="sc">%&gt;%</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># nrow(used_rules) equals total number of applied methods</span></span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">score =</span> <span class="fu">n</span>() <span class="sc">/</span> <span class="fu">nrow</span>(used_rules))</span>
@@ -732,9 +735,9 @@ window.Quarto = {
 <span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="do">##  7 26745 0.4000000</span></span>
 <span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="do">##  8 27430 0.4000000</span></span>
 <span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="do">##  9 15952 0.3777778</span></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="do">## 10 17197 0.3777778</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="do">## 10 17197 0.3777778</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Finally we will tag those rows as <strong>strong outliers</strong> which has score more than 0.2 (subjective threshold which should be researched more).</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>diam_tbl <span class="ot">&lt;-</span> diamonds <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>diam_tbl <span class="ot">&lt;-</span> diamonds <span class="sc">%&gt;%</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id =</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="at">y =</span> outlier_score, <span class="at">by =</span> <span class="st">"id"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
@@ -743,10 +746,10 @@ window.Quarto = {
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Total number of outliers</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(diam_tbl<span class="sc">$</span>score <span class="sc">&gt;</span> <span class="fl">0.2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(diam_tbl<span class="sc">$</span>score <span class="sc">&gt;</span> <span class="fl">0.2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Tibble <code>diam_tbl</code> is basically the <code>diamonds</code> but with three more columns: <code>id</code> for row number, <code>score</code> for combined outlier score and <code>is_out</code> for non-outlier/outlier tag.</p>
 <p>Plots illustrating strong outliers:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>())</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>())</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>plot_outliers <span class="ot">&lt;-</span> <span class="cf">function</span>(tbl, x, y, facet_var) {</span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  tbl <span class="sc">%&gt;%</span></span>
@@ -762,15 +765,15 @@ window.Quarto = {
 <span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>))</span>
 <span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>diam_tbl <span class="sc">%&gt;%</span> <span class="fu">plot_outliers</span>(<span class="st">"carat"</span>, <span class="st">"price"</span>, <span class="at">facet_var =</span> <span class="st">"cut"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>diam_tbl <span class="sc">%&gt;%</span> <span class="fu">plot_outliers</span>(<span class="st">"carat"</span>, <span class="st">"price"</span>, <span class="at">facet_var =</span> <span class="st">"cut"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2017-12-26-combined-outlier-detection-with-dplyr-and-ruler/illustrating-plots-1.png" class="img-fluid"></p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>diam_tbl <span class="sc">%&gt;%</span> <span class="fu">plot_outliers</span>(<span class="st">"x"</span>, <span class="st">"depth"</span>, <span class="at">facet_var =</span> <span class="st">"color"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>diam_tbl <span class="sc">%&gt;%</span> <span class="fu">plot_outliers</span>(<span class="st">"x"</span>, <span class="st">"depth"</span>, <span class="at">facet_var =</span> <span class="st">"color"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2017-12-26-combined-outlier-detection-with-dplyr-and-ruler/illustrating-plots-2.png" class="img-fluid"></p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>diam_tbl <span class="sc">%&gt;%</span> <span class="fu">plot_outliers</span>(<span class="st">"price"</span>, <span class="st">"table"</span>, <span class="at">facet_var =</span> <span class="st">"clarity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>diam_tbl <span class="sc">%&gt;%</span> <span class="fu">plot_outliers</span>(<span class="st">"price"</span>, <span class="st">"table"</span>, <span class="at">facet_var =</span> <span class="st">"clarity"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><img src="2017-12-26-combined-outlier-detection-with-dplyr-and-ruler/illustrating-plots-3.png" class="img-fluid"></p>
 <p>Based on those plots we see the complicated nature of “strong outliers”. They are not necessary located “on the edge” of two-dimensional scatter plots, but most extreme cases are tagged as outliers.</p>
 <p>Also one interesting observation: most outliers are concentrated in the combination of “Fair” cut, “J” colour and “I1” clarity which are worst options among their features. The reason of this effect is group-based definitions of non-outliers which tagged certain groups more than others:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>breaker_report <span class="sc">%&gt;%</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>breaker_report <span class="sc">%&gt;%</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pack <span class="sc">==</span> <span class="st">"group"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(var, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">10</span>)</span>
@@ -787,7 +790,7 @@ window.Quarto = {
 <span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="do">##  8   Fair_E_I1     3</span></span>
 <span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="do">##  9   Fair_F_I1     3</span></span>
 <span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="do">## 10   Fair_H_I1     3</span></span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="do">## # ... with 37 more rows</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="do">## # ... with 37 more rows</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Here we see that “Fair” cut is among majority of top breaker groups. There are also some interesting combinations: <code>Fair_D_I1</code> (“worst”-“best”-“worst”), <code>Fair_J_I1</code> (“worst”-“worst”-“worst”), <code>Ideal_J_I1</code> (“best”-“worst”-“worst”).</p>
 <p>This fact might be interpreted as <strong>suggested combined outlier detection approach discovered notion of diamond quality without prior knowledge about it</strong>.</p>
 </section>
@@ -800,12 +803,12 @@ window.Quarto = {
 <li>Suggested “strong outlier” observations in <code>diamonds</code> dataset are not only those with extreme numerical values but also ones based on quality of diamonds. This is achieved without prior knowledge of “diamond quality” notion.</li>
 </ul>
 <div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-sessionInfo()
+<span class="screen-reader-only">Note</span>sessionInfo()
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
@@ -916,13 +919,14 @@ sessionInfo()
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy
