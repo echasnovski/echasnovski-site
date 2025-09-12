@@ -1,0 +1,45 @@
+---
+title: "PSA for color scheme authors: you might want to adjust `PmenuSel`"
+author: Evgeni Chasnovski
+date: 2024-08-29
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/1f439w8/psa_for_color_scheme_authors_you_might_want_to/)*
+
+TL;DR: to account for possible new custom highlighting in popup menu items, you might want to switch `fg` and `bg` colors in `Pmenu*Sel` groups while adding `reverse` attribute.
+
+------
+
+Neovim Nightly (0.11) recently landed new features regarding adding custom highlighting to items of built-in popup menu:
+
+- Whole item via `hl_group` ([thanks to glepnir](https://github.com/neovim/neovim/pull/29876)).
+- Only "kind" field via `kind_hlgroup` ([also thanks to glepnir](https://github.com/neovim/neovim/pull/30128)).
+
+Both of the fields combine highlight attributes with underlying highlighting from `Pmenu*` groups. This is a great choice because it allows plugin authors to use highlight groups which modify only foreground (a.k.a. text) and it will "reuse" background of popup menu. An alternative would have been to expose special highlight groups which **each color scheme** would have needed to define (while only adding its own popup menu background).
+
+Item highlighting usually should work well with displaying text in regular popup menu item (if it has background similar to `Normal` in terms of lightness), **but** might result into barely readable text when item is selected. This can be the case if color scheme chooses for `PmenuSel` (and its variants like `PmenuKindSel`, etc.) to have intentionally inverted lightness compared to `Pmenu`. I've encountered this with 'mini.hues' and default color scheme (which is [planned to be fixed](https://github.com/neovim/neovim/pull/30183)).
+
+Luckily, there is a solution, albeit a bit unintuitive one: switch `fg`<->`bg` attributes and add `reverse` attribute. Here is an example from bundled 'evening' color scheme:
+
+- Current:
+
+```
+hi PmenuSel      guifg=#000000 guibg=#bebebe gui=NONE cterm=NONE
+hi PmenuMatchSel guifg=#8b008b guibg=#bebebe gui=NONE cterm=NONE
+```
+
+- Adjusted `PmenuSel`:
+
+```
+hi PmenuSel      guifg=#bebebe guibg=#000000 gui=reverse cterm=reverse
+hi PmenuMatchSel guifg=#bebebe guibg=#8b008b gui=reverse cterm=reverse
+```
+
+Here is [a screenshot](https://github.com/user-attachments/assets/8d2b2550-1609-4f27-aac1-ab9d2a0afef7) of before (left) and after (right) 
+
+This works because combining highlight attributes first combines foreground/background colors and *only after that* applies `reverse`. It will keep the same visuals if there is no highlighting, but should also work with reasonable choices of `hl_group` and `kind_hlgroup` in completion items.
+
+------
+
+If you are a color scheme author or a concerned user of one, I think making this change is worth it. You can use the test code example [from PR to default color scheme](https://github.com/neovim/neovim/pull/30183). Hope it helps.

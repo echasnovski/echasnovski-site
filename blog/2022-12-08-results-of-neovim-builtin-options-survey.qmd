@@ -1,0 +1,33 @@
+---
+title: "Results of \"Neovim built-in options survey\""
+author: Evgeni Chasnovski
+date: 2022-12-08
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/zg44mm/results_of_neovim_builtin_options_survey_more_in/)*
+
+![](2022-12-08-results-of-neovim-builtin-options-survey/chart.png)
+
+Hello, Neovim users!
+
+Around two weeks ago I decided to make a [Neovim built-in options survey](./2022-11-22-neovim-builtin-options-survey-needs-your-contribution.qmd). Now it is closed, as it doesn't seem to have an intensive answer supply (last one was more than 24 hours ago).
+
+There were total 227 legible answers. Not as many as I had hoped starting it, but it is what it is.
+
+Main summary of basic options are in the post image. To answer questions in the survey announcement:
+
+- `What Leader key is used the most?` - Space.
+- `Tabs or spaces?` - Spaces (based on 82% of `expandtab=true`)
+- `Absolute, relative, or no line numbers?` - Seems like both absolute and relative. But probably more absolute ones, based on 86% of `number=true`.
+- `Traditional or global statusline?` - Global, but with a tight margin.
+- `Permanent tabline or not?` - Not permanent, default one.
+- `Use persistent undo or not?` - Yes to persistent undo
+- `showmode or noshowmode?` - `noshowmode`
+- `wrap or nowrap?` - `wrap`.
+
+Here is [a gist with full results](https://gist.github.com/echasnovski/fa70dc75c475369747d2a485a13303fb) along with description of how to read them and scripts used
+
+I also created a [GitHub issue in Neovim repository](https://github.com/neovim/neovim/issues/21342) to discuss possibility of default values change. If you agree with changing options which reached 80% for some non-default value (as per [commentary of Justin M. Keys](https://www.reddit.com/r/neovim/comments/z1tmjg/comment/ixfp0gn/?utm_source=share&utm_medium=web2x&context=3)), please upvote initial issue message.
+
+Thanks for reading and participating!

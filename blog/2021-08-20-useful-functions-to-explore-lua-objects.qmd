@@ -1,0 +1,48 @@
+---
+title: "Useful functions to explore Lua objects"
+author: Evgeni Chasnovski
+date: 2021-08-20
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/p84iu2/useful_functions_to_explore_lua_objects/)*
+
+To look at contents of Lua object `a` you can execute `:lua print(vim.inspect(a))`. This will print content inside command line. Following [nvim-lua-guide's tip](https://github.com/nanotee/nvim-lua-guide#tips-3) (**edit**: after making PR to nvim-lua-guide, it is currently in sync with edited version of this post), this can be wrapped into `_G.dump()` function and become `:lua dump(a)` (and even `:lua dump(a, b)`). However, in most cases it doesn't print `nil`, which is a shame. This can be solved by sticking with single argument instead of `...`, but it proved useful in certain cases. So I came up with alternative implementation and decided to share with everyone (**edit**: renamed previous `dump` for a somewhat more pleasant name):
+
+```lua
+function _G.put(...)
+  local objects = {}
+  for i = 1, select('#', ...) do
+    local v = select(i, ...)
+    table.insert(objects, vim.inspect(v))
+  end
+
+  print(table.concat(objects, '\n'))
+  return ...
+end
+```
+
+Now `:lua put(nil)` will actually print `nil` instead of just doing nothing. Also `:lua put(nil, 1, nil)` will print `nil`, `1`, `nil` on separate lines (instead of `nil 1`).
+
+But there is more. Sometimes you want to explore a big nested table (like LSP related stuff). It would be nicer to explore as regular text. And so `put_text()` was born:
+
+```lua
+function _G.put_text(...)
+  local objects = {}
+  for i = 1, select('#', ...) do
+    local v = select(i, ...)
+    table.insert(objects, vim.inspect(v))
+  end
+
+  local lines = vim.split(table.concat(objects, '\n'), '\n')
+  local lnum = vim.api.nvim_win_get_cursor(0)[1]
+  vim.fn.append(lnum, lines)
+  return ...
+end
+```
+
+When called, this will try to add inspection content under the current cursor position. So now if you want to conveniently explore all fields of `vim.loop`, just execute `:lua put_text(vim.loop)`.
+
+Hope this will help somebody.
+
+P.S.: To use `put()` and `put_text()` inside Neovim session, you need to source this Lua code. Easiest way is to put it inside Lua files sourced on startup ('init.lua', for example), and you are good to go.

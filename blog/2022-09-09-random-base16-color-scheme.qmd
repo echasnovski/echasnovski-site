@@ -1,0 +1,18 @@
+---
+title: "Create and apply randomly generated Base16 color scheme"
+author: Evgeni Chasnovski
+date: 2022-09-09
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/x9r5zh/create_and_apply_randomly_generated_base16_color/)*
+
+{{< video 2022-09-09-random-base16-color-scheme/demo.mp4 >}}
+
+Hello, Neovim users!
+
+I decided to share a bit silly, but fun way to choose a color scheme you like. Maybe even have this in your startup config, if you feel particularly adventurous :)
+
+It uses [mini.base16](https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-base16.md) module of [mini.nvim](https://github.com/nvim-mini/mini.nvim) for both palette generation and color scheme application. Granted, results are not *that* different from one another (mainly because they share same highlight group definitions and idea behind making distinctive accent colors), but vary quite a bit.
+
+Here is a [gist with code](https://gist.github.com/echasnovski/2adeb8ca809126ce35ec644918fce413). It has the instructions of how to use it.

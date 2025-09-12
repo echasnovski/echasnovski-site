@@ -1,0 +1,45 @@
+---
+title: "Average Neovim color scheme"
+author: Evgeni Chasnovski
+date: 2023-04-24
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/12xg27j/have_you_ever_wondered_how_average_popular_neovim/)*
+
+![](2023-04-24-average-color-scheme/demo-dark.png)
+
+![](2023-04-24-average-color-scheme/demo-light.png)
+
+Hello, Neovim users!
+
+For quite some time I was wondering how would "average popular Neovim color scheme" look like. I mean, it would certainly contain much purple and blue, but **how much exactly**? It is not a trivial thing to compute.
+
+Thankfully, the recent release of ['mini.colors'](https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-colors.md) makes this task much more manageable.
+
+I decided that general approach to averaging color schemes would be as follows:
+
+- Highlight group will be present in output if it is present (explicitly defined and differs from Neovim's built-in values) in **all** reference color schemes.
+- Attribute of highlight group (like `foreground`, `background`, `underline`, etc.) is present if it is present in **all** reference color schemes.
+
+Of course, there are other ways to tackle this problem, but such a strict approach will ensure that output palette is as consistent as possible. Otherwise output will contain many different but similar colors, which doesn't seem good.
+
+For reference color schemes I decided to go through [awesome-neovim](https://github.com/rockerBOO/awesome-neovim) and pick top 5 Lua implemented color schemes with most stars. Here is the final list (as of 2023-04-20):
+
+| Color scheme                                                                  | Stargazers |
+|-------------------------------------------------------------------------------|------------|
+| [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim)             | 3476 stars |
+| [catppuccin/nvim](https://github.com/catppuccin/nvim)                         | 2639 stars |
+| [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim)             | 2219 stars |
+| [EdenEast/nightfox.nvim](https://github.com/EdenEast/nightfox.nvim)           | 2055 stars |
+| [projekt0n/github-nvim-theme](https://github.com/projekt0n/github-nvim-theme) | 1379 stars |
+
+(Full disclosure: initially I wanted to go with "top 5 Neovim color schemes" which would have included [sainnhe/everforest](https://github.com/sainnhe/everforest) as fifth one. But although its colors are sooooooo nice, it is quite different in terms of which attributes it defines for certain highlight groups. Including it instead of 'projekt0n/github-nvim-theme' resulted in not very coherent output. So in the end it was decided to take "top 5 **Lua** color schemes".)
+
+The result is in the post. Yes, it is blue-purple-ish, as expected. Also in my opinion it does have a quality of "looks like tokyonight/catppuccin/kanagawa, but not quite".
+
+[Here is a gist](https://gist.github.com/echasnovski/283c6676bd7b29124d56b0b262b09c69) with colorscheme files for average dark and light variants (put any of them into `~/.config/nvim/colors` and use `:colorscheme` command as usual) along with a script used to create them. Please don't expect much from actually applying color scheme files, as they define only basic highlight groups with very limited advanced support like many plugins, tree-sitter, semantic tokens, etc.
+
+Besides fulfilling general curiosity, I also plan to use this result to make a data-driven decisions for a new upcoming color scheme generator in 'mini.nvim'.
+
+Hope you enjoyed reading this!

@@ -1,0 +1,26 @@
+---
+title: "Neovim now has built-in plugin manager"
+author: Evgeni Chasnovski
+date: 2025-07-04
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/1lriv80/neovim_now_has_builtin_plugin_manager/)*
+
+Hello, Neovim users!
+
+After rounds of discussions and iterations, Neovim [now has a minimal built-in plugin manager](https://github.com/neovim/neovim/pull/34009). Its functionality is present only on latest `master` branch and located in `vim.pack` module. It is planned to land in 0.12 (which is still not quite soon).
+
+You can read more about the design and workflow [here](https://github.com/neovim/neovim/blob/cbfc3d1cdc199ce65368a2f40dc4b1ddc4331714/runtime/doc/lua.txt#L2529). You can also see the demo of the latest state in the [PR's first comment](https://github.com/neovim/neovim/pull/34009#issue-3060712969).
+
+The overall design is based on 'mini.deps' module, but it is visibly reworked to fix some of its shortcomings and to fit "minimal built-in plugin manager" requirements.
+
+Couple of *very important* notes:
+
+- I can not stress this enough, this is yet a **WORK IN PROGRESS**. There are [many planned improvements](https://github.com/neovim/neovim/issues/34763). Expect breaking changes without notice. Only use it if you are comfortable fixing suddenly not working config.
+
+- Early testing of *existing features* is appreciated. Suggestions about new features will be met very conservatively (at least until there is an ongoing planned work).
+
+- It is not meant to provide all advanced plugin manager features. If you prefer to use a more capable plugin manager, it is totally normal. Probably even possible to use side-by-side with `vim.pack`.
+
+There is still a long road ahead and we'll walk it one step at a time. Thanks for reading and using Neovim!

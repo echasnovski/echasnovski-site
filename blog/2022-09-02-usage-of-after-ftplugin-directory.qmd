@@ -1,0 +1,25 @@
+---
+title: "Usage of 'after/ftplugin' directory for filetype-specific configuration"
+author: Evgeni Chasnovski
+date: 2022-09-02
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/x3zp6t/usage_of_afterftplugin_directory_for/)*
+
+Do you create any configuration that is specific to a certain file type (like setting local options or buffer-local variables, creating local mappings, running some function, etc.)?
+
+- **No**. Sooner or later you probably will. So let's pretend that the answer is...
+- **Yes**. Do you use autocommands with `FileType` event for this?
+    - **No**. Good. There is probably nothing valuable for you to read here. Sorry for taking your time.
+    - **Yes**. Although totally doable, there is another approach which is not popularized much. You can create 'after/ftplugin' directory within your configuration and put filetype-named files to be sourced for this file type. As a bonus, this is technically a way to create a "filetype plugin", so you can now say that you are a plugin author and maintainer.
+    Example: 'after/ftplugin/lua.lua' will be sourced for 'lua' file types (specifically, every time `filetype` buffer option is set to 'lua'). Don't forget to use local variants of setting options (`:setlocal` or `vim.opt_local`) and creating mappings (`vim.api.nvim_buf_set_keymap()`).
+
+This is meant as a Friday post to make more people aware of 'after/ftplugin' directory, because I find this approach really more structured than using autocommands. For reference, here is [how I do it](https://github.com/echasnovski/nvim/tree/master/after/ftplugin).
+
+Some further reading:
+
+- `:h ftplugin` (more in-depth about this approach; not really needed for simple use cases)
+- `:h ftplugin-special` (notes about special things to use in these files)
+- `:h lua-vim-setlocal` (use `vim.opt_local` to set option locally)
+- `:h after-directory` (use 'after' directory so that these options are not overridden by defaults)

@@ -1,0 +1,43 @@
+---
+title: "I contributed to (mostly) 14 top-rated Neovim color schemes. Here are some observations"
+author: Evgeni Chasnovski
+date: 2022-07-20
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/w3jhuc/i_contributed_to_mostly_14_toprated_neovim_color/)*
+
+Some time ago I decided to improve user experience for my [mini.nvim](https://github.com/nvim-mini/mini.nvim) plugin by adding its explicit support to popular color schemes. Although out of the box experience should be pretty good (most coloring is done by linking to carefully selected builtin highlight groups), having them tailored to color scheme choices is certainly better.
+
+So I went to [rockerBoo/awesome-neovim](https://github.com/rockerBOO/awesome-neovim#colorscheme) and selected a handful of color schemes subjectively judging by the number of Github stars, time since latest commit, and language of plugin (Lua preferred). It was not a very scientifically rigorous process which lead to 14 chosen color schemes.
+
+Here is a table of how those contributions went. Now, I want to state right away that this is no way, shape, or form should be used to judge how actively those maintainers watch for their projects. Everyone is different and has limited amount of time in a day. This is only a data about my experience at some point in past.
+
+| Color scheme PR                                                                           | Language  | Time to first reaction      | Outcome              |
+|-------------------------------------------------------------------------------------------|-----------|-----------------------------|----------------------|
+| [bluz71/vim-moonfly-colors](https://github.com/bluz71/vim-moonfly-colors/pull/22)         | Vimscript | ~ 1 day                     | Revised and accepted |
+| [bluz71/vim-nightfly-guicolors](https://github.com/bluz71/vim-nightfly-guicolors/pull/33) | Vimscript | ~ 1 day                     | Revised and accepted |
+| [catppuccin/nvim](https://github.com/catppuccin/nvim/pull/166)                            | Lua       | ~ 6 days                    | Merged               |
+| [EdenEast/nightfox.nvim](https://github.com/EdenEast/nightfox.nvim/pull/174)              | Lua       | ~ 1 day                     | Merged               |
+| [folke/tokyonight.nvim](https://github.com/folke/tokyonight.nvim/pull/179)                | Lua       | > 14 days (no reaction yet) | Open                 |
+| [marko-cerovac/material.nvim](https://github.com/marko-cerovac/material.nvim/pull/103)    | Lua       | ~ 3 days                    | Merged               |
+| [navarasu/onedark.nvim](https://github.com/navarasu/onedark.nvim/pull/87)                 | Lua       | ~ 1 day                     | Merged               |
+| [projekt0n/github-nvim-theme](https://github.com/projekt0n/github-nvim-theme/pull/194)    | Lua       | ~ 1 day                     | Merged               |
+| [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim/pull/57)                 | Lua       | ~ 7 days                    | Waiting for approval |
+| [sainnhe/edge](https://github.com/sainnhe/edge/pull/59)                                   | Vimscript | ~ 1 day                     | Merged               |
+| [sainnhe/everforest](https://github.com/sainnhe/everforest/pull/69)                       | Vimscript | ~ 1 day                     | Merged               |
+| [sainnhe/gruvbox-material](https://github.com/sainnhe/gruvbox-material/pull/133)          | Vimscript | ~ 1 day                     | Merged               |
+| [sainnhe/sonokai](https://github.com/sainnhe/sonokai/pull/65)                             | Vimscript | ~ 1 day                     | Merged               |
+| [shaunsingh/nord.nvim](https://github.com/shaunsingh/nord.nvim/pull/99)                   | Lua       | ~ 1 day                     | Merged               |
+
+Some personal observations after all this was done:
+
+- Having the easily found documentation about how to add plugin support is really useful. Most of contributions were pretty straightforward, but I did end up searching for commits to get a sense of preferred workflow.
+
+- Having the ability to link new highlight groups to existing ones makes contributing considerably easier. I understand its possible absence, but nevertheless.
+
+- Having explicit support for many plugins really helps with adding new ones. It adds more information about design principles of color scheme.
+
+- My two personal favorites from aesthetic point of view are 'Terafox' from 'EdenEast/nightfox.nvim' and 'sainnhe/everforest'. This even prompted me to create a new color scheme for 'mini.nvim' which I am currently testing.
+
+Hope it was interesting. Also, please consider adding similar 'mini.nvim' explicit support for other color schemes (yours or ones you are using). Thanks!

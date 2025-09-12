@@ -1,0 +1,50 @@
+---
+title: "StyLua now supports collapsing simple statements"
+author: Evgeni Chasnovski
+date: 2022-07-07
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/vtdmry/stylua_now_supports_collapsing_simple_statements/)*
+
+Starting from version 0.14.0, [StyLua](https://github.com/JohnnyMorganz/StyLua) (*the* Lua code formatter in Neovim world) implements option `collapse_simple_statement`. From release notes:
+
+> It can take the values `Never` (default), `FunctionOnly`, `ConditionalOnly` or `Always`. When enabled, "simple" functions or if statements (ones where they only return a value or have a simple statement such as a function call) will be collapsed onto a single line where possible.
+
+So now with `collapse_simple_statement = "Always"` instead of this ...
+
+```lua
+local f = function()
+  return true
+end
+
+local g = function()
+  f()
+end
+
+if is_bad then
+  return
+end
+
+if is_good then
+  a = 1
+end
+```
+
+... it will be formatted as ...
+
+```lua
+local f = function() return true end
+
+local g = function() f() end
+
+if is_bad then return end
+
+if is_good then a = 1 end
+```
+
+This is great news for Neovim plugin authors and general users as this type of code is very common. Having it on single line improves readability (in my opinion).
+
+I happily switched to this option. Although using 120 width seems to be quite high sometimes in these cases, so I might start using 100 or even 80.
+
+(Note: I am not an author, [JohnnyMorganz](https://github.com/JohnnyMorganz) is. He is a thoughtful creator and maintainer of StyLua.).

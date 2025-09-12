@@ -1,0 +1,16 @@
+---
+title: "Floating windows in Neovim can now have footer"
+author: Evgeni Chasnovski
+date: 2023-08-26
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/1621k2m/floating_windows_can_now_have_footer/)*
+
+![](2023-08-26-floating-windows-in-neovim-can-now-have-footer/demo.png)
+
+After merging [this PR](https://github.com/neovim/neovim/pull/24739), `nvim_open_win()` now supports `footer` and `footer_pos` options. They are symmetrical to `title` and `title_pos` options, but affect the bottom part of floating window border.
+
+**Important**: this is a part of Neovim 0.10, not current stable Neovim 0.9.1. Will also be available in next Nightly build.
+
+I am excited to see how Neovm community can leverage this. It seems like an appropriate place to show some help data alongside usual title. I have a few ideas for 'mini.nvim' myself :)

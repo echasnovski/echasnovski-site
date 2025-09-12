@@ -1,0 +1,42 @@
+---
+title: "Neovim + mini.pick + nushell = CLI fuzzy picker. Why? Because why not."
+author: Evgeni Chasnovski
+date: 2025-06-20
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/1lg40xm/neovim_minipick_nushell_cli_fuzzy_picker_why/)*
+
+{{< video 2025-06-20-neovim-minipick-nushell-cli-fuzzy-picker/demo.mp4 >}}
+
+Hello, Neovim users!
+
+For quite some time I was interested in trying out [Nushell](https://www.nushell.sh/) as my default shell. To be perfectly honest, I am not sure why. Probably because I am drawn to the idea of "piping structured data" and mastering a powerful tool for the future. Or maybe it is just pretty tables, who knows.
+
+Several weeks ago I decided to give it a try but only in Ghostty (terminal emulator I use for regular activity; as opposed to backup `st` with Zsh). It is pretty interesting to set up from ground up and use.
+
+Switching from Zsh to Nushell very much reminds me of switching from Vim to Neovim *just after* the latter got first-class Lua support. Nu (language of Nushell) is a saner language than Bash to hack the config and add custom features (very much like Lua is to Vimscript). But it is not *quite* stable yet, so expecting something to break after new release is not baseless.
+
+---
+
+Anyway, while writing my prompt from scratch (as one does) I also thought that it would be an interesting challenge to try to go without `fzf` in CLI and try to use fuzzy picking I have set up in Neovim with ['mini.pick'](https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-pick.md). It turned out to be not as complicated as I feared at the beginning. The only downside is that Neovim always occupies full terminal window, so it is impossible to have small-ish picker as `fzf`.
+
+I believe the overall approach can be generalized to other shells and Neovim's fuzzy pickers, so decided to share it here. Basically:
+
+- The general idea is to manually call Neovim with custom config (it can be regular config, but separate one feels cleaner to me) to fuzzy pick things. *Choosing item(s) should write them into a special file* . After that, shell reads the file and performs necessary actions.
+
+- So, to fuzzy pick something like files/subdirectories and insert item at cursor:
+    - Write a global function in 'init.lua' that starts fuzzy picker for files (like using `MiniPick.builtin.files()`) or subdirectories (custom picker). Choosing item(s) should execute custom action and write to a dedicated file (like '/tmp/nvim/out-file').
+    - Write custom shell command/function that calls Neovim with a dedicated 'init.lua' and executes the necessary global Lua function (like with `-c "lua _G.pick_file_cli()"`). After calling `nvim`, the shell command/function should read the '/tmp/nvim/out-file' file, delete it (to not reuse later), and insert its content at cursor.
+    - Map dedicated keys in shell to that command/function. Currently I have `<C-d>` for subdirectories and `<C-t>` for files.
+
+- To fuzzy pick from piped input, create a shell command/function that:
+    - Writes piped input to a dedicated file (like '/tmp/nvim/in-file').
+    - Calls Neovim's global function that reads from that file, fuzzy picks from items, writes chosen one(s) to '/tmp/nvim/out-file'.
+    - Reads from '/tmp/nvim/out-file' and returns its content.
+
+My dedicated Neovim config for this is [here](https://github.com/echasnovski/nvim/blob/a7b3e74d439959696f16f05178377cd6f557533d/init-cli-pick.lua) (it assumes 'mini.nvim' is already installed as suggested in 'pack/*/start' directory). The Nushell part of the approach is [here](https://github.com/echasnovski/dotfiles/blob/027e1fd73a9ba9e8f73245756bba5721afe6b7d6/nushell/.config/nushell/config.nu#L164-L213).
+
+The approach is not perfect and I'd recommend to daily drive it only if you understand how it works. But maybe the whole approach would interesting to someone.
+
+Thanks for reading!

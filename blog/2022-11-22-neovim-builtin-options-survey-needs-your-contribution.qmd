@@ -1,0 +1,41 @@
+---
+title: "Neovim built-in options survey needs your contribution"
+author: Evgeni Chasnovski
+date: 2022-11-22
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/z1tmjg/neovim_builtin_options_survey_needs_your/)*
+
+Hello, Neovim users!
+
+**Update from 2022-12-08**. Survey is closed. Here is a [post with results](./2022-12-08-results-of-neovim-builtin-options-survey.qmd).
+
+For a long time I have been curious about how other people use built-in Neovim settings. For example, I am almost sure that most of you set `termguicolors` to leverage modern color schemes, but I have nothing to back it up.
+
+So I decided to make a survey and it needs your contribution! **Here is the link to [Google form](https://forms.gle/ciFiJ6z1VaQe8iN56).** It lists all steps needed to take part which should take at most 5 minutes of your time. Basically:
+
+- You'd need to download and execute my custom script ([with this source code](https://gist.github.com/echasnovski/493329c67050e9dcc5546815f31179d0)) inside your day-to-day Neovim config (needs at least Neovim 0.7.0). It will produce a formatted scratch buffer with all non-default values of built-in options.
+- Review content for sensible information (paths, etc.).
+- Copy all lines from created buffer and paste them into a single survey question.
+- Click "Submit". That's it!
+
+**It doesn't require logging into your Google account and won't track your email address**. However, please, submit your results only once. I solely rely on your honesty here.
+
+Other possible interesting questions this survey will help answer:
+
+- What `Leader` key is used the most?
+- Tabs or spaces?
+- Absolute, relative, or no line numbers?
+- Traditional or global statusline?
+- Permanent tabline or not?
+- Use persistent undo or not?
+- `showmode` or `noshowmode`?
+- `wrap` or `nowrap`?
+- And maybe more...
+
+What I plan to do with results:
+- The summary of results will be released in some way, shape, or form after survey is closed (at least two weeks from now when there is a 24 hours without new entries). It will be announced in this sub.
+- Possibly use the most commonly set non-default settings to power a Neovim variant, crowd-sourced version of [tpope/vim-sensible](https://github.com/tpope/vim-sensible).
+
+Please, spread a word about this survey to make it more objective. I will consider this survey as passable if at least 100 people will take part. Thanks!

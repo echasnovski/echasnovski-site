@@ -1,0 +1,15 @@
+---
+title: "Neovim now has its own default color scheme"
+author: Evgeni Chasnovski
+date: 2023-12-03
+categories: [neovim, reddit]
+---
+
+*Originally [posted on Reddit](https://www.reddit.com/r/neovim/comments/189nw6r/neovim_now_has_its_own_default_color_scheme/)*
+
+![](2023-12-03-neovim-now-has-its-own-default-color-scheme/demo-dark.png)
+![](2023-12-03-neovim-now-has-its-own-default-color-scheme/demo-light)
+
+See [this PR](https://github.com/neovim/neovim/pull/26334) for more details.
+
+And if you think you'll miss magenta floating windows and completion menu, there is `colorscheme vim`.
