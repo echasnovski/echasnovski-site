@@ -18,10 +18,10 @@ website:
   navbar:
     search: true
     left:
-      - href: blog.qmd
-        text: Blog
       - href: projects.qmd
         text: Projects
+      - href: blog.qmd
+        text: Blog
       - href: talks.qmd
         text: Talks
     right:
@@ -42,10 +42,10 @@ format:
   html:
     theme:
       dark:
-        - darkly
+        - default
         - brand
       light:
-        - darkly
+        - default
         - brand
     toc: true
     respect-user-color-scheme: true

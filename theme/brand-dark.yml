@@ -48,6 +48,7 @@ typography:
     color: primary
   monospace:
     family: monospace
+    background-color: bg-2
   monospace-inline:
     color: grey
     background-color: bg-2
@@ -62,6 +63,11 @@ defaults:
       navbar-fg: "#E3E5CE"
       code-block-bg: "#15242F"
     rules: |
+      p pre code:not(.sourceCode),
+      li pre code:not(.sourceCode),
+      pre code:not(.sourceCode) {
+        background-color: #15242F;
+      }
       .navbar {
         border-bottom: solid 1px #E3E5CE
       }
