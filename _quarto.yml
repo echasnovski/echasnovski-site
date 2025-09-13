@@ -29,7 +29,7 @@ website:
       - icon: github
         href: https://github.com/echasnovski
       - icon: bluesky
-        href: https://bsky.app/profile/echasnovski.bsky.social
+        href: https://bsky.app/profile/echasnovski.com
       - icon: youtube
         href: https://www.youtube.com/@echasnovski
       - icon: rss-fill
@@ -54,6 +54,7 @@ format:
     highlight-style:
       dark: theme/seabed-dark.theme
       light: theme/seabed-light.theme
+    include-after-body: assets/traffic-counter.html
 
 brand:
   light: theme/brand-light.yml
