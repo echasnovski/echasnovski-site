@@ -4,7 +4,9 @@ title: "Projects"
 
 ### Neovim
 
-- [mini.nvim](https://github.com/nvim-mini/mini.nvim) - Library of 40+ independent Lua modules improving overall Neovim experience. Creator and maintainer.
+- [mini.nvim](https://github.com/nvim-mini/mini.nvim) - Library of 40+ independent Lua modules improving overall Neovim experience. Part of the MINI project. Creator and maintainer.
+
+- [MiniMax](https://github.com/nvim-mini/MiniMax) - Collection of fully working self-contained MINI based Neovim configurations. Part of the MINI project. Creator and maintainer.
 
 - [Neovim](https://github.com/neovim/neovim) - Vim-fork focused on extensibility and usability. Team member.
 
