@@ -109,3 +109,11 @@ defaults:
         border: solid 1px;
         border-radius: .25rem;
       }
+
+      :root {
+        --bc-text-color: #2E2E2E;
+        --bc-muted-fg: #5E5E5E;
+        --bc-thread-line: #5E5E5E;
+        --bc-thread-line-width: 1px;
+      }
+      .bc-header { font-size: 1.25rem }
