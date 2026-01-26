@@ -7,9 +7,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Evgeni Chasnovski">
-<meta name="dcterms.date" content="2022-12-29">
+<meta name="dcterms.date" content="2026-01-27">
+<meta name="description" content="Exploration of how number of installed+loaded plugins affect startup+runtime performance">
 
-<title>You don’t need ‘vim-rooter’ (usually) or How to set up smart autochange of current directory – Evgeni Chasnovski</title>
+<title>How many Neovim plugins is too many – Evgeni Chasnovski</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -81,6 +82,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="../site_libs/bootstrap/bootstrap-56473706e0931ccbe1e06bb07ed01d4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
 <link href="../site_libs/bootstrap/bootstrap-dark-1f95d48d4aee5a4db637b8020234119b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script src="../site_libs/quarto-contrib/bluesky-comments-1.0.0/bluesky-comments.js"></script>
+<link href="../site_libs/quarto-contrib/bluesky-comments-1.0.0/styles.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -108,14 +111,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<meta name="quarto:status" content="draft">
 
 
-<meta property="og:title" content="You don’t need ‘vim-rooter’ (usually) or How to set up smart autochange of current directory – Evgeni Chasnovski">
-<meta property="og:description" content="Personal website of Evgeni Chasnovski">
+<meta property="og:title" content="How many Neovim plugins is too many – Evgeni Chasnovski">
+<meta property="og:description" content="Exploration of how number of installed+loaded plugins affect startup+runtime performance">
+<meta property="og:image" content="https://echasnovski.com/blog/2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_init.png">
 <meta property="og:site_name" content="Evgeni Chasnovski">
 <meta property="og:locale" content="en_US">
-<meta name="twitter:title" content="You don’t need ‘vim-rooter’ (usually) or How to set up smart autochange of current directory – Evgeni Chasnovski">
-<meta name="twitter:description" content="Personal website of Evgeni Chasnovski">
+<meta property="og:image:height" content="900">
+<meta property="og:image:width" content="1600">
+<meta name="twitter:title" content="How many Neovim plugins is too many – Evgeni Chasnovski">
+<meta name="twitter:description" content="Exploration of how number of installed+loaded plugins affect startup+runtime performance">
 <meta name="twitter:image" content="https://echasnovski.com/blog/assets/EC2.png">
 <meta name="twitter:creator" content="@echasnovski">
 <meta name="twitter:card" content="summary_large_image">
@@ -293,7 +300,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </script>
 
 <div id="quarto-search-results"></div>
-  <header id="quarto-header" class="headroom fixed-top">
+  <header id="quarto-header" class="headroom fixed-top"><div id="quarto-draft-alert" class="alert alert-warning"><i class="bi bi-pencil-square"></i>Draft</div>
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
@@ -355,8 +362,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#motivation" id="toc-motivation" class="nav-link active" data-scroll-target="#motivation">Motivation</a></li>
+  <li><a href="#benchmark" id="toc-benchmark" class="nav-link" data-scroll-target="#benchmark">Benchmark</a>
+  <ul class="collapse">
+  <li><a href="#plugin-code" id="toc-plugin-code" class="nav-link" data-scroll-target="#plugin-code">Plugin code</a></li>
+  <li><a href="#config-types" id="toc-config-types" class="nav-link" data-scroll-target="#config-types">Config types</a></li>
+  <li><a href="#prior-expectations" id="toc-prior-expectations" class="nav-link" data-scroll-target="#prior-expectations">Prior expectations</a></li>
+  </ul></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
+  <ul class="collapse">
+  <li><a href="#startup" id="toc-startup" class="nav-link" data-scroll-target="#startup">Startup</a></li>
+  <li><a href="#runtime" id="toc-runtime" class="nav-link" data-scroll-target="#runtime">Runtime</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -364,13 +389,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">You don’t need ‘vim-rooter’ (usually) or How to set up smart autochange of current directory</h1>
+<h1 class="title">How many Neovim plugins is too many</h1>
   <div class="quarto-categories">
     <div class="quarto-category">neovim</div>
-    <div class="quarto-category">reddit</div>
+    <div class="quarto-category">curiosity-project</div>
   </div>
   </div>
 
+<div>
+  <div class="description">
+    Exploration of how number of installed+loaded plugins affect startup+runtime performance
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -385,7 +415,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">December 29, 2022</p>
+      <p class="date">January 27, 2026</p>
     </div>
   </div>
   
@@ -397,46 +427,106 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p><em>Originally <a href="https://www.reddit.com/r/neovim/comments/zy5s0l/you_dont_need_vimrooter_usually_or_how_to_set_up/">posted on Reddit</a></em></p>
-<p>Hello, Neovim users!</p>
-<p>The <a href="https://github.com/airblade/vim-rooter">airblade/vim-rooter</a> plugin is an essential part of my Neovim workflow. It automatically changes current directory (<code>:h current-directory</code>) for every buffer to a more natural one (like to path of its Git repository). For me this has the following benefits:</p>
+<p>First, to answer the question in the title: there is no specific number. Each Neovim user decides for themselves how many plugins bring the most joy of using the editor. It can be as low as zero and as many as 100+.</p>
+<p>What I am curious about is how the number of installed and (more importantly) loaded plugins affects overall performance of using Neovim.</p>
+<section id="motivation" class="level2">
+<h2 class="anchored" data-anchor-id="motivation">Motivation</h2>
+<p>There are at least two main reasons for exploring this:</p>
 <ul>
-<li>Most file explorers open closer to the file of current buffer and not inside directory in which Neovim was started.</li>
-<li>Searching files with Telescope is more natural.</li>
-<li>Built-in terminal opens in directory I usually want it to open: in root based on current buffer file.</li>
+<li>Measure a performance benefit of using <a href="https://nvim-mini.org/mini.nvim/">‘mini.nvim’</a> instead of its standalone repos.</li>
+<li>Get an actual data about whether lazy loading can be objectively justified from at least performance point of view.</li>
 </ul>
-<p>However, starting from Neovim 0.8 ‘vim-rooter’ is (almost) obsolete. Using an amazing <code>vim.fs</code> module you can set up basic autochange of current directory using these lines of code (call them somewhere during your Neovim startup):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Array of file names indicating root directory. Modify to your liking.</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">root_names</span> <span class="op">=</span> <span class="op">{</span> <span class="st">'.git'</span><span class="op">,</span> <span class="st">'Makefile'</span> <span class="op">}</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- Cache to use for speed up (at cost of possibly outdated results)</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">root_cache</span> <span class="op">=</span> <span class="op">{}</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">set_root</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- Get directory path to start search from</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">local</span> <span class="va">path</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_buf_get_name<span class="op">(</span><span class="dv">0</span><span class="op">)</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="va">path</span> <span class="op">==</span> <span class="st">''</span> <span class="cf">then</span> <span class="cf">return</span> <span class="cf">end</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="va">path</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">fs</span><span class="op">.</span>dirname<span class="op">(</span><span class="va">path</span><span class="op">)</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- Try cache and resort to searching upward for root directory</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">local</span> <span class="va">root</span> <span class="op">=</span> <span class="va">root_cache</span><span class="op">[</span><span class="va">path</span><span class="op">]</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="va">root</span> <span class="op">==</span> <span class="kw">nil</span> <span class="cf">then</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">local</span> <span class="va">root_file</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">fs</span><span class="op">.</span>find<span class="op">(</span><span class="va">root_names</span><span class="op">,</span> <span class="op">{</span> <span class="va">path</span> <span class="op">=</span> <span class="va">path</span><span class="op">,</span> <span class="va">upward</span> <span class="op">=</span> <span class="kw">true</span> <span class="op">})[</span><span class="dv">1</span><span class="op">]</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">root_file</span> <span class="op">==</span> <span class="kw">nil</span> <span class="cf">then</span> <span class="cf">return</span> <span class="cf">end</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="va">root</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">fs</span><span class="op">.</span>dirname<span class="op">(</span><span class="va">root_file</span><span class="op">)</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="va">root_cache</span><span class="op">[</span><span class="va">path</span><span class="op">]</span> <span class="op">=</span> <span class="va">root</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- Set current directory</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="va">vim</span><span class="op">.</span><span class="va">fn</span><span class="op">.</span>chdir<span class="op">(</span><span class="va">root</span><span class="op">)</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">root_augroup</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_augroup<span class="op">(</span><span class="st">'MyAutoRoot'</span><span class="op">,</span> <span class="op">{})</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'BufEnter'</span><span class="op">,</span> <span class="op">{</span> <span class="va">group</span> <span class="op">=</span> <span class="va">root_augroup</span><span class="op">,</span> <span class="va">callback</span> <span class="op">=</span> <span class="va">set_root</span> <span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Of course this implementation has certain limitations: - The main one is a lack of ability to use glob patterns to find root directory. However, although solvable, I think the most common use case is to define root based on some pre-determined set of actual file names, so this shouldn’t be a big issue. - It caches results to speed up computations with a downside of result possibly being outdated. Usually not an issue, though. Remove all cache related code to not do that.</p>
-<p>Initially I planned to make a separate ‘mini.root’ module, but realized that it would mostly be a reimplementation of <code>vim.fs</code>. So instead I decided to add <a href="https://github.com/nvim-mini/mini.nvim/blob/bd6d1f3fd2da7741140510c2b37e2de7901b03fb/doc/mini-misc.txt#L95"><code>setup_auto_root()</code></a> function to <a href="https://github.com/nvim-mini/mini.nvim/blob/main/readmes/mini-misc.md">mini.misc</a>. If you want a more tested and documented solution, check it out and tell me what you think. Thanks!</p>
+<p>I know there should be a performance difference in both cases since loading a plugin adds an entry in <a href="https://neovim.io/doc/user/helptag.html?tag='runtimepath'">Neovim’s runtime</a>. This is a way to make Neovim “know” about available plugin code/data and use it whenever needed. Like when:</p>
+<ul>
+<li>Performing <code>require('module-name')</code> the first time for ‘module-name’ yields searching through all known ‘lua/’ runtime directories.</li>
+<li>Assigning filetype to a buffer (which is a fairly frequent action) yields searching through ‘ftplugin/’ runtime directories to load filetype plugin script(s).</li>
+<li>Attaching an LSP client on Neovim&gt;=0.11 yields searching through ‘lsp/’ runtime directories.</li>
+<li>And so on. More information is in above link about Neovim’s runtime, plus <a href="https://neovim.io/doc/user/helptag.html?tag=:runtime"><code>:h :runtime</code></a> and <a href="https://neovim.io/doc/user/helptag.html?tag=runtime-search-path"><code>:h runtime-search-path</code></a></li>
+</ul>
+</section>
+<section id="benchmark" class="level2">
+<h2 class="anchored" data-anchor-id="benchmark">Benchmark</h2>
+<p>The only way to answer these questions is by designing and performing benchmarks. Here I’ll describe the necessary basics of what was done, but you can find exact scripts and possibly more details <a href="https://github.com/echasnovski/curiosity-projects/tree/master/neovim-plugin-number">here</a>.</p>
+<p>There are reasonably two performance aspects to benchmark: startup and runtime (i.e.&nbsp;everything after startup).</p>
+<p>The main effect on startup performance is due to increasing ‘runtimepath’ option and immediately using it during startup. The two most common example here are: execute <code>require('plugin-name')</code> during startup (like for enabling and/or configuring the plugin) and Neovim’s automatic sourcing of ‘plugin/’ files.</p>
+<p>The main effect on runtime performance should be just increased ‘runtimepath’. So this is not quite plugin specific, but installing plugins is the main way to increase ‘runtimepath’.</p>
+<p>With that in mind, I settled on the following benchmarking approach:</p>
+<ul>
+<li><p>One benchmark is done for a combination of a number of loaded plugins and the way they are loaded.</p></li>
+<li><p>Procedurally generate each plugin so that it has rudimentary but plausible ‘lua/’ and ‘plugin/’ code. See <a href="#plugin-code">“Plugin code”</a>.</p></li>
+<li><p>Procedurally generate several config types describing how plugins are loaded via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack"><code>vim.pack</code></a> (available on Neovim&gt;=0.12). The whole config is basically a single ‘init.lua’ file. See <a href="#config-types">“Config types”</a>.</p></li>
+<li><p>Measure startup by doing <code>nvim --startuptime file-{config_type}-{n_plugins}</code> 10 times to later average out. From that log file extract:</p>
+<ul>
+<li>How long did it take to source ‘init.lua’.</li>
+<li>How long did it take to source all ‘plugin/’ files.</li>
+<li>Overall startup time.</li>
+</ul></li>
+<li><p>Once per benchmarked <code>config_type</code>+<code>n_plugins</code> combo for many times set filetype and measure time it took. Each one do for a fresh buffer and for a filetype that doesn’t have filetype scripts (do not include their source time in benchmarks). Take a median time as a benchmark result. I settled on 1001 times per each combo, which should be enough to get stable sub millisecond precision.</p></li>
+<li><p>Tested loaded plugin numbers: 0, 5, 10, …, and 50 loaded plugins. Include zero for sanity check and to get a reference for a total startup time.</p></li>
+</ul>
+<section id="plugin-code" class="level3">
+<h3 class="anchored" data-anchor-id="plugin-code">Plugin code</h3>
+<p>Each plugin has a very simple placeholder functionality and is written with “good practices” in mind. In particular, plugin number <code>NN</code> (which is a number from 01 to XX, the total number of loaded plugins) contains:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>lua/pluginNN.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-filename="lua/pluginNN.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">run</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="cn">_G</span><span class="op">.</span><span class="va">value</span> <span class="op">=</span> <span class="st">"PluginNN"</span> <span class="kw">end</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">config</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="cn">_G</span><span class="op">.</span><span class="va">pluginNN</span> <span class="op">=</span> <span class="op">{</span> <span class="st">"PluginNN"</span> <span class="op">}</span> <span class="kw">end</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="op">{</span> <span class="va">config</span> <span class="op">=</span> <span class="va">config</span><span class="op">,</span> <span class="va">run</span> <span class="op">=</span> <span class="va">run</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>plugin/pluginNN.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="plugin/pluginNN.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_user_command<span class="op">(</span><span class="st">"PluginNN"</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span> <span class="fu">require</span><span class="op">(</span><span class="st">"pluginNN"</span><span class="op">).</span>run<span class="op">()</span> <span class="kw">end</span><span class="op">,</span> <span class="op">{})</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">keymap</span><span class="op">.</span>set<span class="op">(</span><span class="st">"n"</span><span class="op">,</span> <span class="st">"&lt;Plug&gt;(PluginNN)"</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span> <span class="fu">require</span><span class="op">(</span><span class="st">"pluginNN"</span><span class="op">).</span>run<span class="op">()</span> <span class="kw">end</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>It is generated inside current working directory and installed using <code>file://</code> source.</p>
+</section>
+<section id="config-types" class="level3">
+<h3 class="anchored" data-anchor-id="config-types">Config types</h3>
+<p>TODO</p>
+<ul>
+<li><p>To have something to compare against, “Single plugin”. A.k.a. “bundle plugin”, similar to how ‘mini.nvim’ “bundles” all its Lua modules.</p></li>
+<li><p>NOTE: Other plugin managers can (and probably do) behave differently.</p></li>
+</ul>
+</section>
+<section id="prior-expectations" class="level3">
+<h3 class="anchored" data-anchor-id="prior-expectations">Prior expectations</h3>
+<ol type="1">
+<li><p>Results for 0 installed plugins do not depend on config type. Nothing installed in various ways is still nothing installed. Can be used for a sanity check and reference for total startup time.</p></li>
+<li><p>Startup time is the best for “Single plugin” config type, followed by “Separate <code>vim.pack.add()</code>” (since <code>require()</code> needs to search through significantly less paths), followed by “Grouped <code>vim.pack.add()</code>”.</p></li>
+<li><p>Both “many plugins” approaches visibly grow linearly with the number of plugins.</p></li>
+<li><p>Runtime performance behaves the same for both “many plugins” config types and is visibly worse than for “single plugin”.</p></li>
+</ol>
+</section>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<section id="startup" class="level3">
+<h3 class="anchored" data-anchor-id="startup">Startup</h3>
+<p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_init.png" class="img-fluid"></p>
+<p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_plugin.png" class="img-fluid"></p>
+<p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_total.png" class="img-fluid"></p>
+<p>TODO</p>
+</section>
+<section id="runtime" class="level3">
+<h3 class="anchored" data-anchor-id="runtime">Runtime</h3>
+<p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/filetype-summary.png" class="img-fluid"></p>
+<p>TODO</p>
+</section>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<ul>
+<li>TODO</li>
+</ul>
+    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mctmppwebs2a" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" header="" n-show-depth="2" n-show-init="10" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l" n-show-more="10"></bluesky-comments>
+  
 
 
+</section>
 
 </main> <!-- /main -->
 <script data-goatcounter="https://echasnovski.goatcounter.com/count" async="" src="//gc.zgo.at/count.js"></script>
