@@ -1,4 +1,11 @@
+/*-- scss:defaults --*/
+
+// Tooltip after having done something (like copy code to clipboard)
+$tooltip-bg: var(--brand-grey-bg);
+$tooltip-color: var(--brand-grey);
+
 /*-- scss:rules --*/
+
 // Various tweaks
 p pre code:not(.sourceCode),
 li pre code:not(.sourceCode),
@@ -6,7 +13,8 @@ pre code:not(.sourceCode) {
   background-color: var(--brand-bg-2);
 }
 .navbar {
-  border-bottom: solid 1px var(--brand-fg-2)
+  border-bottom: solid 1px var(--brand-fg-2);
+  min-height: 60px;
 }
 .blockquote {
   border-left: solid var(--brand-yellow);
@@ -19,6 +27,22 @@ pre code:not(.sourceCode) {
 div.category {
   font-size: 0.8rem;
 }
+.callout.callout-style-default {
+  border: none;
+  border-left: solid 5px
+}
+.quarto-title-meta {
+  color: var(--brand-grey);
+}
+a { text-decoration-thickness: 0.07em }
+
+// Headings
+h1 { font-size: 2em }
+h2 { font-size: 1.75em; margin-top: 1em; margin-bottom: 0.25em; }
+h3 { font-size: 1.5em; margin-top: 1em; margin-bottom: 0.25em; }
+h4 { font-size: 1.25em; margin-top: 1em; margin-bottom: 0.25em; font-weight: normal; }
+h5 { font-size: 1.1em; font-weight: normal; }
+h6 { font-size: 1em; font-weight: normal; }
 
 // Listing in "Blog" page
 .blog-listing-item {
@@ -48,6 +72,14 @@ div.category {
   border: solid 1px;
   border-radius: .25rem;
 }
+.pagination {
+  --bs-pagination-color: var(--brand-fg-2);
+  --bs-pagination-bg: var(--brand-bg-2);
+  --bs-pagination-border-color: var(--brand-fg-2);
+
+  --bs-pagination-hover-color: var(--brand-bg-2);
+  --bs-pagination-hover-bg: var(--brand-fg-2);
+}
 
 // Bluesky-comments
 :root {
@@ -57,3 +89,24 @@ div.category {
   --bc-thread-line-width: 1px;
 }
 .bc-header { font-size: 1.25rem }
+
+// "Order by" and "Filter" inputs
+.input-group {
+  border: solid 1px var(--brand-grey)
+}
+.input-group-text {
+  color: var(--brand-fg-2);
+  background-color: var(--brand-bg-2);
+}
+.search::placeholder { color: var(--brand-comment) }
+
+// Top part of code block with file name
+.code-with-filename .code-with-filename-file {
+  background-color: var(--brand-grey-bg) !important;
+  border: none;
+}
+.code-with-filename .code-with-filename-file pre,
+.code-with-filename .code-with-filename-file strong {
+  color: var(--brand-grey);
+  font-size: 0.9rem;
+}
