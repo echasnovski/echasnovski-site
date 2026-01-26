@@ -59,61 +59,6 @@ typography:
 defaults:
   bootstrap:
     defaults:
-      navbar-bg: "#C9D7E1"
-      navbar-fg: "#232318"
-      code-block-bg: "#C9D7E1"
-    rules: |
-      p pre code:not(.sourceCode),
-      li pre code:not(.sourceCode),
-      pre code:not(.sourceCode) {
-        background-color: #C9D7E1;
-      }
-      .navbar {
-        border-bottom: solid 1px #232318
-      }
-      .blockquote {
-        border-left: solid #696900;
-        color: #5E5E5E;
-      }
-      .cell-output {
-        background: #E2E2E2;
-        color: #5E5E5E;
-      }
-      div.category {
-        font-size: 0.8rem;
-      }
-      .blog-listing-item {
-        padding-top: 1em;
-        padding-bottom: 1em;
-        border-bottom: solid 2px #2E2E2E;
-      }
-      .blog-listing-item-title {
-        color: #005A87;
-        text-decoration: none;
-        font-size: 130%;
-      }
-      .blog-listing-item-description {
-        text-decoration: none;
-        color: #2F2F24;
-      }
-      .blog-listing-item-metadata {
-        color: #5E5E5E;
-        text-decoration: none;
-      }
-      .blog-listing-item-category {
-        color: #5E5E5E;
-        text-decoration: none;
-        padding: .25em .75em;
-        font-size: .65em;
-        text-transform: uppercase;
-        border: solid 1px;
-        border-radius: .25rem;
-      }
-
-      :root {
-        --bc-text-color: #2E2E2E;
-        --bc-muted-fg: #5E5E5E;
-        --bc-thread-line: #5E5E5E;
-        --bc-thread-line-width: 1px;
-      }
-      .bc-header { font-size: 1.25rem }
+      navbar-bg: $brand-bg-2
+      navbar-fg: $brand-fg-2
+      code-block-bg: $brand-bg-2
