@@ -2,6 +2,7 @@
   {
     "listing": "/blog.html",
     "items": [
+      "/blog/2026-01-27-how-many-neovim-plugins-is-too-many.html",
       "/blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html",
       "/blog/2025-06-20-neovim-minipick-nushell-cli-fuzzy-picker.html",
       "/blog/2024-08-29-psa-adjust-`pmenusel`.html",

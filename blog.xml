@@ -10,7 +10,542 @@
 <atom:link href="https://echasnovski.com/blog.xml" rel="self" type="application/rss+xml"/>
 <description>Personal website of Evgeni Chasnovski</description>
 <generator>quarto-1.8.24</generator>
-<lastBuildDate>Fri, 04 Jul 2025 00:00:00 GMT</lastBuildDate>
+<lastBuildDate>Tue, 27 Jan 2026 00:00:00 GMT</lastBuildDate>
+<item>
+  <title>How many Neovim plugins is too many</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2026-01-27-how-many-neovim-plugins-is-too-many.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>First, to directly answer the implied question in the title: there is no specific number. Each Neovim user decides for themselves how many plugins bring the most joy out of using the editor. It can be as low as zero and as many as 100+.</p>
+<p>What I am curious about is how the number of loaded plugins affects overall performance of using Neovim.</p>
+<section id="motivation" class="level2">
+<h2 class="anchored" data-anchor-id="motivation">Motivation</h2>
+<p>There are at least two main reasons for me to explore this:</p>
+<ul>
+<li>Measure a performance benefit of using <a href="https://nvim-mini.org/mini.nvim/">‘mini.nvim’</a> as a single plugin instead of many its standalone repos.</li>
+<li>Get an actual data about whether lazy loading can be objectively justified from at least performance point of view.</li>
+</ul>
+<p>I know there should be a performance difference in both cases since loading a plugin adds a path entry in <a href="https://neovim.io/doc/user/helptag.html?tag='runtimepath'">Neovim’s runtime</a>. This is a way to make Neovim “know” about available plugin code/data and use it whenever needed. Like when:</p>
+<ul>
+<li><p>Doing <code>require('module-name')</code> the first time for ‘module-name’ yields searching through all known ‘lua/’ runtime directories.</p></li>
+<li><p>Assigning filetype to a buffer (which is a fairly frequent action) yields searching through ‘ftplugin/’ runtime directories to load filetype plugin script(s).</p>
+<p>I don’t have an accurate estimation of how frequent this happens. Especially since it highly depends on which plugins are used (as they tend to set filetype for their internal buffers). But my quick testing on Neovim&gt;=0.12 with <code>vim._extui</code> enabled hints that it can be in the vicinity of 500 per active Neovim usage session.</p></li>
+<li><p>Attaching an LSP client on Neovim&gt;=0.11 yields searching through ‘lsp/’ runtime directories.</p></li>
+<li><p>And so on. More information is in above link about Neovim’s runtime, plus <a href="https://neovim.io/doc/user/helptag.html?tag=:runtime"><code>:h :runtime</code></a> and <a href="https://neovim.io/doc/user/helptag.html?tag=runtime-search-path"><code>:h runtime-search-path</code></a></p></li>
+</ul>
+</section>
+<section id="benchmark" class="level2">
+<h2 class="anchored" data-anchor-id="benchmark">Benchmark</h2>
+<p>The only way to answer these questions is by designing and performing benchmarks. Here I’ll describe the necessary basics of what was done, but you can find exact scripts and possibly more details <a href="https://github.com/echasnovski/curiosity-projects/tree/master/neovim-plugin-number">here</a>.</p>
+<p>There are reasonably two performance aspects to benchmark: startup and runtime (i.e.&nbsp;everything after startup).</p>
+<p>The main effect of loading plugins on startup performance is due to increasing ‘runtimepath’ value and immediately using it during startup. The two most common example here are: execute <code>require('plugin-name')</code> (like when using its method to enable and/or configure the plugin) and Neovim’s automatic sourcing of ‘plugin/’ files.</p>
+<p>The main effect on runtime performance should be just increased ‘runtimepath’. So this is not quite plugin number specific, but installing plugins is the main way to increase the number of runtime paths.</p>
+<p>With that in mind, I settled on the following benchmarking approach:</p>
+<ul>
+<li><p>One benchmark is done for a combination of a number of loaded plugins (<code>n_plugins</code>) and the way they are loaded (<code>config_type</code>).</p></li>
+<li><p>Procedurally generate each plugin so that it has rudimentary but plausible ‘lua/’ and ‘plugin/’ code. See “Plugin code”.</p></li>
+<li><p>Procedurally generate several config types describing how plugins are loaded via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack"><code>vim.pack</code></a> (available on Neovim&gt;=0.12). The whole config is basically a single ‘init.lua’ file. See “Config types”.</p></li>
+<li><p>Run the Neovim with the config once to install necessary plugins.</p></li>
+<li><p>Measure startup by doing the equivalent of <code>nvim --startuptime file-{config_type}-{n_plugins}</code> 10 times to later average out. From startup log file extract:</p>
+<ul>
+<li>How long did it take to source ‘init.lua’.</li>
+<li>How long did it take to source all ‘plugin/’ files.</li>
+<li>Overall startup time.</li>
+</ul></li>
+<li><p>Once per benchmarked <code>config_type</code>+<code>n_plugins</code> combo set filetype and measure time it took. Repeat many times with each try for a fresh buffer and for a filetype that doesn’t have filetype scripts (to not include their source time in benchmarks). Take a median time as a benchmark result. I settled on 1001 times per each combo, which should be enough to get stable sub millisecond precision.</p></li>
+<li><p>Tested loaded plugin numbers: 0, 5, 10, …, and 50 loaded plugins. Include zero for a sanity check and to get a reference for a total startup time.</p></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Benchmarks were done at the time when Neovim 0.12 is still in development. The AppImage with the following version was used:</p>
+<pre><code>NVIM v0.12.0-dev-2101+gd93e150888
+Build type: RelWithDebInfo
+LuaJIT 2.1.1767980792</code></pre>
+</div>
+</div>
+<section id="plugin-code" class="level3">
+<h3 class="anchored" data-anchor-id="plugin-code">Plugin code</h3>
+<p>Each plugin has a very simple placeholder functionality and is written with “good practices” in mind. In particular, plugin number <code>NN</code> (which is a number from 01 to <code>n_plugins</code>, the total number of loaded plugins) contains:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>lua/pluginNN.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="lua/pluginNN.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">run</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">_G</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">value</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PluginNN"</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb2-2"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">config</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="cn" style="color: #8f5902;
+background-color: null;
+font-style: inherit;">_G</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pluginNN</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PluginNN"</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb2-3"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">config</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">config</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">run</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">run</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>plugin/pluginNN.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="plugin/pluginNN.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_user_command<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"PluginNN"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"pluginNN"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>run<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{})</span></span>
+<span id="cb3-2"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">keymap</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>set<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"n"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"&lt;Plug&gt;(PluginNN)"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"pluginNN"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>run<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span></code></pre></div></div>
+</div>
+<p>It is generated inside ‘host/’ subdirectory of current working directory and installed using <code>file:///path/to/working/directory/host/pluginXX</code> as a source.</p>
+</section>
+<section id="config-types" class="level3">
+<h3 class="anchored" data-anchor-id="config-types">Config types</h3>
+<p>Three types of configs are benchmarked:</p>
+<ol type="1">
+<li><p><code>Grouped add()</code> - many independent plugins are installed and loaded as a group in a single <code>vim.pack.add()</code> call and later configured. This is the most robust and straightforward way to install many plugins with <code>vim.pack</code>.</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="cb4-2">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'file:///path/to/working/directory/host/plugin01'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb4-3">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- ...</span></span>
+<span id="cb4-4">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'file:///path/to/working/directory/host/pluginXX'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb4-5"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">confirm</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">false</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb4-6"></span>
+<span id="cb4-7"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'plugin01'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>config<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb4-8"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- ...</span></span>
+<span id="cb4-9"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'pluginXX'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>config<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span></code></pre></div></div>
+</div></li>
+<li><p><code>Separate add()</code> - many independent plugins are installed, loaded, and configured in “sequential” manner. This installs and loads one plugin at a time while immediately configuring it. This is meant to check if having plugin entry in ‘runtimepath’ closer to its start (since <code>:packadd</code> from <code>vim.pack.add()</code> adds an entry very close to the start) adds a meaningful startup improvement (as <code>require('pluginNN')</code> then needs to traverse fewer directories). SPOILER: it’s complicated.</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'file:///path/to/working/directory/host/plugin01'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">confirm</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">false</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb5-2"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'plugin01'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>config<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb5-3"></span>
+<span id="cb5-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- ...</span></span>
+<span id="cb5-5"></span>
+<span id="cb5-6"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'file:///path/to/working/directory/host/pluginXX'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">confirm</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">false</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb5-7"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'pluginXX'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>config<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span></code></pre></div></div>
+</div></li>
+</ol>
+<ul>
+<li><p><code>Single plugin</code> - single plugin that combines all Lua modules and plugin files of separate plugins into one. All ‘lua/pluginNN.lua’ and ‘plugin/pluginNN.lua’ files are combined under a single directory. This provides the same functionality as many plugins, but “packaged” in a single plugin. Similar to how ‘mini.nvim’ is related to its standalone repos. This only adds a single entry to ‘runtimepath’ and is also used as a reference to compare against.</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'file:///path/to/working/directory/host/singleXX'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">confirm</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">false</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb6-2"></span>
+<span id="cb6-3"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'plugin01'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>config<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb6-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- ...</span></span>
+<span id="cb6-5"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'pluginXX'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>config<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span></code></pre></div></div>
+</div></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>All config types use <code>vim.pack.add()</code> to install and load plugins. For installed plugins it essentially executes <code>:packadd!</code> during startup, so modifies ‘runtimepath’ immediately. Other plugin managers can and do behave differently while requiring more elaborate ways of delayed execution of <code>require('pluginNN').config()</code>.</p>
+</div>
+</div>
+</section>
+<section id="prior-expectations" class="level3">
+<h3 class="anchored" data-anchor-id="prior-expectations">Prior expectations</h3>
+<ol type="1">
+<li><p>Results for 0 loaded plugins do not depend on config type. Nothing loaded in various ways is still nothing loaded. Can be used for a sanity check and reference for total startup time.</p></li>
+<li><p>Startup time is the best for <code>Single plugin</code> config type, followed by <code>Separate vim.pack.add()</code>, followed by <code>Grouped vim.pack.add()</code>.</p></li>
+<li><p>Both “many plugins” approaches visibly grow with the number of plugins.</p></li>
+<li><p>Runtime performance behaves the same for both “many plugins” config types and is visibly worse than for “single plugin”.</p></li>
+</ol>
+</section>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<section id="startup" class="level3">
+<h3 class="anchored" data-anchor-id="startup">Startup</h3>
+<p>Here are the results of benchmarking startup time (semi transparent points are actual times, line and text represent median times).</p>
+<p><img src="https://echasnovski.com/blog/2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_init.png" class="img-fluid"></p>
+<p><img src="https://echasnovski.com/blog/2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_plugin.png" class="img-fluid"></p>
+<p><img src="https://echasnovski.com/blog/2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_total.png" class="img-fluid"></p>
+<p>Observations:</p>
+<ul>
+<li><p>Having zero plugins indeed adds nothing to startup time.</p></li>
+<li><p>Best performance is indeed for <code>Single plugin</code>. Having constant number of ‘runtimepath’ entries can save up to 50% of startup time for 50 plugins.</p></li>
+<li><p>However, <code>Separate add()</code> is not faster than <code>Grouped add()</code>. In fact, it is <em>much slower</em>. At first, I thought that this is a result of constant overhead of a <code>vim.pack.add</code> call, but similar results can be seen with <code>vim.cmd('packadd! pluginXX')</code>.</p>
+<p>After digging through the Neovim code base (with the help of <a href="https://github.com/TheLeoP/">Luis Calle</a>), the reason seems to be internal caching. In particular:</p>
+<ul>
+<li>Searching in <code>require()</code> is done by a custom package loader <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/runtime/lua/vim/_init_packages.lua#L31">that uses private <code>vim.api.nvim__get_runtime()</code></a>.</li>
+<li>The <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/api/vim.c#L652">private <code>vim.api.nvim__get_runtime()</code></a> uses <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/runtime.c#L656">a helper</a> that does some caching of runtime files if ‘runtimepath’ has changed.</li>
+</ul>
+<p>So instead of the expected “Add to ‘runtimepath’” -&gt; “<code>require</code> searches small number of directories”, there is a “Do some ‘runtimepath’ caching” step in the middle. It seems to have been added with caching <code>pack/*/start/*</code> plugins in mind.</p>
+<p>Although quick, it still adds a significant overhead at this millisecond scale of actions. But on the other hand, this approach allows to have more “separated” config structure, which many people like.</p>
+<p><strong>NOTE: This behavior might change in the future, since in theory it should be possible to have <code>:packadd!</code> smartly manipulate the cached ‘runtimepath’ value. So that there won’t be any extra recomputations going on. This seems to <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/runtime.c#L932-L933">have a TODO note</a>.</strong></p></li>
+<li><p>Sourcing ‘plugin/’ does not depend on config type and grows close to linearly with the number of loaded plugins. The exact numbers are rather small, though.</p></li>
+<li><p>Total startup time is mostly affected by ‘init.lua’.</p></li>
+</ul>
+</section>
+<section id="runtime" class="level3">
+<h3 class="anchored" data-anchor-id="runtime">Runtime</h3>
+<p><img src="https://echasnovski.com/blog/2026-01-27-how-many-neovim-plugins-is-too-many/filetype-summary.png" class="img-fluid"></p>
+<p>Observations:</p>
+<ul>
+<li><p>Indeed for both “many plugins” config types runtime performance is the same.</p></li>
+<li><p>Switching to a single plugin can drastically reduce runtime overhead complexity from nearly linear to nearly constant.</p></li>
+</ul>
+</section>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<ul>
+<li><p>Loading plugins indeed adds a measurable performance overhead. Both during startup and runtime.</p></li>
+<li><p>Reducing the number of loaded plugins (be it by using a single “bundle plugin” or by lazy loading plugins some time later) can measurably improve performance. The saved time grows linearly with the number of reduced plugins and can be as high as 50% of startup/runtime overhead for 50 reduced plugins.</p></li>
+<li><p>Using single <code>vim.pack.add()</code> call to load all necessary plugins at once and later configure in a series of <code>require()</code> calls is more performant than doing <code>vim.pack.add()</code> -&gt; <code>require()</code> -&gt; <code>vim.pack.add()</code> -&gt; <code>require()</code>. This has to do with internal caching of ‘runtimepath’ option and <strong>might change in the future</strong>.</p></li>
+<li><p>Are these findings useful? I’d say yes. On paper, the amount of saved time is very small: order of tens of milliseconds during startup and one millisecond during runtime.</p>
+<p>However, Neovim users take pride in their instantaneous startup and runtime performance. When looking at a big picture of a general advice for users, the value of saved time (<code>number of opening Neovim</code> x <code>10 ms</code> + <code>number of runtime searching per session</code> x <code>1 ms</code> ~ 5 x 10 + 500 x 1 = 550 ms per day) can be visible if multiplied by the number of users and number of passed days.</p></li>
+<li><p>My personal (very biased) recommendation would be this: if you want to optimize startup and runtime performance benchmarked here, switching from many separate plugins to one plugin that provides same/similar functionality is the best course of action here. If that is not possible, then consider doing some simple lazy loading (like after first screen draw or on <code>InsertEnter</code>/<code>CmdlineEnter</code> events).</p>
+<p>It is also completely fine to not care about millisecond level overhead in favor of using plugins and structure that brings you more joy. In the end, the choice is always up to the user.</p></li>
+</ul>
+<!--  -->
+
+
+</section>
+
+ ]]></description>
+  <category>neovim</category>
+  <category>curiosity-project</category>
+  <guid>https://echasnovski.com/blog/2026-01-27-how-many-neovim-plugins-is-too-many.html</guid>
+  <pubDate>Tue, 27 Jan 2026 00:00:00 GMT</pubDate>
+</item>
 <item>
   <title>Neovim now has built-in plugin manager</title>
   <dc:creator>Evgeni Chasnovski</dc:creator>
@@ -2332,332 +2867,6 @@ font-style: italic;">## [1] 1</span></span></code></pre></div></div>
   <category>questionflow</category>
   <guid>https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr.html</guid>
   <pubDate>Mon, 11 Nov 2019 00:00:00 GMT</pubDate>
-</item>
-<item>
-  <title>Local randomness in R</title>
-  <dc:creator>Evgeni Chasnovski</dc:creator>
-  <link>https://echasnovski.com/blog/2019-08-13-local-randomness-in-r.html</link>
-  <description><![CDATA[ 
-
-
-
-
-
-<section id="prologue" class="level1">
-<h1>Prologue</h1>
-<p>Let’s say we have a deterministic (non-random) problem for which one of the solutions involves randomness. One very common example of such problem is a function minimization on certain interval: it can be solved non-randomly (like in most methods of <a href="https://rdrr.io/r/stats/optim.html">optim()</a>), or randomly (the simplest approach being to generate random set of points on interval and to choose the one with the lowest function value).</p>
-<p>What is a “clean” way of writing a function to solve the problem? The issue with direct usage of randomness inside a function is that it affects the state of outer random number generation:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Demo problem solving function</span></span>
-<span id="cb1-2">minimize_f <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">function</span>(f, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">from =</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0</span>, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">to =</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">n =</span> <span class="fl" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1e3</span>) {</span>
-<span id="cb1-3">  points <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">runif</span>(n, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">min =</span> from, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">max =</span> to)</span>
-<span id="cb1-4"></span>
-<span id="cb1-5">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">invisible</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">min</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">f</span>(points)))</span>
-<span id="cb1-6">}</span>
-<span id="cb1-7"></span>
-<span id="cb1-8"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Reference random number output</span></span>
-<span id="cb1-9"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">101</span>)</span>
-<span id="cb1-10"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">runif</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>)</span>
-<span id="cb1-11"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 0.3721984</span></span>
-<span id="cb1-12"></span>
-<span id="cb1-13"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Test random number output is different from reference one. But we want it to</span></span>
-<span id="cb1-14"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># be the same.</span></span>
-<span id="cb1-15"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">101</span>)</span>
-<span id="cb1-16"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">minimize_f</span>(sin)</span>
-<span id="cb1-17"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">runif</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>)</span>
-<span id="cb1-18"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 0.1016229</span></span></code></pre></div></div>
-<p>So how can we get “more clean” implementation which does not affect outer state? This short post is inspired by the following sources: <a href="https://stackoverflow.com/questions/23090958/isolate-randomness-of-a-local-environment-from-the-global-r-process">this StackOverflow question</a> by Yihui Xie and <a href="http://www.cookbook-r.com/Numbers/Saving_the_state_of_the_random_number_generator/">this cookbook advice</a>.</p>
-</section>
-<section id="local-randomness" class="level1">
-<h1>Local randomness</h1>
-<p>The state of random number generation is stored in <a href="https://rdrr.io/r/base/Random.html">.Random.seed</a> variable, which is “an integer vector” and it “can be saved and restored, but should not be altered by the user”. This gives us a very big hint about how to implement “local randomness”: capture state at the start of the function, make necessary computations, and restore state at the end. Bad news is, this also means that we enter here the dark realm of variables and their environments.</p>
-<p><strong>How to “save state”?</strong> In help page there is a note: “The object <code>.Random.seed</code> is only looked for in the user’s workspace”. Here “user’s workspace” seems to mean global environment, which should be addressed with variable <code>.GlobalEnv</code>. So, to “save state” we need to get a value of <code>.Random.seed</code> variable inside global environment. This is a job for <a href="https://rdrr.io/r/base/exists.html">get0()</a>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1">get_rand_state <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">function</span>() {</span>
-<span id="cb2-2">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Using `get0()` here to have `NULL` output in case object doesn't exist.</span></span>
-<span id="cb2-3">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Also using `inherits = FALSE` to get value exactly from global environment</span></span>
-<span id="cb2-4">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># and not from one of its parent.</span></span>
-<span id="cb2-5">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">get0</span>(<span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">".Random.seed"</span>, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">envir =</span> .GlobalEnv, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">inherits =</span> <span class="cn" style="color: #8f5902;
-background-color: null;
-font-style: inherit;">FALSE</span>)</span>
-<span id="cb2-6">}</span></code></pre></div></div>
-<p><strong>How to “restore state”?</strong> We need to assign certain value (of previously saved state) to a <code>.Random.seed</code> variable in global environment. This is a job for <a href="https://rdrr.io/r/base/assign.html">assign()</a>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1">set_rand_state <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">function</span>(state) {</span>
-<span id="cb3-2">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Assigning `NULL` state might lead to unwanted consequences</span></span>
-<span id="cb3-3">  <span class="cf" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">if</span> (<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">!</span><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">is.null</span>(state)) {</span>
-<span id="cb3-4">    <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">assign</span>(<span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">".Random.seed"</span>, state, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">envir =</span> .GlobalEnv, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">inherits =</span> <span class="cn" style="color: #8f5902;
-background-color: null;
-font-style: inherit;">FALSE</span>)</span>
-<span id="cb3-5">  }</span>
-<span id="cb3-6">}</span></code></pre></div></div>
-<p><strong>How to make “local randomness”?</strong> We can now save and restore random state. The final peace of a puzzle is to make restoration at the end of computations inside a function. This is a job for <a href="https://rdrr.io/r/base/on.exit.html">on.exit()</a>: call for <code>set_rand_state()</code> should be wrapped in <code>on.exit()</code> to perform restoration exactly at the moment when function ends all operations it is supposed to do.</p>
-<p><strong>Notes</strong> about positioning of calls inside a function:</p>
-<ul>
-<li>Call to <code>get_rand_state()</code> should be done right at the beginning of a function body to capture the state just before the function was called.</li>
-<li>Simply positioning call to <code>set_rand_state()</code> inside function body right before returning result might be not enough, because previous lines of code can terminate earlier (for example, with error). Function <code>on.exit()</code> guarantees execution of expression.</li>
-</ul>
-<p>Giving all that, the “clean” way of implementing “local randomness” is the following:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1">my_f <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">function</span>() {</span>
-<span id="cb4-2">  old_state <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">get_rand_state</span>()</span>
-<span id="cb4-3">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">on.exit</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">set_rand_state</span>(old_state))</span>
-<span id="cb4-4"></span>
-<span id="cb4-5">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># The rest of the code</span></span>
-<span id="cb4-6">}</span></code></pre></div></div>
-<p>Let’s check this solution on practice:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1">minimize_f_clean <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="cf" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">function</span>(f, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">from =</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0</span>, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">to =</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">n =</span> <span class="fl" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1e3</span>) {</span>
-<span id="cb5-2">  old_state <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">get_rand_state</span>()</span>
-<span id="cb5-3">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">on.exit</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">set_rand_state</span>(old_state))</span>
-<span id="cb5-4"></span>
-<span id="cb5-5">  points <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">runif</span>(n, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">min =</span> from, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">max =</span> to)</span>
-<span id="cb5-6"></span>
-<span id="cb5-7">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">invisible</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">min</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">f</span>(points)))</span>
-<span id="cb5-8">}</span>
-<span id="cb5-9"></span>
-<span id="cb5-10"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Reference random number output (repeated for reading convenience)</span></span>
-<span id="cb5-11"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">101</span>)</span>
-<span id="cb5-12"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">runif</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>)</span>
-<span id="cb5-13"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 0.3721984</span></span>
-<span id="cb5-14"></span>
-<span id="cb5-15"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Output of `runif(1)` is the same as reference one, which was the goal</span></span>
-<span id="cb5-16"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">101</span>)</span>
-<span id="cb5-17"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">minimize_f_clean</span>(sin)</span>
-<span id="cb5-18"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">runif</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>)</span>
-<span id="cb5-19"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 0.3721984</span></span></code></pre></div></div>
-</section>
-<section id="epilogue" class="level1">
-<h1>Epilogue</h1>
-<ul>
-<li>Creating a function with “local randomness” although requires some dark R magic (with <code>get0()</code>, <code>assign()</code>, and <code>on.exit()</code> usage), is pretty straightforward.</li>
-<li>If you have some non-trivial R problem, there is a good chance that Yihui Xie has already posted a question on StackOverflow about it.</li>
-</ul>
-<div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>sessionInfo()
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-1" class="callout-1-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
-<pre><code>## R version 3.6.1 (2019-07-05)
-## Platform: x86_64-pc-linux-gnu (64-bit)
-## Running under: Ubuntu 18.04.3 LTS
-##
-## Matrix products: default
-## BLAS:   /usr/lib/x86_64-linux-gnu/openblas/libblas.so.3
-## LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so
-##
-## locale:
-##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C
-##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8
-##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8
-##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C
-##  [9] LC_ADDRESS=C               LC_TELEPHONE=C
-## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C
-##
-## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base
-##
-## loaded via a namespace (and not attached):
-##  [1] compiler_3.6.1  magrittr_1.5    bookdown_0.11   tools_3.6.1
-##  [5] htmltools_0.3.6 yaml_2.2.0      Rcpp_1.0.1      stringi_1.4.3
-##  [9] rmarkdown_1.13  blogdown_0.12   knitr_1.23      stringr_1.4.0
-## [13] digest_0.6.19   xfun_0.7        evaluate_0.14</code></pre>
-</div>
-</div>
-</div>
-
-
-</section>
-
- ]]></description>
-  <category>rstats</category>
-  <category>questionflow</category>
-  <guid>https://echasnovski.com/blog/2019-08-13-local-randomness-in-r.html</guid>
-  <pubDate>Tue, 13 Aug 2019 00:00:00 GMT</pubDate>
 </item>
 </channel>
 </rss>
