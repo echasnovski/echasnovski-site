@@ -80,8 +80,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f02add0dffcdec21d3284ee72a750fbe.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-56473706e0931ccbe1e06bb07ed01d4b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-1f95d48d4aee5a4db637b8020234119b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-f3c8a1c05dc111bee0e381f275ff211e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-006b19251627ff679b9415c7e950db0b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script src="../site_libs/quarto-contrib/bluesky-comments-1.0.0/bluesky-comments.js"></script>
 <link href="../site_libs/quarto-contrib/bluesky-comments-1.0.0/styles.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -427,77 +427,147 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>First, to answer the question in the title: there is no specific number. Each Neovim user decides for themselves how many plugins bring the most joy of using the editor. It can be as low as zero and as many as 100+.</p>
+<p>First, to directly answer the implied question in the title: there is no specific number. Each Neovim user decides for themselves how many plugins bring the most joy out of using the editor. It can be as low as zero and as many as 100+.</p>
 <p>What I am curious about is how the number of installed and (more importantly) loaded plugins affects overall performance of using Neovim.</p>
 <section id="motivation" class="level2">
 <h2 class="anchored" data-anchor-id="motivation">Motivation</h2>
-<p>There are at least two main reasons for exploring this:</p>
+<p>There are at least two main reasons for me to explore this:</p>
 <ul>
-<li>Measure a performance benefit of using <a href="https://nvim-mini.org/mini.nvim/">‘mini.nvim’</a> instead of its standalone repos.</li>
+<li>Measure a performance benefit of using <a href="https://nvim-mini.org/mini.nvim/">‘mini.nvim’</a> as a single plugin instead of many its standalone repos.</li>
 <li>Get an actual data about whether lazy loading can be objectively justified from at least performance point of view.</li>
 </ul>
-<p>I know there should be a performance difference in both cases since loading a plugin adds an entry in <a href="https://neovim.io/doc/user/helptag.html?tag='runtimepath'">Neovim’s runtime</a>. This is a way to make Neovim “know” about available plugin code/data and use it whenever needed. Like when:</p>
+<p>I know there should be a performance difference in both cases since loading a plugin adds a path entry in <a href="https://neovim.io/doc/user/helptag.html?tag='runtimepath'">Neovim’s runtime</a>. This is a way to make Neovim “know” about available plugin code/data and use it whenever needed. Like when:</p>
 <ul>
-<li>Performing <code>require('module-name')</code> the first time for ‘module-name’ yields searching through all known ‘lua/’ runtime directories.</li>
-<li>Assigning filetype to a buffer (which is a fairly frequent action) yields searching through ‘ftplugin/’ runtime directories to load filetype plugin script(s).</li>
-<li>Attaching an LSP client on Neovim&gt;=0.11 yields searching through ‘lsp/’ runtime directories.</li>
-<li>And so on. More information is in above link about Neovim’s runtime, plus <a href="https://neovim.io/doc/user/helptag.html?tag=:runtime"><code>:h :runtime</code></a> and <a href="https://neovim.io/doc/user/helptag.html?tag=runtime-search-path"><code>:h runtime-search-path</code></a></li>
+<li><p>Doing <code>require('module-name')</code> the first time for ‘module-name’ yields searching through all known ‘lua/’ runtime directories.</p></li>
+<li><p>Assigning filetype to a buffer (which is a fairly frequent action) yields searching through ‘ftplugin/’ runtime directories to load filetype plugin script(s).</p>
+<p>I don’t have an accurate estimation of how frequent this happens. Especially since it highly depends on which plugins are used (as they tend to set filetype for their internal buffers). But my quick testing on Neovim&gt;=0.12 with <code>vim._extui</code> enabled hints that it can be in the vicinity of 500 per active Neovim usage session.</p></li>
+<li><p>Attaching an LSP client on Neovim&gt;=0.11 yields searching through ‘lsp/’ runtime directories.</p></li>
+<li><p>And so on. More information is in above link about Neovim’s runtime, plus <a href="https://neovim.io/doc/user/helptag.html?tag=:runtime"><code>:h :runtime</code></a> and <a href="https://neovim.io/doc/user/helptag.html?tag=runtime-search-path"><code>:h runtime-search-path</code></a></p></li>
 </ul>
 </section>
 <section id="benchmark" class="level2">
 <h2 class="anchored" data-anchor-id="benchmark">Benchmark</h2>
 <p>The only way to answer these questions is by designing and performing benchmarks. Here I’ll describe the necessary basics of what was done, but you can find exact scripts and possibly more details <a href="https://github.com/echasnovski/curiosity-projects/tree/master/neovim-plugin-number">here</a>.</p>
 <p>There are reasonably two performance aspects to benchmark: startup and runtime (i.e.&nbsp;everything after startup).</p>
-<p>The main effect on startup performance is due to increasing ‘runtimepath’ option and immediately using it during startup. The two most common example here are: execute <code>require('plugin-name')</code> during startup (like for enabling and/or configuring the plugin) and Neovim’s automatic sourcing of ‘plugin/’ files.</p>
-<p>The main effect on runtime performance should be just increased ‘runtimepath’. So this is not quite plugin specific, but installing plugins is the main way to increase ‘runtimepath’.</p>
+<p>The main effect of loading plugins on startup performance is due to increasing ‘runtimepath’ option and immediately using it during startup. The two most common example here are: execute <code>require('plugin-name')</code> (like for enabling and/or configuring the plugin) and Neovim’s automatic sourcing of ‘plugin/’ files.</p>
+<p>The main effect on runtime performance should be just increased ‘runtimepath’. So this is not quite plugin number specific, but installing plugins is the main way to increase the number of runtime paths.</p>
 <p>With that in mind, I settled on the following benchmarking approach:</p>
 <ul>
-<li><p>One benchmark is done for a combination of a number of loaded plugins and the way they are loaded.</p></li>
+<li><p>One benchmark is done for a combination of a number of loaded plugins (<code>n_plugins</code>) and the way they are loaded (<code>config_type</code>).</p></li>
 <li><p>Procedurally generate each plugin so that it has rudimentary but plausible ‘lua/’ and ‘plugin/’ code. See <a href="#plugin-code">“Plugin code”</a>.</p></li>
 <li><p>Procedurally generate several config types describing how plugins are loaded via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack"><code>vim.pack</code></a> (available on Neovim&gt;=0.12). The whole config is basically a single ‘init.lua’ file. See <a href="#config-types">“Config types”</a>.</p></li>
-<li><p>Measure startup by doing <code>nvim --startuptime file-{config_type}-{n_plugins}</code> 10 times to later average out. From that log file extract:</p>
+<li><p>Run the Neovim with the config once to install necessary plugins.</p></li>
+<li><p>Measure startup by doing equivalent of <code>nvim --startuptime file-{config_type}-{n_plugins}</code> 10 times to later average out. From startup log file extract:</p>
 <ul>
 <li>How long did it take to source ‘init.lua’.</li>
 <li>How long did it take to source all ‘plugin/’ files.</li>
 <li>Overall startup time.</li>
 </ul></li>
-<li><p>Once per benchmarked <code>config_type</code>+<code>n_plugins</code> combo for many times set filetype and measure time it took. Each one do for a fresh buffer and for a filetype that doesn’t have filetype scripts (do not include their source time in benchmarks). Take a median time as a benchmark result. I settled on 1001 times per each combo, which should be enough to get stable sub millisecond precision.</p></li>
-<li><p>Tested loaded plugin numbers: 0, 5, 10, …, and 50 loaded plugins. Include zero for sanity check and to get a reference for a total startup time.</p></li>
+<li><p>Once per benchmarked <code>config_type</code>+<code>n_plugins</code> combo for many times set filetype and measure time it took. Each one do for a fresh buffer and for a filetype that doesn’t have filetype scripts (to not include their source time in benchmarks). Take a median time as a benchmark result. I settled on 1001 times per each combo, which should be enough to get stable sub millisecond precision.</p></li>
+<li><p>Tested loaded plugin numbers: 0, 5, 10, …, and 50 loaded plugins. Include zero for a sanity check and to get a reference for a total startup time.</p></li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Benchmarks were done at the time when Neovim 0.12 is still in development. The AppImage with the following version was used:</p>
+<pre><code>NVIM v0.12.0-dev-2101+gd93e150888
+Build type: RelWithDebInfo
+LuaJIT 2.1.1767980792</code></pre>
+</div>
+</div>
 <section id="plugin-code" class="level3">
 <h3 class="anchored" data-anchor-id="plugin-code">Plugin code</h3>
-<p>Each plugin has a very simple placeholder functionality and is written with “good practices” in mind. In particular, plugin number <code>NN</code> (which is a number from 01 to XX, the total number of loaded plugins) contains:</p>
+<p>Each plugin has a very simple placeholder functionality and is written with “good practices” in mind. In particular, plugin number <code>NN</code> (which is a number from 01 to <code>n_plugins</code>, the total number of loaded plugins) contains:</p>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>lua/pluginNN.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-filename="lua/pluginNN.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">run</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="cn">_G</span><span class="op">.</span><span class="va">value</span> <span class="op">=</span> <span class="st">"PluginNN"</span> <span class="kw">end</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">config</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="cn">_G</span><span class="op">.</span><span class="va">pluginNN</span> <span class="op">=</span> <span class="op">{</span> <span class="st">"PluginNN"</span> <span class="op">}</span> <span class="kw">end</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="op">{</span> <span class="va">config</span> <span class="op">=</span> <span class="va">config</span><span class="op">,</span> <span class="va">run</span> <span class="op">=</span> <span class="va">run</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="lua/pluginNN.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">run</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="cn">_G</span><span class="op">.</span><span class="va">value</span> <span class="op">=</span> <span class="st">"PluginNN"</span> <span class="kw">end</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">config</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="cn">_G</span><span class="op">.</span><span class="va">pluginNN</span> <span class="op">=</span> <span class="op">{</span> <span class="st">"PluginNN"</span> <span class="op">}</span> <span class="kw">end</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="op">{</span> <span class="va">config</span> <span class="op">=</span> <span class="va">config</span><span class="op">,</span> <span class="va">run</span> <span class="op">=</span> <span class="va">run</span> <span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>plugin/pluginNN.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="plugin/pluginNN.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_user_command<span class="op">(</span><span class="st">"PluginNN"</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span> <span class="fu">require</span><span class="op">(</span><span class="st">"pluginNN"</span><span class="op">).</span>run<span class="op">()</span> <span class="kw">end</span><span class="op">,</span> <span class="op">{})</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">keymap</span><span class="op">.</span>set<span class="op">(</span><span class="st">"n"</span><span class="op">,</span> <span class="st">"&lt;Plug&gt;(PluginNN)"</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span> <span class="fu">require</span><span class="op">(</span><span class="st">"pluginNN"</span><span class="op">).</span>run<span class="op">()</span> <span class="kw">end</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="plugin/pluginNN.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_user_command<span class="op">(</span><span class="st">"PluginNN"</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span> <span class="fu">require</span><span class="op">(</span><span class="st">"pluginNN"</span><span class="op">).</span>run<span class="op">()</span> <span class="kw">end</span><span class="op">,</span> <span class="op">{})</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">keymap</span><span class="op">.</span>set<span class="op">(</span><span class="st">"n"</span><span class="op">,</span> <span class="st">"&lt;Plug&gt;(PluginNN)"</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span> <span class="fu">require</span><span class="op">(</span><span class="st">"pluginNN"</span><span class="op">).</span>run<span class="op">()</span> <span class="kw">end</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>It is generated inside current working directory and installed using <code>file://</code> source.</p>
+<p>It is generated inside ‘host/’ subdirectory of current working directory and installed using <code>file:///path/to/working/directory/host/pluginXX</code> as a source.</p>
 </section>
 <section id="config-types" class="level3">
 <h3 class="anchored" data-anchor-id="config-types">Config types</h3>
-<p>TODO</p>
+<p>Three types of configs are benchmarked:</p>
+<ol type="1">
+<li><p><code>Grouped add()</code> - many independent plugins are installed as a group in single <code>vim.pack.add()</code> call and later configured. This is the most robust and straightforward way to install many plugins with <code>vim.pack</code>.</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="init.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'file:///path/to/working/directory/host/plugin01'</span><span class="op">,</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- ...</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'file:///path/to/working/directory/host/pluginXX'</span><span class="op">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="op">},</span> <span class="op">{</span> <span class="va">confirm</span> <span class="op">=</span> <span class="kw">false</span> <span class="op">})</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'plugin01'</span><span class="op">).</span>config<span class="op">()</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">-- ...</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'pluginXX'</span><span class="op">).</span>config<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div></li>
+<li><p><code>Separate add()</code> - many independent plugins are installed and configured in “sequential” manner. This installs and loads one plugin at a time while immediately configuring it. This is meant to check if having plugin entry in ‘runtimepath’ closer to its start (since <code>:packadd</code> from <code>vim.pack.add()</code> adds an entry very close to the start) adds a meaningful startup improvement (as <code>require('pluginNN')</code> then needs to traverse fewer directories). SPOILER: it’s complicated.</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="init.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'file:///path/to/working/directory/host/plugin01'</span> <span class="op">},</span> <span class="op">{</span> <span class="va">confirm</span> <span class="op">=</span> <span class="kw">false</span> <span class="op">})</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'plugin01'</span><span class="op">).</span>config<span class="op">()</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- ...</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'file:///path/to/working/directory/host/pluginXX'</span> <span class="op">},</span> <span class="op">{</span> <span class="va">confirm</span> <span class="op">=</span> <span class="kw">false</span> <span class="op">})</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'pluginXX'</span><span class="op">).</span>config<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div></li>
+</ol>
 <ul>
-<li><p>To have something to compare against, “Single plugin”. A.k.a. “bundle plugin”, similar to how ‘mini.nvim’ “bundles” all its Lua modules.</p></li>
-<li><p>NOTE: Other plugin managers can (and probably do) behave differently.</p></li>
+<li><p><code>Single plugin</code> - single plugin that combines all Lua modules and plugin files of separate plugins into one. All ‘lua/pluginNN.lua’ and ‘plugin/pluginNN.lua’ files are combined under a single directory. This provides the same functionality as many plugins, but “packaged” in a single plugin. Similar to how ‘mini.nvim’ is related to its standalone repos. This only adds a single entry to ‘runtimepath’ and is also used as a reference to compare against.</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="init.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'file:///path/to/working/directory/host/singleXX'</span> <span class="op">},</span> <span class="op">{</span> <span class="va">confirm</span> <span class="op">=</span> <span class="kw">false</span> <span class="op">})</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'plugin01'</span><span class="op">).</span>config<span class="op">()</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- ...</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'pluginXX'</span><span class="op">).</span>config<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div></li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>All config types use <code>vim.pack.add()</code> to install and load plugins. For installed plugins it essentially executes <code>:packadd!</code> during startup, so modifies ‘runtimepath’ immediately. Other plugin managers can (and probably do) behave differently and would allow more elaborate ways of delayed executing of <code>require('pluginNN').config()</code>.</p>
+</div>
+</div>
 </section>
 <section id="prior-expectations" class="level3">
 <h3 class="anchored" data-anchor-id="prior-expectations">Prior expectations</h3>
 <ol type="1">
 <li><p>Results for 0 installed plugins do not depend on config type. Nothing installed in various ways is still nothing installed. Can be used for a sanity check and reference for total startup time.</p></li>
-<li><p>Startup time is the best for “Single plugin” config type, followed by “Separate <code>vim.pack.add()</code>” (since <code>require()</code> needs to search through significantly less paths), followed by “Grouped <code>vim.pack.add()</code>”.</p></li>
-<li><p>Both “many plugins” approaches visibly grow linearly with the number of plugins.</p></li>
+<li><p>Startup time is the best for <code>Single plugin</code> config type, followed by <code>Separate vim.pack.add()</code>, followed by <code>Grouped vim.pack.add()</code>.</p></li>
+<li><p>Both “many plugins” approaches visibly grow with the number of plugins.</p></li>
 <li><p>Runtime performance behaves the same for both “many plugins” config types and is visibly worse than for “single plugin”.</p></li>
 </ol>
 </section>
@@ -506,24 +576,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="results">Results</h2>
 <section id="startup" class="level3">
 <h3 class="anchored" data-anchor-id="startup">Startup</h3>
+<p>Here are the results of benchmarking startup time (semi transparent points are actual times, line and text represent median times).</p>
 <p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_init.png" class="img-fluid"></p>
 <p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_plugin.png" class="img-fluid"></p>
 <p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/startup-summary_total.png" class="img-fluid"></p>
-<p>TODO</p>
+<p>Observations:</p>
+<ul>
+<li><p>Having zero plugins indeed adds nothing to startup time.</p></li>
+<li><p>Best performance is indeed for <code>Single plugin</code>. Having constant number of ‘runtimepath’ entries can save up to 50% of startup time for 50 plugins.</p>
+<p>However, <code>Separate add()</code> is not faster than <code>Grouped add()</code>. In fact, it is <em>much slower</em>. At first, I thought that this is an overhead of separate <code>vim.pack.add</code> calls, but similar results can be seen with <code>vim.cmd('packadd! pluginXX')</code>.</p>
+<p>After digging through the Neovim code base (with the help of <a href="https://github.com/TheLeoP/">Luis Calle</a>), the reason seems to be internal caching. In particular:</p>
+<ul>
+<li>Searching in <code>require()</code> is done by a custom package loader <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/runtime/lua/vim/_init_packages.lua#L31">that uses private <code>vim.api.nvim__get_runtime()</code></a>.</li>
+<li>The <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/api/vim.c#L652">private <code>vim.api.nvim__get_runtime()</code></a> uses <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/runtime.c#L656">a helper</a> that does some caching of runtime files if ‘runtimepath’ has changed.</li>
+</ul>
+<p>So instead of the expected “Add to ‘runtimepath’” -&gt; “<code>require</code> searches small number of directories”, there is a “Do some ‘runtimepath’ caching” step in the middle. It seems to have been added with caching <code>pack/*/start/*</code> plugins in mind.</p>
+<p>Although quick, it still adds a significant overhead at this millisecond scale of actions. But on the other hand, this approach allows to have more “separated” config structure, which many people like.</p>
+<p><strong>NOTE: This behavior might change in the future, since in theory it should be possible to have <code>:packadd!</code> smartly manipulate the cached ‘runtimepath’ value. So that there won’t be any extra recomputations going on.</strong></p></li>
+<li><p>Sourcing ‘plugin/’ does not depend on config type and grows linearly with the number of loaded plugins. The exact numbers are rather small, though.</p></li>
+<li><p>Total startup time is mostly affected by ‘init.lua’.</p></li>
+</ul>
 </section>
 <section id="runtime" class="level3">
 <h3 class="anchored" data-anchor-id="runtime">Runtime</h3>
 <p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/filetype-summary.png" class="img-fluid"></p>
-<p>TODO</p>
+<p>Observations:</p>
+<ul>
+<li><p>Indeed for both “many plugins” config types runtime performance is the same.</p></li>
+<li><p>Switching to a single plugin can reduce constant runtime overhead by as much as 55%.</p></li>
+</ul>
 </section>
 </section>
 <section id="conclusion" class="level2">
 <h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
 <ul>
-<li>TODO</li>
+<li><p>Loading plugins indeed adds a measurable performance overhead. Both during startup and runtime.</p></li>
+<li><p>Reducing the number of loaded plugins (be it by using a single “bundle plugin” or by lazy loading plugins some time later) can measurably improve performance. The saved time grows linearly with the number of reduced plugins and can be as high as 50% of startup/runtime overhead for 50 reduced plugins.</p></li>
+<li><p>Are these finding useful? I’d say yes. On paper, the amount of saved time is very small: order of tens of milliseconds during startup and one millisecond during runtime. But Neovim users take pride in their instantaneous startup and runtime performance.</p>
+<p>However, when looking at a big picture of a general advice for users, the value of (<code>number of opening Neovim</code> x <code>10 ms</code> + <code>number of runtime searching per session</code> x <code>1 ms</code> ~ 5 x 10 + 500 x 1 = 550 ms per day) can be visible if multiplied by the number of users and number of passed days.</p></li>
+<li><p>My personal (very biased) recommendation would be this: if you want to optimize startup and runtime performance benchmarked here, switching from many separate plugins to one plugin that provides same/similar functionality is the best course of action here. If that is not possible, then consider doing some simple lazy loading (like after first screen draw or on <code>InsertEnter</code>/<code>CmdlineEnter</code> events).</p>
+<p>But in the end, the choice is always up to the user.</p></li>
 </ul>
-    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mctmppwebs2a" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" header="" n-show-depth="2" n-show-init="10" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l" n-show-more="10"></bluesky-comments>
-  
+<!--  -->
 
 
 </section>
