@@ -12,9 +12,10 @@ website:
   open-graph:
     site-name: "Evgeni Chasnovski"
     locale: en_US
+    image: /assets/EC2-social.png
   twitter-card:
     creator: "@echasnovski"
-    image: "assets/EC2.png"
+    image: /assets/EC2-social.png
 
   navbar:
     search: true
