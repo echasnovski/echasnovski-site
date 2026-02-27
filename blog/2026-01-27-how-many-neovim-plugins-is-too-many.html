@@ -80,8 +80,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f02add0dffcdec21d3284ee72a750fbe.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-f3c8a1c05dc111bee0e381f275ff211e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-006b19251627ff679b9415c7e950db0b.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-8ec558f54e4a37d346f3418814628a5e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-e34e5ebe958eeba02811bc1799a878c1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script src="../site_libs/quarto-contrib/bluesky-comments-1.0.0/bluesky-comments.js"></script>
 <link href="../site_libs/quarto-contrib/bluesky-comments-1.0.0/styles.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -441,7 +441,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><p>Doing <code>require('module-name')</code> the first time for ‘module-name’ yields searching through all known ‘lua/’ runtime directories.</p></li>
 <li><p>Assigning filetype to a buffer (which is a fairly frequent action) yields searching through ‘ftplugin/’ runtime directories to load filetype plugin script(s).</p>
-<p>I don’t have an accurate estimation of how frequent this happens. Especially since it highly depends on which plugins are used (as they tend to set filetype for their internal buffers). But my quick testing on Neovim&gt;=0.12 with <code>vim._extui</code> enabled hints that it can be in the vicinity of 500 per active Neovim usage session.</p></li>
+<p>I don’t have an accurate estimation of how frequent this happens. Especially since it highly depends on which plugins are used (as they tend to set filetype for their internal buffers). But my quick testing on Neovim&gt;=0.12 with <code>vim._core.ui2</code> enabled hints that it can be in the vicinity of 500 per active Neovim usage session.</p></li>
 <li><p>Attaching an LSP client on Neovim&gt;=0.11 yields searching through ‘lsp/’ runtime directories.</p></li>
 <li><p>And so on. More information is in above link about Neovim’s runtime, plus <a href="https://neovim.io/doc/user/helptag.html?tag=:runtime"><code>:h :runtime</code></a> and <a href="https://neovim.io/doc/user/helptag.html?tag=runtime-search-path"><code>:h runtime-search-path</code></a></p></li>
 </ul>
@@ -478,9 +478,9 @@ Note
 </div>
 <div class="callout-body-container callout-body">
 <p>Benchmarks were done at the time when Neovim 0.12 is still in development. The AppImage with the following version was used:</p>
-<pre><code>NVIM v0.12.0-dev-2101+gd93e150888
+<pre><code>NVIM v0.12.0-dev-2435+g18c5f06c9f
 Build type: RelWithDebInfo
-LuaJIT 2.1.1767980792</code></pre>
+LuaJIT 2.1.1771967821</code></pre>
 </div>
 </div>
 <section id="plugin-code" class="level3">
@@ -575,6 +575,7 @@ Note
 </section>
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
+<p><strong>Edit on 2026-02-27</strong>: initial version of this post was done on <code>v0.12.0-dev-2101+gd93e150888</code> development version of Neovim. Some observations didn’t feel right, which resulted into <a href="https://github.com/neovim/neovim/issues/37586">me suggesting an optimization upstream</a>. It was <a href="https://github.com/neovim/neovim/pull/37722">promptly addressed</a> by Neovim wizard <a href="https://github.com/bfredl"><span class="citation" data-cites="bfredl">@bfredl</span></a> (the quick turnaround is mostly because it affects the <code>vim.pack</code> in the upcoming Neovim 0.12 release). Each section has “Initial results” spoiler preserved for posterity.</p>
 <section id="startup" class="level3">
 <h3 class="anchored" data-anchor-id="startup">Startup</h3>
 <p>Here are the results of benchmarking startup time (semi transparent points are actual times, line and text represent median times).</p>
@@ -585,18 +586,40 @@ Note
 <ul>
 <li><p>Having zero plugins indeed adds nothing to startup time.</p></li>
 <li><p>Best performance is indeed for <code>Single plugin</code>. Having constant number of ‘runtimepath’ entries can save up to 50% of startup time for 50 plugins.</p></li>
-<li><p>However, <code>Separate add()</code> is not faster than <code>Grouped add()</code>. In fact, it is <em>much slower</em>. At first, I thought that this is a result of constant overhead of a <code>vim.pack.add</code> call, but similar results can be seen with <code>vim.cmd('packadd! pluginXX')</code>.</p>
+<li><p>However, <code>Separate add()</code> is not visibly faster than <code>Grouped add()</code>. This probably has to do with the fact that ‘runtimepath’ option has special treatment: it is internally smartly cached on every <code>:packadd</code> to increase startup performance.</p></li>
+<li><p>Sourcing ‘plugin/’ does not depend on config type and grows close to linearly with the number of loaded plugins. The exact numbers are rather small, though.</p></li>
+<li><p>Total startup time is mostly affected by ‘init.lua’.</p></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Initial results
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/initial-results/startup-summary_init.png" class="img-fluid"></p>
+<p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/initial-results/startup-summary_plugin.png" class="img-fluid"></p>
+<p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/initial-results/startup-summary_total.png" class="img-fluid"></p>
+<ul>
+<li><p><code>Separate add()</code> is <em>much slower</em> than <code>Grouped add()</code>. At first, I thought that this is a result of constant overhead of a <code>vim.pack.add</code> call, but similar results can be seen with <code>vim.cmd('packadd! pluginXX')</code>.</p>
 <p>After digging through the Neovim code base (with the help of <a href="https://github.com/TheLeoP/">Luis Calle</a>), the reason seems to be internal caching. In particular:</p>
 <ul>
 <li>Searching in <code>require()</code> is done by a custom package loader <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/runtime/lua/vim/_init_packages.lua#L31">that uses private <code>vim.api.nvim__get_runtime()</code></a>.</li>
 <li>The <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/api/vim.c#L652">private <code>vim.api.nvim__get_runtime()</code></a> uses <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/runtime.c#L656">a helper</a> that does some caching of runtime files if ‘runtimepath’ has changed.</li>
 </ul>
 <p>So instead of the expected “Add to ‘runtimepath’” -&gt; “<code>require</code> searches small number of directories”, there is a “Do some ‘runtimepath’ caching” step in the middle. It seems to have been added with caching <code>pack/*/start/*</code> plugins in mind.</p>
-<p>Although quick, it still adds a significant overhead at this millisecond scale of actions. But on the other hand, this approach allows to have more “separated” config structure, which many people like.</p>
-<p><strong>NOTE: This behavior might change in the future, since in theory it should be possible to have <code>:packadd!</code> smartly manipulate the cached ‘runtimepath’ value. So that there won’t be any extra recomputations going on. This seems to <a href="https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/runtime.c#L932-L933">have a TODO note</a>.</strong></p></li>
-<li><p>Sourcing ‘plugin/’ does not depend on config type and grows close to linearly with the number of loaded plugins. The exact numbers are rather small, though.</p></li>
-<li><p>Total startup time is mostly affected by ‘init.lua’.</p></li>
+<p>Although quick, it still adds a significant overhead at this millisecond scale of actions. But on the other hand, this approach allows to have more “separated” config structure, which many people like.</p></li>
+<li><p>There is an overall and uniform ~10% improvement in startup speed between initial and “new” results. This might be a result of another startup improvement done within a month between benchmarks, since the startup time with zero plugins has improved by the same amount.</p>
+<p>However, since there is a similar improvement in “Runtime” results, it might be due to how the benchmarking machine was feeling on a particular day.</p></li>
 </ul>
+</div>
+</div>
+</div>
 </section>
 <section id="runtime" class="level3">
 <h3 class="anchored" data-anchor-id="runtime">Runtime</h3>
@@ -606,6 +629,22 @@ Note
 <li><p>Indeed for both “many plugins” config types runtime performance is the same.</p></li>
 <li><p>Switching to a single plugin can drastically reduce runtime overhead complexity from nearly linear to nearly constant.</p></li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Initial results
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p><img src="2026-01-27-how-many-neovim-plugins-is-too-many/initial-results/filetype-summary.png" class="img-fluid"></p>
+</div>
+</div>
+</div>
 </section>
 </section>
 <section id="conclusion" class="level2">
@@ -613,13 +652,13 @@ Note
 <ul>
 <li><p>Loading plugins indeed adds a measurable performance overhead. Both during startup and runtime.</p></li>
 <li><p>Reducing the number of loaded plugins (be it by using a single “bundle plugin” or by lazy loading plugins some time later) can measurably improve performance. The saved time grows linearly with the number of reduced plugins and can be as high as 50% of startup/runtime overhead for 50 reduced plugins.</p></li>
-<li><p>Using single <code>vim.pack.add()</code> call to load all necessary plugins at once and later configure in a series of <code>require()</code> calls is more performant than doing <code>vim.pack.add()</code> -&gt; <code>require()</code> -&gt; <code>vim.pack.add()</code> -&gt; <code>require()</code>. This has to do with internal caching of ‘runtimepath’ option and <strong>might change in the future</strong>.</p></li>
+<li><p>There is no practical difference between “one <code>vim.pack.add()</code>” (load all necessary plugins at once and later configure in a series of <code>require()</code> calls) and “separate <code>vim.pack.add()</code>” (<code>vim.pack.add()</code> -&gt; <code>require()</code> -&gt; <code>vim.pack.add()</code> -&gt; <code>require()</code>). This seems to have to do with internal caching of ‘runtimepath’ option.</p></li>
 <li><p>Are these findings useful? I’d say yes. On paper, the amount of saved time is very small: order of tens of milliseconds during startup and one millisecond during runtime.</p>
 <p>However, Neovim users take pride in their instantaneous startup and runtime performance. When looking at a big picture of a general advice for users, the value of saved time (<code>number of opening Neovim</code> x <code>10 ms</code> + <code>number of runtime searching per session</code> x <code>1 ms</code> ~ 5 x 10 + 500 x 1 = 550 ms per day) can be visible if multiplied by the number of users and number of passed days.</p></li>
 <li><p>My personal (very biased) recommendation would be this: if you want to optimize startup and runtime performance benchmarked here, switching from many separate plugins to one plugin that provides same/similar functionality is the best course of action here. If that is not possible, then consider doing some simple lazy loading (like after first screen draw or on <code>InsertEnter</code>/<code>CmdlineEnter</code> events).</p>
 <p>It is also completely fine to not care about millisecond level overhead in favor of using plugins and structure that brings you more joy. In the end, the choice is always up to the user.</p></li>
 </ul>
-    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mdg67faaic2w" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l" n-show-init="10" n-show-depth="2" n-show-more="10" header=""></bluesky-comments>
+    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mdg67faaic2w" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l" n-show-depth="2" n-show-init="10" n-show-more="10" header=""></bluesky-comments>
   
 
 
