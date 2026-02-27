@@ -22,7 +22,7 @@ I know there should be a performance difference in both cases since loading a pl
 - Doing `require('module-name')` the first time for 'module-name' yields searching through all known 'lua/' runtime directories.
 - Assigning filetype to a buffer (which is a fairly frequent action) yields searching through 'ftplugin/' runtime directories to load filetype plugin script(s).
 
-    I don't have an accurate estimation of how frequent this happens. Especially since it highly depends on which plugins are used (as they tend to set filetype for their internal buffers). But my quick testing on Neovim>=0.12 with `vim._extui` enabled hints that it can be in the vicinity of 500 per active Neovim usage session.
+    I don't have an accurate estimation of how frequent this happens. Especially since it highly depends on which plugins are used (as they tend to set filetype for their internal buffers). But my quick testing on Neovim>=0.12 with `vim._core.ui2` enabled hints that it can be in the vicinity of 500 per active Neovim usage session.
 
 - Attaching an LSP client on Neovim>=0.11 yields searching through 'lsp/' runtime directories.
 - And so on. More information is in above link about Neovim's runtime, plus [`:h :runtime`](https://neovim.io/doc/user/helptag.html?tag=:runtime) and [`:h runtime-search-path`](https://neovim.io/doc/user/helptag.html?tag=runtime-search-path)
@@ -60,9 +60,9 @@ With that in mind, I settled on the following benchmarking approach:
 Benchmarks were done at the time when Neovim 0.12 is still in development. The AppImage with the following version was used:
 
 ```
-NVIM v0.12.0-dev-2101+gd93e150888
+NVIM v0.12.0-dev-2435+g18c5f06c9f
 Build type: RelWithDebInfo
-LuaJIT 2.1.1767980792
+LuaJIT 2.1.1771967821
 ```
 :::
 
@@ -141,6 +141,8 @@ All config types use `vim.pack.add()` to install and load plugins. For installed
 
 ## Results
 
+**Edit on 2026-02-27**: initial version of this post was done on `v0.12.0-dev-2101+gd93e150888` development version of Neovim. Some observations didn't feel right, which resulted into [me suggesting an optimization upstream](https://github.com/neovim/neovim/issues/37586). It was [promptly addressed](https://github.com/neovim/neovim/pull/37722) by Neovim wizard [@bfredl](https://github.com/bfredl) (the quick turnaround is mostly because it affects the `vim.pack` in the upcoming Neovim 0.12 release). Each section has "Initial results" spoiler preserved for posterity.
+
 ### Startup
 
 Here are the results of benchmarking startup time (semi transparent points are actual times, line and text represent median times).
@@ -157,22 +159,36 @@ Observations:
 
 - Best performance is indeed for `Single plugin`. Having constant number of 'runtimepath' entries can save up to 50% of startup time for 50 plugins.
 
-- However, `Separate add()` is not faster than `Grouped add()`. In fact, it is *much slower*. At first, I thought that this is a result of constant overhead of a `vim.pack.add` call, but similar results can be seen with `vim.cmd('packadd! pluginXX')`.
-
-  After digging through the Neovim code base (with the help of [Luis Calle](https://github.com/TheLeoP/)), the reason seems to be internal caching. In particular:
-
-  - Searching in `require()` is done by a custom package loader [that uses private `vim.api.nvim__get_runtime()`](https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/runtime/lua/vim/_init_packages.lua#L31).
-  - The [private `vim.api.nvim__get_runtime()`](https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/api/vim.c#L652) uses [a helper](https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/runtime.c#L656) that does some caching of runtime files if 'runtimepath' has changed.
-
-  So instead of the expected "Add to 'runtimepath'" -> "`require` searches small number of directories", there is a "Do some 'runtimepath' caching" step in the middle. It seems to have been added with caching `pack/*/start/*` plugins in mind.
-
-  Although quick, it still adds a significant overhead at this millisecond scale of actions. But on the other hand, this approach allows to have more "separated" config structure, which many people like.
-
-  **NOTE: This behavior might change in the future, since in theory it should be possible to have `:packadd!` smartly manipulate the cached 'runtimepath' value. So that there won't be any extra recomputations going on. This seems to [have a TODO note](https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/runtime.c#L932-L933).**
+- However, `Separate add()` is not visibly faster than `Grouped add()`. This probably has to do with the fact that 'runtimepath' option has special treatment: it is internally smartly cached on every `:packadd` to increase startup performance.
 
 - Sourcing 'plugin/' does not depend on config type and grows close to linearly with the number of loaded plugins. The exact numbers are rather small, though.
 
 - Total startup time is mostly affected by 'init.lua'.
+
+::: {.callout-note collapse="true"}
+## Initial results
+
+![](2026-01-27-how-many-neovim-plugins-is-too-many/initial-results/startup-summary_init.png)
+
+![](2026-01-27-how-many-neovim-plugins-is-too-many/initial-results/startup-summary_plugin.png)
+
+![](2026-01-27-how-many-neovim-plugins-is-too-many/initial-results/startup-summary_total.png)
+
+- `Separate add()` is *much slower* than `Grouped add()`. At first, I thought that this is a result of constant overhead of a `vim.pack.add` call, but similar results can be seen with `vim.cmd('packadd! pluginXX')`.
+
+  After digging through the Neovim code base (with the help of [Luis Calle](https://github.com/TheLeoP/)), the reason seems to be internal caching. In particular:
+
+    - Searching in `require()` is done by a custom package loader [that uses private `vim.api.nvim__get_runtime()`](https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/runtime/lua/vim/_init_packages.lua#L31).
+    - The [private `vim.api.nvim__get_runtime()`](https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/api/vim.c#L652) uses [a helper](https://github.com/neovim/neovim/blob/c28113dd9d09b661061d25c147e39efadc6e700b/src/nvim/runtime.c#L656) that does some caching of runtime files if 'runtimepath' has changed.
+
+    So instead of the expected "Add to 'runtimepath'" -> "`require` searches small number of directories", there is a "Do some 'runtimepath' caching" step in the middle. It seems to have been added with caching `pack/*/start/*` plugins in mind.
+
+    Although quick, it still adds a significant overhead at this millisecond scale of actions. But on the other hand, this approach allows to have more "separated" config structure, which many people like.
+
+- There is an overall and uniform ~10% improvement in startup speed between initial and "new" results. This might be a result of another startup improvement done within a month between benchmarks, since the startup time with zero plugins has improved by the same amount.
+
+    However, since there is a similar improvement in "Runtime" results, it might be due to how the benchmarking machine was feeling on a particular day.
+:::
 
 ### Runtime
 
@@ -184,13 +200,19 @@ Observations:
 
 - Switching to a single plugin can drastically reduce runtime overhead complexity from nearly linear to nearly constant.
 
+::: {.callout-note collapse="true"}
+## Initial results
+
+![](2026-01-27-how-many-neovim-plugins-is-too-many/initial-results/filetype-summary.png)
+:::
+
 ## Conclusion
 
 - Loading plugins indeed adds a measurable performance overhead. Both during startup and runtime.
 
 - Reducing the number of loaded plugins (be it by using a single "bundle plugin" or by lazy loading plugins some time later) can measurably improve performance. The saved time grows linearly with the number of reduced plugins and can be as high as 50% of startup/runtime overhead for 50 reduced plugins.
 
-- Using single `vim.pack.add()` call to load all necessary plugins at once and later configure in a series of `require()` calls is more performant than doing `vim.pack.add()` -> `require()` -> `vim.pack.add()` -> `require()`. This has to do with internal caching of 'runtimepath' option and **might change in the future**.
+- There is no practical difference between "one `vim.pack.add()`" (load all necessary plugins at once and later configure in a series of `require()` calls) and "separate `vim.pack.add()`" (`vim.pack.add()` -> `require()` -> `vim.pack.add()` -> `require()`). This seems to have to do with internal caching of 'runtimepath' option.
 
 - Are these findings useful? I'd say yes. On paper, the amount of saved time is very small: order of tens of milliseconds during startup and one millisecond during runtime.
 
