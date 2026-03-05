@@ -1,0 +1,420 @@
+---
+title: "Intro to vim.pack (Neovim built-in plugin manager)"
+author: Evgeni Chasnovski
+date: 2026-03-10
+categories: [neovim]
+description: "A somewhat concise yet comprehensive introduction to `vim.pack`: how it works and how to use it"
+draft: true
+---
+
+An upcoming Neovim 0.12 release [will have a built-in plugin manager](2025-07-04-neovim-now-has-builtin-plugin-manager.qmd). It is implemented in Lua and is available as a built-in [`vim.pack`](https://neovim.io/doc/user/helptag.html?tag=vim.pack) module (hence the name). This blog post describes fundamentals of how `vim.pack` is intended to be used. Reading only selected sections should be fine, but it is written to be read from top to bottom.
+
+::: {.callout-note}
+Beware that, although unlikely, some information can become outdated. The Neovim's own documentation is always the higher authority than this post. From the running Neovim instance execute `:h vim.pack` to read the help.
+:::
+
+## Concepts
+
+This section lists `vim.pack` adjacent information that would benefit to understand before using it.
+
+### Lua
+
+The `vim.pack` is written and is designed to be used in Lua programming language. So at least basic understanding of its logic and syntax would be useful.
+
+There are many sources online for the language itself, like ["Learn X in Y minutes where X=Lua"](https://learnxinyminutes.com/lua/). Neovim has its own resources: [`:h lua-concepts`](https://neovim.io/doc/user/helptag.html?tag=lua-concepts) and [`:h lua-guide`](https://neovim.io/doc/user/helptag.html?tag=lua-guide).
+
+There shouldn't be much needed to know to actually use `vim.pack`. Mostly concepts about tables (`{ 'one', 'two' }` and `{ a = 1, b = 2 }`), functions (`f({ 'one', 'two' })`), and how to execute code inside user's config (put it in or source from ['init.lua' file](https://neovim.io/doc/user/helptag.html?tag=init.lua)).
+
+### Runtime files
+
+To provide extensibility and flexibility, Neovim (and Vim) has a concept of runtime files: various support files that can be found and used when Neovim is running. Where these files are searched is controlled by the ['runtimepath' option](https://neovim.io/doc/user/helptag.html?tag='runtimepath'), which is essentially a list of directories.
+
+Most commonly used types of runtime files when it comes to external plugins in Neovim are:
+
+- Lua modules. Searched in `lua/` subdirectories.
+- Plugin scripts. Searched in `plugin/` subdirectories.
+- Filetype plugins. Searched in `ftplugin/` subdirectories.
+
+---
+
+For example, if `'runtimepath'` is `/home/user/dir,/home/user/dir-other`, then:
+
+- `require('myplug')` will try to look for `lua/myplug.lua` or `lua/myplug/init.lua` inside `/home/user/dir`, then `/home/user/dir-other`, and source the first one it finds.
+
+- All files in `/home/user/dir/plugin` and `/home/user/dir-other/plugin` are sourced in alphabetical order during startup.
+
+- Setting filetype `myft` will look for `ftplugin/myft.{vim,lua}` inside `/home/user/dir`, then `/home/user/dir-other`, and source all that it finds.
+
+The two most important runtime paths for common users available by default are:
+
+- [User's config directory](https://neovim.io/doc/user/helptag.html?tag=$XDG_CONFIG_HOME): `~/.config/nvim` on Unix and `~/AppData/Local/nvim` on Windows. Used for personal config.
+
+- [The `site/` subdirectory of user's data directory](https://neovim.io/doc/user/helptag.html?tag=$XDG_DATA_HOME): `~/.local/share/nvim/site` on Unix and `~/AppData/Local/nvim-data/site` on Windows. Used for data from plugins installed by user.
+
+---
+
+When it comes to a plugin manager:
+
+- Installing a plugin means to download and put it in the known location on the disk.
+
+- Loading a plugin means to make sure that its path is a proper part of `'runtimepath'`. Not at the start, not at the end, but somewhere in the middle.
+
+### Plugin packages {#plugin-packages}
+
+To at least somehow standardize extensibility via plugins, Neovim (and Vim) has the concept of [plugin packages](https://neovim.io/doc/user/helptag.html?tag=packages) (a.k.a. "Vim packages" or just "packages"). It is a collection of plugins meant to be used together. For Neovim to find a plugin package, it should be put in 'pack' subdirectory of any path from [`'packpath'`](https://neovim.io/doc/user/helptag.html?tag='packpath') (works similar and by default equal to `'runtimepath'`).
+
+One package can have two types of plugins:
+
+- So called "opt" plugins are meant to be available/loaded only on demand after executing [`:packadd`](https://neovim.io/doc/user/helptag.html?tag=:packadd). This command searches through a dedicated set of directories (controlled by [`'packpath'`](https://neovim.io/doc/user/helptag.html?tag='packpath'), the same as 'runtimepath' by default).
+
+- So called "start" plugins are meant to be available/loaded automatically during startup. The only way to make them not load during startup is to move them to the "opt" part of the package.
+
+---
+
+For example, a package named `bundle` (common name from early days of adapting this feature) might have the following structure:
+
+```
+bundle/
+├── start/                 Directory for "start" plugins
+│   ├── plug-one/          First "start" plugin
+│   │   └── ftplugin/
+│   │       └── myft.lua
+│   └── plug-two/          Second "start" plugin
+│       └── lua/
+│           └── myplug.lua
+└── opt/                   Directory for "opt" plugins
+    └── plug-three/        The only "opt" plugin
+        └── lua/
+            └── three.lua
+```
+
+If this package is put as `pack/bundle/` subdirectory under some known package path (the `~/.local/share/nvim/site` would be the most expected place), then:
+
+- Plugins 'plug-one' and 'plug-two' will *always* be available after startup.
+
+- Plugin 'plug-three' is made available after executing `:packadd plug-three`.
+
+## Install and load
+
+Adding plugin(s) to a config is done via [`vim.pack.add()`](https://neovim.io/doc/user/helptag.html?tag=vim.pack.add()). It acts as a "smart `:packadd`" - install if plugin is missing and load it. It is mostly designed to be a part of the user's config: add it with a list of all external plugins you want to use and forget about it. Like this (for more comprehensive examples see ["Config organization"](#config-organization)):
+
+```lua
+vim.pack.add({
+  'https://github.com/nvim-mini/mini.nvim',
+  'https://github.com/neovim/nvim-lspconfig',
+  'https://github.com/nvim-treesitter/nvim-treesitter',
+})
+```
+
+By default during initial install there is also a confirmation dialog showing which plugins are going to be installed.
+
+Plugins installed by `vim.pack` are expected to be managed/altered **only by `vim.pack` methods**. Which means do not update/delete their code by hand. There are safeguards to handle this graciously, but in general there can be problems.
+
+Plugins that are `vim.pack.add()`ed in current session are called "active" or "loaded".
+
+---
+
+A subtle but one of the key things to understand is that `vim.pack.add()` is **just a function**. It takes plugin specifications and acts on it immediately. After execution is done, all listed plugins can be assumed to be available in the current Neovim session.
+
+Some consequences of this design are:
+
+- It results into a more unified config: adding a plugin is similar to creating a mapping or an autocommand.
+
+- It can be called multiple times with different plugin lists (with [minor caveats](#many-vim-pack-add)) for a more "modular" config.
+
+- [Lazy loading](#lazy-loading) in principle is just "call this exact function, just some time later".
+
+- It can be used interactively like `:lua vim.pack.add({ 'https://github.com/nvim-mini/mini.nvim' })`.
+
+---
+
+All plugins that were not previously installed by `vim.pack` are installed in parallel. They are put into a dedicated `core` [plugin package](#plugin-packages) as "opt" plugins (see [`:h vim.pack-directory`](https://neovim.io/doc/user/helptag.html?tag=vim.pack-directory)). There is no "start" plugin support because:
+
+- It makes possible to comment out the (part of) `vim.pack.add()` call and some plugins will not load in the next session. Almost as if it doesn't exist at all.
+
+- This way the entire config acts as a blueprint of how plugins are installed, loaded, and meant to be updated. The assumed workflow with "start" plugins is more like "manually install and forget about it" which is not quite "add to init.lua and forget about it". Since all plugins are assumed to listed in the config and are loaded with `vim.pack.add`, there is functionally no difference b
+
+---
+
+By default loading plugin is done with `:packadd` (possibly with `!`) command, which essentially makes plugin's [runtime files](#runtime-files) known to Neovim and sources some of them ('plugin/' and 'ftdetect/' scripts).
+
+With `vim.pack.add()` it is also possible to have custom loading logic. This can be useful to do something more or do nothing at all The latter is useful as a workaround for some complex lazy loading. For example:
+
+```{.lua #vim-pack-add-no-load}
+vim.pack.add(                                     -- <1>
+  { 'https://github.com/neovim/nvim-lspconfig' },
+  { load = function() end }                       -- <2>
+)
+```
+
+1. "Register" plugin, but not load it right away
+2. Do nothing instead of `:packadd` to load
+
+### Specification
+
+Each plugin can be specified as a single string describing its source, i.e. from where to download its files (`git clone` for install and `git fetch` to update). Please use this approach if no extra tweaking is required.
+
+Only Git repos can be managed (installed, updated, deleted) by `vim.pack`. For other ways of plugin distribution, it is suggested to manually download them into a [separate, dedicated plugin package](#plugin-packages) (either directly or via symlinked directory). This also includes so called "local" plugins, which users already have on the disk and want to manage themselves.
+
+By default the plugin will be installed named as the source's repository name and will get updates following default branch (usually `main` or `master`). It is also possible to tweak this by specifying [table specification](https://neovim.io/doc/user/helptag.html?tag=vim.pack.Spec) instead of a single source string. Like this:
+
+```lua
+vim.pack.add({
+  { src = 'https://github.com/nvim-mini/mini.nvim', version = 'stable' },   -- <1>
+  { src = 'https://github.com/neovim/nvim-lspconfig', name = 'lspconfig' }, -- <2>
+  'https://github.com/nvim-treesitter/nvim-treesitter',                     -- <3>
+})
+```
+
+1. Use updates from `stable` Git revision (branch, tag, or commit)
+2. Use custom name
+3. Table and string specifications can be mixed
+
+To follow semver-like named tags, use [`:h vim.version.range()`](https://neovim.io/doc/user/helptag.html?tag=vim.version.range()) as `version`:
+
+
+```lua
+vim.pack.add({
+  { src = 'https://github.com/nvim-mini/mini.nvim', version = vim.version.range('*') },     -- <1>
+  { src = 'https://github.com/neovim/nvim-lspconfig', version = vim.version.range('2.x') }, -- <2>
+})
+```
+
+1. Always try installing latest semver tag
+2. Install latest semver tag if it is >=2.0.0 and <3.0.0
+
+Use `data` field to store/pass extra information or plugin specific methods:
+
+```lua
+local selective_load = function(plug_data)
+  if (plug_data.spec.data or {}).skip_load then return end -- <1>
+  vim.cmd.packadd(plug_data.spec.name)
+end
+
+vim.pack.add({
+  'https://github.com/nvim-mini/mini.nvim',
+  { src = 'https://github.com/neovim/nvim-lspconfig', data = { skip_load = true } },
+}, { load = selective_load })
+```
+
+1. Do not load if explicitly asked.
+
+### Lockfile
+
+On top of listing used plugins in a config (to control how they installed and loaded), `vim.pack` stores extra information in [its lockfile](https://neovim.io/doc/user/helptag.html?tag=vim.pack-lockfile): `nvim-pack-lock.json` in user's config directory. It contains JSON encoded information about the current state of all plugins managed by `vim.pack`. It is meant to be treated like a part of the config (like tracked via version control, for example) but **not modified by hand**.
+
+The lockfile serves several purposes:
+
+- It is used as a "latest working state" reference when bootstrapping the config on the new machine. In this case during **the very first `vim.pack.add()` call** all plugins that are present in the lockfile but absent on disk are installed all at once. This ensures that even "lazy loaded" plugins are installed right away.
+
+- It contains information about plugin's `version`, i.e. target state when updating. This is useful when [updating](#update) if there not-yet-active plugins (since there is no `vim.pack.add()` call yet to say which `version` it followes).
+
+- In future it will allow to store more information about the config to perform more actions without much startup overhead. Like provide information about minimum expected Neovim version (per plugin) or plugin dependencies (to at least ensure that they are already loaded).
+
+If something is done to plugins not via `vim.pack` methods, lockfile can become out of sync with what is on the disk. Following [troubleshooting steps](#troubleshoot) should usually help.
+
+### Hooks
+
+A common requirement for managing plugins is to be able to perform dedicated actions (usually called "plugin hooks") whenever plugin's state changes. Like "build/compile the plugin", "update parsers installed by this plugin", "perform initial registration".
+
+The suggested interface for that is by using [dedicated `vim.pack` events](https://neovim.io/doc/user/helptag.html?tag=vim.pack-events): `PackChangedPre` (before the change) and `PackChanged` (after the change). These events are triggered whenever plugins are affected via `vim.pack` functions.
+
+Autocommands for these events will receive information about affected plugin via [event data](https://neovim.io/doc/user/helptag.html?tag=event-data). It will contain at least plugin's name and specification, whether it is active, and what kind of change it is. There are three major kinds of changes:
+
+- `kind=install` - initial plugin install, before loading.
+- `kind=update` - update already installed plugin, possibly not loaded.
+- `kind=delete` - delete from disk.
+
+---
+
+Here is an example of updating tree-sitter parsers whenever plugin named 'nvim-treesitter' is updated:
+
+```lua
+vim.api.nvim_create_autocmd('PackChanged', { callback = function(ev)
+  local name, kind = ev.data.spec.name, ev.data.kind
+  if name == 'nvim-treesitter' and kind == 'update' then              -- <1>
+    if not ev.data.active then vim.cmd.packadd('nvim-treesitter') end -- <2>
+    vim.cmd('TSUpdate')
+  end
+end })
+```
+
+1. Update tree-sitter parsers whenever 'nvim-treesitter' updates
+2. Make sure that 'nvim-treesitter' is loaded to use `:TSUpdate`
+
+::: {.callout-note #hooks-install}
+One important caveat worth mentioning is about plugin install hooks. For them to work, their autocommand has to be created **before the `vim.pack.add()` call that does the installation**. Otherwise Neovim can't know about that hook (at least before there is a `packspec` support).
+
+Depending on the level of robustness you want to achieve for your config, there are several degrees of handling this:
+
+- Create an autocommand before `vim.pack.add()` that lists the plugin. This will run the hook when the plugin is installed for the very first time.
+
+- (Recommended) Create an autocommand before **the very first `vim.pack.add()`**. This will run the hook even when installing the plugin [based on the lockfile](#lockfile).
+
+- If the hook *absolutely needs* to have plugin's `data` (like if it contains project build instructions), the plugin should be listed in the very first `vim.pack.add()`. If this plugin is intended to be lazy loaded, [register it without loading](#vim-pack-add-no-load) and use `vim.cmd.packadd` when later loading.
+:::
+
+---
+
+The long-term plan is to move defining common hooks (like "after install" and "after update") from user's responsibility to plugin's. One approach is to use some sort of standardized file in plugin root that tells plugin manager what scripts to execute on certain events. This is commonly mentioned as ["add `packspec` support"](https://github.com/neovim/packspec/). This should mostly remove the need for custom hooks for most users.
+
+## Config organization {#config-organization}
+
+### Single `vim.pack.add()`
+
+The most robust approach around which `vim.pack` was designed. Define one autocommand for hooks and have single `vim.pack.add()` that installs and loads plugins. Works well when "bootstrapping" config on new machine (since installation from the lockfile is done on first `vim.pack.add()`). Example:
+
+```{.lua filename=init.lua}
+vim.api.nvim_create_autocmd('PackChanged', { callback = function(ev)  -- <1>
+  local name, kind = ev.data.spec.name, ev.data.kind
+  if name == 'nvim-treesitter' and kind == 'update' then
+    if not ev.data.active then vim.cmd.packadd('nvim-treesitter') end
+    vim.cmd('TSUpdate')
+  end
+end })
+
+vim.pack.add({                                                        -- <2>
+  'https://github.com/nvim-mini/mini.nvim',
+  'https://github.com/neovim/nvim-lspconfig',
+  'https://github.com/nvim-treesitter/nvim-treesitter',
+})
+
+require('mini.ai').setup()                                            -- <3>
+require('mini.surround').setup()
+vim.lsp.enable({ 'lua_ls' })
+```
+
+1. Define hooks via autocommand(s)
+2. Add (maybe install and load) all at once
+3. Use plugins immediately
+
+This should be enough for most users. The two most common downsides expressed about it are:
+
+- It is not "modular" enough as many people prefer spreading plugin configuration across multiple files. The usual answer is to use [many `vim.pack.add()` calls](many-vim-pack-add).
+
+- It loads all plugins immediately during startup which can visibly affect startup time. It also increases 'runtimepath' (which can [have negative impact as weell](2026-01-27-how-many-neovim-plugins-is-too-many.qmd)). The answer is to use [lazy loading](lazy-loading), **but to a moderate extent**. Extreme lazy loading usually comes with a hidden cognitive overhead both when using and maintaining config.
+
+### Many `vim.pack.add()` {#many-vim-pack-add}
+
+Usually very similar to a "single `vim.pack.add()`" approach but with many `vim.pack.add` spread across multiple files.
+
+One way to do it is to add files inside 'plugin/' directory of the config. This way they will be discovered and executed (in alphabetical order) automatically during startup. Example:
+
+```{.lua filename=plugin/mini.lua}
+vim.pack.add({ 'https://github.com/nvim-mini/mini.nvim' })
+
+require('mini.ai').setup()
+require('mini.surround').setup()
+```
+
+```{.lua filename=plugin/nvim-lspconfig.lua}
+vim.pack.add({ 'https://github.com/neovim/nvim-lspconfig' })
+
+vim.lsp.enable({ 'lua_ls' })
+```
+
+```{.lua filename=plugin/nvim-treesitter.lua}
+vim.api.nvim_create_autocmd('PackChanged', { callback = function(ev)
+  local name, kind = ev.data.spec.name, ev.data.kind
+  if name == 'nvim-treesitter' and kind == 'update' then
+    if not ev.data.active then vim.cmd.packadd('nvim-treesitter') end
+    vim.cmd('TSUpdate')
+  end
+end })
+
+vim.pack.add({ 'https://github.com/nvim-treesitter/nvim-treesitter' })
+```
+
+::: {.callout-note}
+The current single fragility of this approach occurs when 1) "bootstrapping" from the [lockfile](#lockfile) 2) a plugin that requires an action during install. See [dedicated note](#hooks-install) about possible solutions.
+
+In this particular example a solution could be to create all installation hooks in 'init.lua' file:
+
+```{.lua filename=init.lua}
+vim.api.nvim_create_autocmd('PackChanged', { callback = function(ev)
+  -- ... -- <1>
+end})
+```
+
+1. Installation hooks
+:::
+
+### Lazy loading {#lazy-loading}
+
+TODO: "Load just before it is needed" vs "Load when it doesn't have negative impact" approaches.
+
+The `vim.pack` manager is designed with lazy loading in mind, but definitely not as a front and center use case. Use it moderately.
+
+The basic idea behind lazy loading with `vim.pack`: call `vim.pack.add()` not during startup but register it to be called whenever you want to load the plugin. I'd suggest to only use basic autocommands and not rely on any complex logic (like "load on mapping", etc.).
+
+Example:
+
+```{.lua filename=init.lua}
+vim.api.nvim_create_autocmd('InsertEnter', { callback = function()  -- <1>
+  vim.pack.add({ 'https://github.com/nvim-mini/mini.completion' })
+end })
+
+vim.api.nvim_create_autocmd('CmdlineEnter', { callback = function() -- <2>
+  vim.pack.add({ 'https://github.com/nvim-mini/mini.cmdline' })
+end })
+```
+
+1. Load when entering Insert mode.
+2. Load when entering Command-line mode.
+
+::: {.callout-note}
+- When adding new lazy loaded plugin, make sure it is installed. Either trigger its loading in a new session or manually run `vim.pack.add()` with its source.
+
+- This also has the same "install hooks" fragility as the [many `vim.pack.add()`](many-vim-pack-add) approach with the same solutions.
+:::
+
+## Update
+
+Updating already installed plugins is done via [`vim.pack.update()`](https://neovim.io/doc/user/helptag.html?tag=vim.pack.update()). There is no dedicated user command [yet](https://github.com/neovim/neovim/issues/34764).
+
+Executing `:lua vim.pack.update()` will update all plugins and `:lua vim.pack.update({ 'mini.nvim' })` will update selected plugins. It means:
+
+- Download new changes from plugin sources.
+- Compute new target state and all the changes (`git log`) it needs to apply to get there.
+- (By default) show a confirmation buffer with all pending updates.
+
+
+In-process LSP cool features:
+
+- ...
+
+Other common ways to use `vim.pack.update()`:
+
+- `:lua vim.pack.update(nil, { force = true })`
+
+- `:lua vim.pack.update(nil, { offline = true })`
+
+- `:lua vim.pack.update(nil, { target = 'lockfile' })`
+
+## Delete
+
+`:lua vim.pack.del({ 'nvim-lspconfig' })`.
+
+Do not delete by hand.
+
+## Troubleshoot
+
+`:checkhealth vim.pack` . Consult https://github.com/neovim/neovim/pull/37309.
+
+## Migrate
+
+Basically:
+
+- Update config to use `vim.pack` instead of previous plugin manager.
+
+- Make sure that plugins and accompanying files are not on disk.
+
+### mini.deps
+
+The ['mini.deps'](https://nvim-mini.org/mini.nvim/readmes/mini-deps.html) was initially designed with the idea of being merged as Neovim's built-in plugin manager. The overall concept proved to be rather successful and after about 1.5 years of public testing it was used as a basis for `vim.pack`. In many ways, `vim.pack` is better and slicker version of 'mini.deps'. So the migration should be rather painless.
+
+### lazy.nvim
+
+Not all capabilities are one-to-one reproducible by design.
+
+<!-- {{< bluesky-comments !!!!!!!!!!!!!!!!!!! >}} -->
