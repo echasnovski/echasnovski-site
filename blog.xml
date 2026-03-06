@@ -574,7 +574,7 @@ Note
 <li><p>My personal (very biased) recommendation would be this: if you want to optimize startup and runtime performance benchmarked here, switching from many separate plugins to one plugin that provides same/similar functionality is the best course of action here. If that is not possible, then consider doing some simple lazy loading (like after first screen draw or on <code>InsertEnter</code>/<code>CmdlineEnter</code> events).</p>
 <p>It is also completely fine to not care about millisecond level overhead in favor of using plugins and structure that brings you more joy. In the end, the choice is always up to the user.</p></li>
 </ul>
-    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mdg67faaic2w" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" n-show-more="10" n-show-init="10" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l" n-show-depth="2" header=""></bluesky-comments>
+    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mdg67faaic2w" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" n-show-depth="2" n-show-more="10" n-show-init="10" header="" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l"></bluesky-comments>
   
 
 

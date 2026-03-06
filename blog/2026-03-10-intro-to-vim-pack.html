@@ -80,8 +80,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-f02add0dffcdec21d3284ee72a750fbe.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-8ec558f54e4a37d346f3418814628a5e.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../site_libs/bootstrap/bootstrap-dark-e34e5ebe958eeba02811bc1799a878c1.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-f088c2cac89e87627853cf3f77338284.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-3cd121eeb1766fced7ea3eef98465ce9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
 <script src="../site_libs/quarto-contrib/bluesky-comments-1.0.0/bluesky-comments.js"></script>
 <link href="../site_libs/quarto-contrib/bluesky-comments-1.0.0/styles.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -502,7 +502,7 @@ Note
 </ul>
 <hr>
 <p>For example, a package named <code>bundle</code> (common name from early days of adapting this feature) might have the following structure:</p>
-<pre><code>bundle/
+<pre class="tree-style"><code>bundle/
 ├── start/                 Directory for "start" plugins
 │   ├── plug-one/          First "start" plugin
 │   │   └── ftplugin/
@@ -523,17 +523,18 @@ Note
 </section>
 <section id="install-and-load" class="level2">
 <h2 class="anchored" data-anchor-id="install-and-load">Install and load</h2>
-<p>Adding plugin(s) to a config is done via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.add()"><code>vim.pack.add()</code></a>. It acts as a “smart <code>:packadd</code>” - install if plugin is missing and load it. It is mostly designed to be a part of the user’s config: add it with a list of all external plugins you want to use and forget about it. Like this (for more comprehensive examples see <a href="#config-organization">“Config organization”</a>):</p>
+<p>Adding plugin(s) to a config is done via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.add()"><code>vim.pack.add()</code></a>. It acts as a “smart <code>:packadd</code>” - install if plugin is missing and load it. The design is for it to be a part of the user’s config: add with a list of all external plugins you want to use and forget about it. Like this (for more comprehensive examples see <a href="#config-organization">“Config organization”</a>):</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'https://github.com/nvim-mini/mini.nvim'</span><span class="op">,</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">'https://github.com/neovim/nvim-lspconfig'</span><span class="op">,</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'https://github.com/nvim-treesitter/nvim-treesitter'</span><span class="op">,</span></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>By default during initial install there is also a confirmation dialog showing which plugins are going to be installed.</p>
+<p>By default during initial install there is also a confirmation dialog showing which plugins are going to be installed. Press <code>y</code> to confirm, <code>n</code> to skip, <code>a</code> to allow for all <code>vim.pack.add()</code> confirmations in current session. It looks like this:</p>
+<p><img src="2026-03-10-intro-to-vim-pack/demo-confirmation.png" class="img-fluid"></p>
 <p>Plugins installed by <code>vim.pack</code> are expected to be managed/altered <strong>only by <code>vim.pack</code> methods</strong>. Which means do not update/delete their code by hand. There are safeguards to handle this graciously, but in general there can be problems.</p>
-<p>Plugins that are <code>vim.pack.add()</code>ed in current session are called “active” or “loaded”.</p>
+<p>Adding plugin via <code>vim.pack.add()</code> makes it “active” or “loaded” in current session.</p>
 <hr>
-<p>A subtle but one of the key things to understand is that <code>vim.pack.add()</code> is <strong>just a function</strong>. It takes plugin specifications and acts on it immediately. After execution is done, all listed plugins can be assumed to be available in the current Neovim session.</p>
+<p>A subtle but one of the key things to understand is that <code>vim.pack.add()</code> is <strong>just a function</strong>. It takes plugin specifications and acts on them immediately. After execution is done without errors, all listed plugins should be available in the current Neovim session.</p>
 <p>Some consequences of this design are:</p>
 <ul>
 <li><p>It results into a more unified config: adding a plugin is similar to creating a mapping or an autocommand.</p></li>
@@ -544,12 +545,12 @@ Note
 <hr>
 <p>All plugins that were not previously installed by <code>vim.pack</code> are installed in parallel. They are put into a dedicated <code>core</code> <a href="#plugin-packages">plugin package</a> as “opt” plugins (see <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-directory"><code>:h vim.pack-directory</code></a>). There is no “start” plugin support because:</p>
 <ul>
-<li><p>It makes possible to comment out the (part of) <code>vim.pack.add()</code> call and some plugins will not load in the next session. Almost as if it doesn’t exist at all.</p></li>
-<li><p>This way the entire config acts as a blueprint of how plugins are installed, loaded, and meant to be updated. The assumed workflow with “start” plugins is more like “manually install and forget about it” which is not quite “add to init.lua and forget about it”. Since all plugins are assumed to listed in the config and are loaded with <code>vim.pack.add</code>, there is functionally no difference b</p></li>
+<li><p>It makes possible to comment out the (part of) <code>vim.pack.add()</code> call and some plugins will not load in the next session. Almost as if they don’t exist at all.</p></li>
+<li><p>This way the entire config acts as a blueprint of how plugins are loaded and meant to be updated. Using “start” plugins more fits the workflow like “manually install and forget about it” which is not quite “add to init.lua and forget about it”. Since all plugins are assumed to be listed in the config and are loaded with <code>vim.pack.add</code>, there is functionally no difference between “opt” and “start” plugin types.</p></li>
 </ul>
 <hr>
-<p>By default loading plugin is done with <code>:packadd</code> (possibly with <code>!</code>) command, which essentially makes plugin’s <a href="#runtime-files">runtime files</a> known to Neovim and sources some of them (‘plugin/’ and ‘ftdetect/’ scripts).</p>
-<p>With <code>vim.pack.add()</code> it is also possible to have custom loading logic. This can be useful to do something more or do nothing at all The latter is useful as a workaround for some complex lazy loading. For example:</p>
+<p>By default loading plugin is done by executing <code>:packadd</code> (possibly with <code>!</code>) command, which essentially makes plugin’s <a href="#runtime-files">runtime files</a> known to Neovim and sources some of them (<code>plugin/</code> and <code>ftdetect/</code> scripts).</p>
+<p>With <code>vim.pack.add()</code> it is also possible to have custom loading logic. This can be useful to do something more or do nothing at all. The latter is useful as a workaround for some complex <a href="#lazy-loading">lazy loading</a>. For example:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="vim-pack-add-no-load"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="vim-pack-add-no-load" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="vim-pack-add-no-load-1" class="code-annotation-target"><a href="#vim-pack-add-no-load-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">(</span></span>
 <span id="vim-pack-add-no-load-2"><a href="#vim-pack-add-no-load-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span> <span class="st">'https://github.com/neovim/nvim-lspconfig'</span> <span class="op">},</span></span>
 <a class="code-annotation-anchor" data-target-cell="vim-pack-add-no-load" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="vim-pack-add-no-load-3" class="code-annotation-target"><a href="#vim-pack-add-no-load-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span> <span class="fu">load</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="kw">end</span> <span class="op">}</span></span>
@@ -568,7 +569,7 @@ Note
 <h3 class="anchored" data-anchor-id="specification">Specification</h3>
 <p>Each plugin can be specified as a single string describing its source, i.e.&nbsp;from where to download its files (<code>git clone</code> for install and <code>git fetch</code> to update). Please use this approach if no extra tweaking is required.</p>
 <p>Only Git repos can be managed (installed, updated, deleted) by <code>vim.pack</code>. For other ways of plugin distribution, it is suggested to manually download them into a <a href="#plugin-packages">separate, dedicated plugin package</a> (either directly or via symlinked directory). This also includes so called “local” plugins, which users already have on the disk and want to manage themselves.</p>
-<p>By default the plugin will be installed named as the source’s repository name and will get updates following default branch (usually <code>main</code> or <code>master</code>). It is also possible to tweak this by specifying <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.Spec">table specification</a> instead of a single source string. Like this:</p>
+<p>By default the plugin will be installed as source’s repository name and will get updates following default branch (usually <code>main</code> or <code>master</code>). It is also possible to tweak this by specifying <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.Spec">table specification</a> instead of a single source string. Like this:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-3"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-3-1"><a href="#annotated-cell-3-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
 <a class="code-annotation-anchor" data-target-cell="annotated-cell-3" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-3-2" class="code-annotation-target"><a href="#annotated-cell-3-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span> <span class="va">src</span> <span class="op">=</span> <span class="st">'https://github.com/nvim-mini/mini.nvim'</span><span class="op">,</span> <span class="va">version</span> <span class="op">=</span> <span class="st">'stable'</span> <span class="op">},</span></span>
 <a class="code-annotation-anchor" data-target-cell="annotated-cell-3" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-3-3" class="code-annotation-target"><a href="#annotated-cell-3-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span> <span class="va">src</span> <span class="op">=</span> <span class="st">'https://github.com/neovim/nvim-lspconfig'</span><span class="op">,</span> <span class="va">name</span> <span class="op">=</span> <span class="st">'lspconfig'</span> <span class="op">},</span></span>
@@ -577,7 +578,7 @@ Note
 <dl class="code-annotation-container-grid">
 <dt data-target-cell="annotated-cell-3" data-target-annotation="1">1</dt>
 <dd>
-<span data-code-cell="annotated-cell-3" data-code-lines="2" data-code-annotation="1">Use updates from <code>stable</code> Git revision (branch, tag, or commit)</span>
+<span data-code-cell="annotated-cell-3" data-code-lines="2" data-code-annotation="1">Use updates from <code>stable</code> Git reference (branch, tag, or commit)</span>
 </dd>
 <dt data-target-cell="annotated-cell-3" data-target-annotation="2">2</dt>
 <dd>
@@ -590,17 +591,23 @@ Note
 </dl>
 <p>To follow semver-like named tags, use <a href="https://neovim.io/doc/user/helptag.html?tag=vim.version.range()"><code>:h vim.version.range()</code></a> as <code>version</code>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-4"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-4-1"><a href="#annotated-cell-4-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
-<a class="code-annotation-anchor" data-target-cell="annotated-cell-4" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-4-2" class="code-annotation-target"><a href="#annotated-cell-4-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span> <span class="va">src</span> <span class="op">=</span> <span class="st">'https://github.com/nvim-mini/mini.nvim'</span><span class="op">,</span> <span class="va">version</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">version</span><span class="op">.</span>range<span class="op">(</span><span class="st">'*'</span><span class="op">)</span> <span class="op">},</span></span>
-<a class="code-annotation-anchor" data-target-cell="annotated-cell-4" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-4-3" class="code-annotation-target"><a href="#annotated-cell-4-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span> <span class="va">src</span> <span class="op">=</span> <span class="st">'https://github.com/neovim/nvim-lspconfig'</span><span class="op">,</span> <span class="va">version</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">version</span><span class="op">.</span>range<span class="op">(</span><span class="st">'2.x'</span><span class="op">)</span> <span class="op">},</span></span>
-<span id="annotated-cell-4-4"><a href="#annotated-cell-4-4" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="annotated-cell-4-2"><a href="#annotated-cell-4-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span></span>
+<span id="annotated-cell-4-3"><a href="#annotated-cell-4-3" aria-hidden="true" tabindex="-1"></a>    <span class="va">src</span> <span class="op">=</span> <span class="st">'https://github.com/nvim-mini/mini.nvim'</span><span class="op">,</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-4" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-4-4" class="code-annotation-target"><a href="#annotated-cell-4-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">version</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">version</span><span class="op">.</span>range<span class="op">(</span><span class="st">'*'</span><span class="op">)</span></span>
+<span id="annotated-cell-4-5"><a href="#annotated-cell-4-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">},</span></span>
+<span id="annotated-cell-4-6"><a href="#annotated-cell-4-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span></span>
+<span id="annotated-cell-4-7"><a href="#annotated-cell-4-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">src</span> <span class="op">=</span> <span class="st">'https://github.com/neovim/nvim-lspconfig'</span><span class="op">,</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-4" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-4-8" class="code-annotation-target"><a href="#annotated-cell-4-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">version</span> <span class="op">=</span> <span class="va">vim</span><span class="op">.</span><span class="va">version</span><span class="op">.</span>range<span class="op">(</span><span class="st">'2.x'</span><span class="op">)</span></span>
+<span id="annotated-cell-4-9"><a href="#annotated-cell-4-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">},</span></span>
+<span id="annotated-cell-4-10"><a href="#annotated-cell-4-10" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <dl class="code-annotation-container-grid">
 <dt data-target-cell="annotated-cell-4" data-target-annotation="1">1</dt>
 <dd>
-<span data-code-cell="annotated-cell-4" data-code-lines="2" data-code-annotation="1">Always try installing latest semver tag</span>
+<span data-code-cell="annotated-cell-4" data-code-lines="4" data-code-annotation="1">Always try installing latest semver tag</span>
 </dd>
 <dt data-target-cell="annotated-cell-4" data-target-annotation="2">2</dt>
 <dd>
-<span data-code-cell="annotated-cell-4" data-code-lines="3" data-code-annotation="2">Install latest semver tag if it is &gt;=2.0.0 and &lt;3.0.0</span>
+<span data-code-cell="annotated-cell-4" data-code-lines="8" data-code-annotation="2">Install latest semver tag if it is &gt;=2.0.0 and &lt;3.0.0</span>
 </dd>
 </dl>
 <p>Use <code>data</code> field to store/pass extra information or plugin specific methods:</p>
@@ -616,25 +623,25 @@ Note
 <dl class="code-annotation-container-grid">
 <dt data-target-cell="annotated-cell-5" data-target-annotation="1">1</dt>
 <dd>
-<span data-code-cell="annotated-cell-5" data-code-lines="2" data-code-annotation="1">Do not load if explicitly asked.</span>
+<span data-code-cell="annotated-cell-5" data-code-lines="2" data-code-annotation="1">Do not load if explicitly asked</span>
 </dd>
 </dl>
 </section>
 <section id="lockfile" class="level3">
 <h3 class="anchored" data-anchor-id="lockfile">Lockfile</h3>
-<p>On top of listing used plugins in a config (to control how they installed and loaded), <code>vim.pack</code> stores extra information in <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-lockfile">its lockfile</a>: <code>nvim-pack-lock.json</code> in user’s config directory. It contains JSON encoded information about the current state of all plugins managed by <code>vim.pack</code>. It is meant to be treated like a part of the config (like tracked via version control, for example) but <strong>not modified by hand</strong>.</p>
+<p>On top of listing used plugins in a config (to control how they are loaded), <code>vim.pack</code> stores extra information in <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-lockfile">its lockfile</a>: <code>nvim-pack-lock.json</code> in user’s config directory. It contains JSON encoded information about the current state of all plugins managed by <code>vim.pack</code>. It is meant to be treated like a part of the config (like tracked via version control, for example) but <strong>not modified by hand</strong>.</p>
 <p>The lockfile serves several purposes:</p>
 <ul>
-<li><p>It is used as a “latest working state” reference when bootstrapping the config on the new machine. In this case during <strong>the very first <code>vim.pack.add()</code> call</strong> all plugins that are present in the lockfile but absent on disk are installed all at once. This ensures that even “lazy loaded” plugins are installed right away.</p></li>
-<li><p>It contains information about plugin’s <code>version</code>, i.e.&nbsp;target state when updating. This is useful when <a href="#update">updating</a> if there not-yet-active plugins (since there is no <code>vim.pack.add()</code> call yet to say which <code>version</code> it followes).</p></li>
-<li><p>In future it will allow to store more information about the config to perform more actions without much startup overhead. Like provide information about minimum expected Neovim version (per plugin) or plugin dependencies (to at least ensure that they are already loaded).</p></li>
+<li><p>It is used as a “latest working state” reference when bootstrapping the config on the new machine. In this case during <strong>the very first <code>vim.pack.add()</code> call</strong> all plugins that are present in the lockfile but absent on disk are installed all at once. This ensures that even <a href="#lazy-loading">lazy loaded</a> plugins are installed right away.</p></li>
+<li><p>It contains information about plugin’s <code>version</code>, i.e.&nbsp;target state when updating. This is useful when <a href="#update">updating</a> if there are not-yet-active plugins (since there is no <code>vim.pack.add()</code> call yet to say which <code>version</code> it follows).</p></li>
+<li><p>In future it will allow to store more information about plugins to perform more actions without much startup overhead. Like provide information about minimum expected Neovim version (per plugin) or plugin dependencies (to at least ensure that they are already loaded).</p></li>
 </ul>
 <p>If something is done to plugins not via <code>vim.pack</code> methods, lockfile can become out of sync with what is on the disk. Following <a href="#troubleshoot">troubleshooting steps</a> should usually help.</p>
 </section>
 <section id="hooks" class="level3">
 <h3 class="anchored" data-anchor-id="hooks">Hooks</h3>
 <p>A common requirement for managing plugins is to be able to perform dedicated actions (usually called “plugin hooks”) whenever plugin’s state changes. Like “build/compile the plugin”, “update parsers installed by this plugin”, “perform initial registration”.</p>
-<p>The suggested interface for that is by using <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-events">dedicated <code>vim.pack</code> events</a>: <code>PackChangedPre</code> (before the change) and <code>PackChanged</code> (after the change). These events are triggered whenever plugins are affected via <code>vim.pack</code> functions.</p>
+<p>The suggested interface for that is by creating <a href="https://neovim.io/doc/user/helptag.html?tag=autocommand">autocommand(s)</a> for <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-events">dedicated <code>vim.pack</code> events</a>: <code>PackChangedPre</code> (before the change) and <code>PackChanged</code> (after the change). These events are triggered whenever plugins are affected via <code>vim.pack</code> functions.</p>
 <p>Autocommands for these events will receive information about affected plugin via <a href="https://neovim.io/doc/user/helptag.html?tag=event-data">event data</a>. It will contain at least plugin’s name and specification, whether it is active, and what kind of change it is. There are three major kinds of changes:</p>
 <ul>
 <li><code>kind=install</code> - initial plugin install, before loading.</li>
@@ -660,6 +667,9 @@ Note
 <span data-code-cell="annotated-cell-6" data-code-lines="4" data-code-annotation="2">Make sure that ‘nvim-treesitter’ is loaded to use <code>:TSUpdate</code></span>
 </dd>
 </dl>
+<hr>
+<p>The long-term plan is to move defining common hooks (like “after install” and “after update”) from user’s responsibility to plugin’s. One approach is to use some sort of standardized file in plugin root that tells plugin manager what scripts to execute on certain events. This is commonly mentioned as <a href="https://github.com/neovim/packspec/">“add <code>packspec</code> support”</a>. This should remove the need for custom hooks for most users.</p>
+<hr>
 <div id="hooks-install" class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -679,15 +689,14 @@ Note
 </ul>
 </div>
 </div>
-<hr>
-<p>The long-term plan is to move defining common hooks (like “after install” and “after update”) from user’s responsibility to plugin’s. One approach is to use some sort of standardized file in plugin root that tells plugin manager what scripts to execute on certain events. This is commonly mentioned as <a href="https://github.com/neovim/packspec/">“add <code>packspec</code> support”</a>. This should mostly remove the need for custom hooks for most users.</p>
 </section>
 </section>
 <section id="config-organization" class="level2">
 <h2 class="anchored" data-anchor-id="config-organization">Config organization</h2>
 <section id="single-vim.pack.add" class="level3">
 <h3 class="anchored" data-anchor-id="single-vim.pack.add">Single <code>vim.pack.add()</code></h3>
-<p>The most robust approach around which <code>vim.pack</code> was designed. Define one autocommand for hooks and have single <code>vim.pack.add()</code> that installs and loads plugins. Works well when “bootstrapping” config on new machine (since installation from the lockfile is done on first <code>vim.pack.add()</code>). Example:</p>
+<p>This is the most robust approach around which <code>vim.pack</code> was designed. Have a single <code>vim.pack.add()</code> that installs+loads plugins and (if needed) create one autocommand for hooks prior to it. Also works well when “bootstrapping” config on new machine (since it automatically resolves possible <a href="#hooks-install">installation hooks</a> problems).</p>
+<p>Here is an example:</p>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>init.lua</strong></pre>
@@ -724,32 +733,31 @@ Note
 <span data-code-cell="annotated-cell-7" data-code-lines="15" data-code-annotation="3">Use plugins immediately</span>
 </dd>
 </dl>
-<p>This should be enough for most users. The two most common downsides expressed about it are:</p>
+<p>It should be enough for most users. The two most common downsides expressed about this approach are:</p>
 <ul>
-<li><p>It is not “modular” enough as many people prefer spreading plugin configuration across multiple files. The usual answer is to use <a href="many-vim-pack-add">many <code>vim.pack.add()</code> calls</a>.</p></li>
-<li><p>It loads all plugins immediately during startup which can visibly affect startup time. It also increases ‘runtimepath’ (which can <a href="../blog/2026-01-27-how-many-neovim-plugins-is-too-many.html">have negative impact as weell</a>). The answer is to use <a href="lazy-loading">lazy loading</a>, <strong>but to a moderate extent</strong>. Extreme lazy loading usually comes with a hidden cognitive overhead both when using and maintaining config.</p></li>
+<li><p>It is not “modular” enough as many people prefer spreading plugin configuration across multiple files. The usual answer is to use <a href="#many-vim-pack-add">many <code>vim.pack.add()</code> calls</a>.</p></li>
+<li><p>It loads all plugins immediately during startup which can visibly affect startup time. It also increases ‘runtimepath’ (which can have <a href="../blog/2026-01-27-how-many-neovim-plugins-is-too-many.html">slightly negative impact</a>). The answer is to use <a href="#lazy-loading">lazy loading</a>, but <strong>please</strong> only to a moderate extent. Extreme lazy loading usually comes with a hidden cognitive overhead both when using and maintaining the config.</p></li>
 </ul>
 </section>
 <section id="many-vim-pack-add" class="level3">
 <h3 class="anchored" data-anchor-id="many-vim-pack-add">Many <code>vim.pack.add()</code></h3>
-<p>Usually very similar to a “single <code>vim.pack.add()</code>” approach but with many <code>vim.pack.add</code> spread across multiple files.</p>
-<p>One way to do it is to add files inside ‘plugin/’ directory of the config. This way they will be discovered and executed (in alphabetical order) automatically during startup. Example:</p>
+<p>Usually very similar to a “single <code>vim.pack.add()</code>” approach but with many <code>vim.pack.add</code> calls spread across single or multiple files.</p>
+<p>One way to do it is to add files inside <code>plugin/</code> directory of the config. This way they will be discovered and executed (in alphabetical order) automatically during startup.</p>
+<p>Here is an example:</p>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>plugin/mini.lua</strong></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="plugin/mini.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.nvim'</span> <span class="op">})</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'mini.ai'</span><span class="op">).</span>setup<span class="op">()</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'mini.surround'</span><span class="op">).</span>setup<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'mini.ai'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'mini.surround'</span><span class="op">).</span>setup<span class="op">()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>plugin/nvim-lspconfig.lua</strong></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="plugin/nvim-lspconfig.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/neovim/nvim-lspconfig'</span> <span class="op">})</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">lsp</span><span class="op">.</span>enable<span class="op">({</span> <span class="st">'lua_ls'</span> <span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">lsp</span><span class="op">.</span>enable<span class="op">({</span> <span class="st">'lua_ls'</span> <span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
@@ -762,8 +770,7 @@ Note
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'TSUpdate'</span><span class="op">)</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span> <span class="op">})</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-treesitter/nvim-treesitter'</span> <span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-treesitter/nvim-treesitter'</span> <span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -775,53 +782,89 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The current single fragility of this approach occurs when 1) “bootstrapping” from the <a href="#lockfile">lockfile</a> 2) a plugin that requires an action during install. See <a href="#hooks-install">dedicated note</a> about possible solutions.</p>
+<p>The current single fragility of this approach occurs when) “bootstrapping” from the <a href="#lockfile">lockfile</a>) a plugin that requires an action during install. See <a href="#hooks-install">dedicated note</a> about possible solutions.</p>
 <p>In this particular example a solution could be to create all installation hooks in ‘init.lua’ file:</p>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>init.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-15" data-filename="init.lua"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-15-1"><a href="#annotated-cell-15-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'PackChanged'</span><span class="op">,</span> <span class="op">{</span> <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">ev</span><span class="op">)</span></span>
-<a class="code-annotation-anchor" data-target-cell="annotated-cell-15" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-15-2" class="code-annotation-target"><a href="#annotated-cell-15-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- ...</span></span>
-<span id="annotated-cell-15-3"><a href="#annotated-cell-15-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span><span class="op">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="init.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'PackChanged'</span><span class="op">,</span> <span class="op">{</span> <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">ev</span><span class="op">)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- Various installation hooks</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<dl class="code-annotation-container-grid">
-<dt data-target-cell="annotated-cell-15" data-target-annotation="1">1</dt>
-<dd>
-<span data-code-cell="annotated-cell-15" data-code-lines="2" data-code-annotation="1">Installation hooks</span>
-</dd>
-</dl>
 </div>
 </div>
 </section>
 <section id="lazy-loading" class="level3">
 <h3 class="anchored" data-anchor-id="lazy-loading">Lazy loading</h3>
-<p>TODO: “Load just before it is needed” vs “Load when it doesn’t have negative impact” approaches.</p>
+<p>To improve startup and runtime performance, is to delay loading a plugin. Colloquially known as “lazy loading”. Functionally, there are two types of plugin lazy loading:</p>
+<ul>
+<li><p>“Load not during startup” - improves startup time until first draw at the cost of still loading all plugins (might slightly affect runtime performance). It is an easy to understand and maintain approach, though.</p></li>
+<li><p>“Load just before it is needed” - improves overall performance at the cost of a more complex config.</p></li>
+</ul>
+<hr>
 <p>The <code>vim.pack</code> manager is designed with lazy loading in mind, but definitely not as a front and center use case. Use it moderately.</p>
-<p>The basic idea behind lazy loading with <code>vim.pack</code>: call <code>vim.pack.add()</code> not during startup but register it to be called whenever you want to load the plugin. I’d suggest to only use basic autocommands and not rely on any complex logic (like “load on mapping”, etc.).</p>
+<p>The basic idea is to call <code>vim.pack.add()</code> not during startup but register it to be called whenever you want to load the plugin.</p>
+<p>The “load not during startup” approach can be done via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.schedule()"><code>vim.schedule()</code></a>:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="init.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span>schedule<span class="op">(</span><span class="kw">function</span><span class="op">()</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'https://github.com/nvim-mini/mini.completion'</span><span class="op">,</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'https://github.com/nvim-mini/mini.cmdline'</span><span class="op">,</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">})</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The “load just before it is needed” approach can become complex if taken at face value. My personal suggestion is to only use basic autocommands and not rely on any complex logic (like “load on mapping”, etc.).</p>
 <p>Example:</p>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>init.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-11" data-filename="init.lua"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="annotated-cell-11" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-11-1" class="code-annotation-target"><a href="#annotated-cell-11-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'InsertEnter'</span><span class="op">,</span> <span class="op">{</span> <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
-<span id="annotated-cell-11-2"><a href="#annotated-cell-11-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.completion'</span> <span class="op">})</span></span>
-<span id="annotated-cell-11-3"><a href="#annotated-cell-11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span> <span class="op">})</span></span>
-<span id="annotated-cell-11-4"><a href="#annotated-cell-11-4" aria-hidden="true" tabindex="-1"></a></span>
-<a class="code-annotation-anchor" data-target-cell="annotated-cell-11" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-11-5" class="code-annotation-target"><a href="#annotated-cell-11-5" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'CmdlineEnter'</span><span class="op">,</span> <span class="op">{</span> <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
-<span id="annotated-cell-11-6"><a href="#annotated-cell-11-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.cmdline'</span> <span class="op">})</span></span>
-<span id="annotated-cell-11-7"><a href="#annotated-cell-11-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span> <span class="op">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-12" data-filename="init.lua"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="annotated-cell-12" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-12-1" class="code-annotation-target"><a href="#annotated-cell-12-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'CmdlineEnter'</span><span class="op">,</span> <span class="op">{</span> <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="annotated-cell-12-2"><a href="#annotated-cell-12-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.cmdline'</span> <span class="op">})</span></span>
+<span id="annotated-cell-12-3"><a href="#annotated-cell-12-3" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span> <span class="op">})</span></span>
+<span id="annotated-cell-12-4"><a href="#annotated-cell-12-4" aria-hidden="true" tabindex="-1"></a></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-12" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-12-5" class="code-annotation-target"><a href="#annotated-cell-12-5" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'InsertEnter'</span><span class="op">,</span> <span class="op">{</span> <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="annotated-cell-12-6"><a href="#annotated-cell-12-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.completion'</span> <span class="op">})</span></span>
+<span id="annotated-cell-12-7"><a href="#annotated-cell-12-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span> <span class="op">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <dl class="code-annotation-container-grid">
-<dt data-target-cell="annotated-cell-11" data-target-annotation="1">1</dt>
+<dt data-target-cell="annotated-cell-12" data-target-annotation="1">1</dt>
 <dd>
-<span data-code-cell="annotated-cell-11" data-code-lines="1" data-code-annotation="1">Load when entering Insert mode.</span>
+<span data-code-cell="annotated-cell-12" data-code-lines="5" data-code-annotation="1">Load when entering Insert mode.</span>
 </dd>
-<dt data-target-cell="annotated-cell-11" data-target-annotation="2">2</dt>
+<dt data-target-cell="annotated-cell-12" data-target-annotation="2">2</dt>
 <dd>
-<span data-code-cell="annotated-cell-11" data-code-lines="5" data-code-annotation="2">Load when entering Command-line mode.</span>
+<span data-code-cell="annotated-cell-12" data-code-lines="1" data-code-annotation="2">Load when entering Command-line mode.</span>
 </dd>
 </dl>
+<p>Both of these approaches can be unified and improved by using a dedicated <a href="https://nvim-mini.org/mini.nvim/doc/mini-misc.html#minimisc.safely"><code>safely()</code></a> wrapper from ‘mini.misc’ module of ‘mini.nvim’. With this, the config is more robust (errors will be reported as warnings to not block code execution and load all plugins) and unified:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-13"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-13-1"><a href="#annotated-cell-13-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.misc'</span> <span class="op">})</span></span>
+<span id="annotated-cell-13-2"><a href="#annotated-cell-13-2" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">misc</span> <span class="op">=</span> <span class="fu">require</span><span class="op">(</span><span class="st">'mini.misc'</span><span class="op">)</span></span>
+<span id="annotated-cell-13-3"><a href="#annotated-cell-13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">later</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="va">misc</span><span class="op">.</span>safely<span class="op">(</span><span class="st">'later'</span><span class="op">,</span> <span class="va">f</span><span class="op">)</span> <span class="kw">end</span></span>
+<span id="annotated-cell-13-4"><a href="#annotated-cell-13-4" aria-hidden="true" tabindex="-1"></a><span class="kw">local</span> <span class="va">on_event</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">ev</span><span class="op">,</span> <span class="va">f</span><span class="op">)</span> <span class="va">misc</span><span class="op">.</span>safely<span class="op">(</span><span class="st">'event:'</span> <span class="op">..</span> <span class="va">ev</span><span class="op">,</span> <span class="va">f</span><span class="op">)</span> <span class="kw">end</span></span>
+<span id="annotated-cell-13-5"><a href="#annotated-cell-13-5" aria-hidden="true" tabindex="-1"></a></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-13" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-13-6" class="code-annotation-target"><a href="#annotated-cell-13-6" aria-hidden="true" tabindex="-1"></a>later<span class="op">(</span><span class="kw">function</span><span class="op">()</span></span>
+<span id="annotated-cell-13-7"><a href="#annotated-cell-13-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.cmdline'</span> <span class="op">})</span></span>
+<span id="annotated-cell-13-8"><a href="#annotated-cell-13-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span><span class="op">)</span></span>
+<span id="annotated-cell-13-9"><a href="#annotated-cell-13-9" aria-hidden="true" tabindex="-1"></a></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-13" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-13-10" class="code-annotation-target"><a href="#annotated-cell-13-10" aria-hidden="true" tabindex="-1"></a>on_event<span class="op">(</span><span class="st">'InsertEnter'</span><span class="op">,</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="annotated-cell-13-11"><a href="#annotated-cell-13-11" aria-hidden="true" tabindex="-1"></a>  <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.completion'</span> <span class="op">})</span></span>
+<span id="annotated-cell-13-12"><a href="#annotated-cell-13-12" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span><span class="op">)</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-13" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-13" data-code-lines="6" data-code-annotation="1">Load ‘mini.cmdline’ some time later after startup</span>
+</dd>
+<dt data-target-cell="annotated-cell-13" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-13" data-code-lines="10" data-code-annotation="2">Load ‘mini.completion’ on <code>InsertEnter</code> event</span>
+</dd>
+</dl>
+<hr>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
