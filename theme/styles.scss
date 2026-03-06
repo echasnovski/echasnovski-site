@@ -7,6 +7,9 @@ $tooltip-color: var(--brand-grey);
 /*-- scss:rules --*/
 
 // Various tweaks
+pre, pre > code {
+  border-radius: 0 !important;
+}
 p pre code:not(.sourceCode),
 li pre code:not(.sourceCode),
 pre code:not(.sourceCode) {
@@ -109,4 +112,28 @@ h6 { font-size: 1em; font-weight: normal; }
 .code-with-filename .code-with-filename-file strong {
   color: var(--brand-grey);
   font-size: 0.9rem;
+}
+
+// Show code annotations below code block, with same bg, separated by 2px line
+pre.code-annotation-code {
+  border: none;
+  border-radius: 0;
+
+  // Highlight annotated code line within code block when pressed on annotation
+  position: relative;
+}
+.code-annotation-container-grid {
+  margin-top: -1em !important;
+  border-top: 2px solid var(--brand-fg);
+  border-radius: 0;
+
+  background-color: var(--brand-bg-2);
+  font-size: 0.9em;
+  padding-top: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+// Dedicated class to reduce line height for file tree code blocks
+.tree-style {
+  line-height: 1.25;
 }
