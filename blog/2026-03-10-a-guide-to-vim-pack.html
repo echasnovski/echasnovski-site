@@ -383,7 +383,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#config-organization" id="toc-config-organization" class="nav-link" data-scroll-target="#config-organization">Config organization</a>
   <ul class="collapse">
-  <li><a href="#single-vim.pack.add" id="toc-single-vim.pack.add" class="nav-link" data-scroll-target="#single-vim.pack.add">Single <code>vim.pack.add()</code></a></li>
+  <li><a href="#single-vim-pack-add" id="toc-single-vim-pack-add" class="nav-link" data-scroll-target="#single-vim-pack-add">Single <code>vim.pack.add()</code></a></li>
   <li><a href="#many-vim-pack-add" id="toc-many-vim-pack-add" class="nav-link" data-scroll-target="#many-vim-pack-add">Many <code>vim.pack.add()</code></a></li>
   <li><a href="#lazy-loading" id="toc-lazy-loading" class="nav-link" data-scroll-target="#lazy-loading">Lazy loading</a></li>
   </ul></li>
@@ -693,8 +693,8 @@ Note
 </section>
 <section id="config-organization" class="level2">
 <h2 class="anchored" data-anchor-id="config-organization">Config organization</h2>
-<section id="single-vim.pack.add" class="level3">
-<h3 class="anchored" data-anchor-id="single-vim.pack.add">Single <code>vim.pack.add()</code></h3>
+<section id="single-vim-pack-add" class="level3">
+<h3 class="anchored" data-anchor-id="single-vim-pack-add">Single <code>vim.pack.add()</code></h3>
 <p>This is the most robust approach around which <code>vim.pack</code> was designed. Have a single <code>vim.pack.add()</code> that installs+loads plugins and (if needed) create one autocommand for hooks prior to it. Also works well when “bootstrapping” config on new machine (since it automatically resolves possible <a href="#hooks-install">installation hooks</a> problems).</p>
 <p>Here is an example:</p>
 <div class="code-with-filename">
@@ -961,19 +961,126 @@ Note
 </section>
 <section id="migrate" class="level2">
 <h2 class="anchored" data-anchor-id="migrate">Migrate</h2>
-<p>Basically:</p>
+<p>There is a chance that you already use a plugin manager, in which case in order to use <code>vim.pack</code> you’d have to migrate from the previous one. And my personal suggestion would be to do it, as <code>vim.pack</code> being built-in means that it 1) has dedicated and knowledgeable people maintaining it; and 2) has basically the same stability guarantees as Neovim core itself. The downside might be a slower release cycle than a regular plugin, so you’d have to wait longer for possible fixes and new features.</p>
+<p>Depending on the complexity and the number of used plugins, it might be a complex and tedious task. But in a nutshell:</p>
+<ol type="1">
+<li><p>Update the config to use <code>vim.pack</code> instead of the previous plugin manager. Make sure that there is no single use of the previous plugin manager whatsoever (otherwise it will become confusing to locate problems).</p></li>
+<li><p>Make sure that plugins and accompanying files from the previous plugin manager are not on disk. This might be crucial to not have several plugins mixed.</p>
+<p>For this, find the location of where the plugin manager installed plugins and delete the directory manually.</p></li>
+</ol>
+<p>Here are a couple of approaches that could make the transition easier:</p>
 <ul>
-<li><p>Update config to use <code>vim.pack</code> instead of previous plugin manager.</p></li>
-<li><p>Make sure that plugins and accompanying files are not on disk.</p></li>
+<li><p>Adjust a temporary config (see <a href="https://neovim.io/doc/user/helptag.html?tag=$NVIM_APPNAME"><code>:h $NVIM_APPNAME</code></a>) at your own pace without the pressure of not having the fully working setup. You can start either with a full copy of the “main” config or start fresh.</p>
+<p>For example, create <code>~/.config/nvim-vim-pack</code> directory. Either empty to start fresh or by copying <code>~/.config/nvim</code>. Adjusting <code>nvim-vim-pack</code> config will have no impact on the “main” <code>nvim</code> config. Use <code>NVIM_APPNAME=nvim-vim-pack nvim</code> to start Neovim with the <code>nvim-vim-pack</code> config. When you feel like done, move the content back to <code>~/.config/nvim</code> (it will reinstall <code>vim.pack</code> plugins into a new <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">“data” standard path</a>).</p></li>
+<li><p>Start with a simple <a href="#single-vim-pack-add">one <code>vim.pack.add()</code></a> style of config and see if it fits your needs. It might be surprising and refreshing to trade the startup speed for config simplicity.</p>
+<p>If it doesn’t feel right, you can start <a href="#many-vim-pack-add">modularizing</a> the config. And only if absolutely needed, try <a href="#lazy-loading">lazy loading</a> some plugins.</p></li>
 </ul>
 <section id="mini.deps" class="level3">
 <h3 class="anchored" data-anchor-id="mini.deps">mini.deps</h3>
-<p>The <a href="https://nvim-mini.org/mini.nvim/readmes/mini-deps.html">‘mini.deps’</a> was initially designed with the idea of being merged as Neovim’s built-in plugin manager. The overall concept proved to be rather successful and after about 1.5 years of public testing it was used as a basis for <code>vim.pack</code>. In many ways, <code>vim.pack</code> is better and slicker version of ‘mini.deps’. So the migration should be rather painless.</p>
+<p>The <a href="https://nvim-mini.org/mini.nvim/readmes/mini-deps.html">‘mini.deps’</a> was initially designed with the idea of being merged as Neovim’s built-in plugin manager. The overall concept proved to be rather successful and after about 1.5 years of public testing it was used as a basis for <code>vim.pack</code>.</p>
+<p>In many ways, <code>vim.pack</code> is better and slicker version of ‘mini.deps’ which is why it will eventually be recommended instead of ‘mini.deps’. So the migration should be rather painless. But here are a couple of pointers:</p>
+<ul>
+<li><p>Instead of <code>MiniDeps.add('user/repo')</code> use <code>vim.pack.add({ 'https://github.com/user/repo' })</code>, i.e.&nbsp;use full URL and a list instead of a single string.</p></li>
+<li><p>In table specification: <code>source</code> -&gt; <code>src</code>, <code>checkout</code> -&gt; <code>version</code>.</p></li>
+<li><p>Resolve dependencies manually by listing them in <code>vim.pack.add()</code> list before target plugin. It shouldn’t be a problem to <code>vim.pack.add()</code> the same plugin several times, but it is better to resolve to the point of every plugin being added exactly once.</p></li>
+<li><p>Rewrite hooks to be <a href="#hooks">in autocommand form</a>.</p></li>
+<li><p>Instead of <code>MiniDeps.now()</code> and <code>MiniDeps.later()</code>, use <a href="https://nvim-mini.org/mini.nvim/doc/mini-misc.html#minimisc.safely"><code>MiniMisc.safely()</code></a>.</p></li>
+<li><p><strong>Do not forget</strong> to remove plugins (located in <code>site/pack/deps</code> subdirectory of <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">“data” standard path</a>) and possible <code>mini-deps-snap</code> snapshot file. Otherwise there will be conflicts (since ‘mini.deps’ also uses <a href="#plugin-packages">plugin package</a>).</p></li>
+</ul>
+<p>You can see an example of a real config migration <a href="https://nvim-mini.org/MiniMax/configs/diffs/nvim-0.11_nvim-0.12/">in MiniMax</a>: the main theme of moving from <code>nvim-0.11</code> to <code>nvim-0.12</code> reference config is changing plugin manager from ‘mini.deps’ to <code>vim.pack</code>.</p>
+<p>Here is an simpler example:</p>
+<ul>
+<li><p>‘mini.deps’ config (excluding the part of bootstrapping ‘mini.nvim’ or ‘mini.deps’):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="va">MiniDeps</span><span class="op">.</span>add<span class="op">(</span><span class="st">'nvim-mini/mini.nvim'</span><span class="op">)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'mini.ai'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="va">MiniDeps</span><span class="op">.</span>add<span class="op">({</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">source</span> <span class="op">=</span> <span class="st">'nvim-treesitter/nvim-treesitter'</span><span class="op">,</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">checkout</span> <span class="op">=</span> <span class="st">'main'</span><span class="op">,</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="va">hooks</span> <span class="op">=</span> <span class="op">{</span> <span class="va">post_checkout</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'TSUpdate'</span><span class="op">)</span> <span class="kw">end</span> <span class="op">},</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>The translated <code>vim.pack</code> config:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.nvim'</span> <span class="op">})</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'mini.ai'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'PackChanged'</span><span class="op">,</span> <span class="op">{</span> <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">ev</span><span class="op">)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">local</span> <span class="va">name</span><span class="op">,</span> <span class="va">kind</span> <span class="op">=</span> <span class="va">ev</span><span class="op">.</span><span class="va">data</span><span class="op">.</span><span class="va">spec</span><span class="op">.</span><span class="va">name</span><span class="op">,</span> <span class="va">ev</span><span class="op">.</span><span class="va">data</span><span class="op">.</span><span class="va">kind</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="va">name</span> <span class="op">==</span> <span class="st">'nvim-treesitter'</span> <span class="kw">and</span> <span class="va">kind</span> <span class="op">==</span> <span class="st">'update'</span> <span class="cf">then</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="va">ev</span><span class="op">.</span><span class="va">data</span><span class="op">.</span><span class="va">active</span> <span class="cf">then</span> <span class="va">vim</span><span class="op">.</span><span class="va">cmd</span><span class="op">.</span>packadd<span class="op">(</span><span class="st">'nvim-treesitter'</span><span class="op">)</span> <span class="cf">end</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'TSUpdate'</span><span class="op">)</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">end</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span> <span class="op">})</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="va">src</span> <span class="op">=</span> <span class="st">'https://github.com/nvim-treesitter/nvim-treesitter'</span><span class="op">,</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="va">version</span> <span class="op">=</span> <span class="st">'main'</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">},</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+</ul>
 </section>
 <section id="lazy.nvim" class="level3">
 <h3 class="anchored" data-anchor-id="lazy.nvim">lazy.nvim</h3>
-<p>Not all capabilities are one-to-one reproducible by design.</p>
-<!--  -->
+<p>The <a href="https://lazy.folke.io/">folke/lazy.nvim</a> is the most used plugin manager at the time of this writing. And rightly so: it is very capable with lots of features. Ironically, this itself makes it not very suitable to be part of Neovim as most of the features come with great code and maintenance complexity. Plus the whole idea of treating lazy loading as the main goal of a plugin manager does not sit well with Neovim core team.</p>
+<p>Not all ‘lazy.nvim’ capabilities are one-to-one reproducible by design. My best suggestion would be to follow <a href="#migrate">both approaches suggested earlier</a>: use temporary config and start with <a href="#single-vim-pack-add">simple approach</a> first.</p>
+<p>Couple of pointers:</p>
+<ul>
+<li><p>Use full URL as source (as string or <code>src</code> field) and a single <code>version</code> instead of <code>branch</code> / <code>tag</code> / <code>commit</code> / <code>version</code> / <code>pin</code> fields.</p></li>
+<li><p>Instead of the <code>opts</code> field to configure plugin, use a dedicated way to configure a plugin (should be mentioned in plugin’s documentation/README) after <code>vim.pack.add</code>ing it. Typically it is something like <code>require('plugin').setup(opts)</code>, which is done by ‘lazy.nvim’ behind the scenes, but not by <code>vim.pack.add()</code>.</p></li>
+<li><p>There is no built-in lazy loading with <code>vim.pack</code>, so specification fields like <code>cmd</code>, <code>event</code>, <code>ft</code>, <code>keys</code> can not be translated directly. For emulating loading on event see <a href="#lazy-loading">“Lazy loading”</a> section.</p></li>
+<li><p>If you use <a href="https://lazy.folke.io/usage/structuring">structured plugins</a>, it should be okay to start with <a href="#many-vim-pack-add">many <code>vim.pack.add()</code></a> config organization. Instead of <code>return { 'user/repo', ... }</code> it has to be a call to <code>vim.pack.add({ 'https://github.com/user/repo' })</code> (either right away or registered for lazy loading; along with configuring the plugin).</p></li>
+<li><p>The directory where ‘lazy.nvim’ stores its plugins is <code>lazy</code> subdirectory of <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">“data” standard path</a>. Delete it manually before migrating.</p></li>
+</ul>
+<p>Here is a migration example partially based on the <a href="https://lazy.folke.io/spec/examples">example from ‘lazy.nvim’ documentation</a>:</p>
+<ul>
+<li><p>‘lazy.nvim’ “simple” config (excluding the part of bootstrapping ‘lazy.nvim’):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'lazy'</span><span class="op">).</span>setup<span class="op">({</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">spec</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">'nvim-mini/mini.hues'</span><span class="op">,</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>      <span class="va">lazy</span> <span class="op">=</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>      <span class="va">priority</span> <span class="op">=</span> <span class="dv">1000</span><span class="op">,</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>      <span class="va">config</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span> <span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'colorscheme miniwinter'</span><span class="op">)</span> <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>      <span class="st">'nvim-mini/mini.ai'</span><span class="op">,</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>      <span class="va">opts</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">search_method</span> <span class="op">=</span> <span class="st">'cover'</span><span class="op">,</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>      <span class="op">},</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">{</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">'nvim-mini/mini.completion'</span><span class="op">,</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>      <span class="va">event</span> <span class="op">=</span> <span class="st">'InsertEnter'</span><span class="op">,</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>      <span class="va">dependencies</span> <span class="op">=</span> <span class="op">{</span> <span class="st">'nvim-mini/mini.snippets'</span> <span class="op">},</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>      <span class="va">config</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        <span class="fu">require</span><span class="op">(</span><span class="st">'mini.snippets'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>        <span class="fu">require</span><span class="op">(</span><span class="st">'mini.completion'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>      <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">},</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="op">},</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>The translated <code>vim.pack</code> config:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.hues'</span> <span class="op">})</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'colorscheme miniwinter'</span><span class="op">)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.ai'</span> <span class="op">})</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'mini.ai'</span><span class="op">).</span>setup<span class="op">({</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="va">search_method</span> <span class="op">=</span> <span class="st">'cover'</span><span class="op">,</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'InsertEnter'</span><span class="op">,</span> <span class="op">{</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="va">once</span> <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>      <span class="st">'https://github.com/nvim-mini/mini.snippets'</span><span class="op">,</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">'https://github.com/nvim-mini/mini.completion'</span><span class="op">,</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.snippets'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.completion'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<!--  --></li>
+</ul>
 
 
 </section>
