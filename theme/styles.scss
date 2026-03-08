@@ -121,6 +121,14 @@ pre.code-annotation-code {
 
   // Highlight annotated code line within code block when pressed on annotation
   position: relative;
+
+  // Make sure that annotation anchors stick to the right edge of the code block
+  // when scrolling. This also removes an empty vertical line under anchors fixed
+  // to the code and. See https://github.com/quarto-dev/quarto-cli/issues/13449
+  // This also makes highlighting of annotated code (after clicking on
+  // annotation number below) span the whole width when scrolling horizontally.
+  display: inline-table !important;
+  min-width: 100%;
 }
 .code-annotation-container-grid {
   margin-top: -1em !important;
@@ -129,8 +137,26 @@ pre.code-annotation-code {
 
   background-color: var(--brand-bg-2);
   font-size: 0.9em;
-  padding-top: 0.5rem;
-  padding-left: 0.5rem;
+  padding: 0.5rem;
+}
+// Make sure that code annotation lines are aligned vertically
+.code-annotation-container-grid dd {
+  margin: 0.25rem !important;
+}
+.code-annotation-container-grid dt {
+  margin: 0.25rem !important;
+  color: var(--brand-grey) !important;
+  background-color: var(--brand-grey-bg) !important;
+}
+.code-annotation-anchor {
+  position: sticky !important;
+  right: 0.25rem !important;
+  color: var(--brand-grey) !important;
+  background-color: var(--brand-grey-bg) !important;
+}
+.code-annotation-gutter,
+.code-annotation-gutter-bg {
+  display: none !important;
 }
 
 // Dedicated class to reduce line height for file tree code blocks
