@@ -441,7 +441,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>The upcoming Neovim 0.12 release <a href="../blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html">will have a built-in plugin manager</a>. It is implemented in Lua and is available as a built-in <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack"><code>vim.pack</code></a> module (hence the name). This blog post describes fundamentals of how <code>vim.pack</code> is intended to be used. Reading only selected sections should be fine, but it is written to be read from top to bottom.</p>
+<p>The upcoming Neovim 0.12 release <a href="../blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html">will have a built-in plugin manager</a>. It is implemented in Lua and is available as a built-in <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack"><code>vim.pack</code></a> module (hence the name). This blog post describes the fundamentals of how <code>vim.pack</code> is intended to be used. Reading only selected sections should be fine, but it is written to be read from top to bottom.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -452,7 +452,7 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Beware that, although unlikely, some information can become outdated. The Neovim’s own documentation is always the higher authority than this post. From the running Neovim instance execute <code>:h vim.pack</code> to read the help and <code>:h vim.pack-examples</code> to read suggested workflows for common use cases.</p>
+<p>Beware that, although unlikely, some information can become outdated. Neovim’s own documentation is always the higher authority than this post. From the running Neovim instance execute <code>:h vim.pack</code> to read the help and <code>:h vim.pack-examples</code> to read suggested workflows for common use cases.</p>
 </div>
 </div>
 <section id="concepts" class="level2">
@@ -531,8 +531,45 @@ Note
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>By default during initial install there is also a confirmation dialog showing which plugins are going to be installed. Press <code>y</code> to confirm, <code>n</code> to skip, <code>a</code> to allow for all <code>vim.pack.add()</code> confirmations in current session. It looks like this:</p>
 <p><img src="2026-03-10-a-guide-to-vim-pack/demo-vim-pack-add-confirm.png" class="img-fluid"></p>
-<p>Plugins installed by <code>vim.pack</code> are expected to be managed/altered <strong>only by <code>vim.pack</code> methods</strong>. Which means do not update/delete their code by hand. There are safeguards to handle this graciously, but in general there can be problems.</p>
-<p>Adding plugin via <code>vim.pack.add()</code> makes it “active” or “loaded” in current session.</p>
+<p>Adding a plugin via <code>vim.pack.add()</code> makes it “active” or “loaded” in current session.</p>
+<hr>
+<p>All plugins that were not previously installed by <code>vim.pack</code> are installed in parallel. They are put into a dedicated <code>core</code> <a href="#plugin-packages">plugin package</a> as “opt” plugins (see <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-directory"><code>:h vim.pack-directory</code></a>). There is no “start” plugin support because:</p>
+<ul>
+<li><p>It makes possible to comment out the (part of) <code>vim.pack.add()</code> call and some plugins will not load in the next session. Almost as if they don’t exist at all.</p></li>
+<li><p>This way the entire config acts as a blueprint of how plugins are loaded and meant to be updated. Using “start” plugins more fits the workflow like “manually install and forget about it” which is not quite “add to init.lua and forget about it”. Since all plugins are assumed to be listed in the config and are loaded with <code>vim.pack.add</code>, there is functionally no difference between “opt” and “start” plugin types.</p></li>
+</ul>
+<hr>
+<p>Only Git repos can be managed (installed, updated, deleted) by <code>vim.pack</code>. For other ways of plugin distribution, it is suggested to manually download them into a <a href="#plugin-packages">separate, dedicated plugin package</a> (either directly or via symlinked directory). This also includes so called “local” plugins, which users already have on the disk and want to manage themselves.</p>
+<p>Plugins installed by <code>vim.pack</code> are expected to be managed/altered <strong>only by <code>vim.pack</code></strong>. Which means do not update/delete their code by hand. There are safeguards to handle this graciously, but in general there can be problems. To contribute to a plugin you use via <code>vim.pack</code>, the safest approach is to:</p>
+<ul>
+<li><p>If not already, set up a directory for “local” plugins that fits into <a href="#plugin-packages">plugin package</a> structure. The easiest approach is a dedicated package like <code>~/.local/share/nvim/site/pack/mine/opt</code> or <code>~/.config/nvim/pack/mine/opt</code> (while adding <code>pack/</code> directory to <code>.gitignore</code>). It can also be anywhere on the disk but with a symlink to a known</p></li>
+<li><p>Download it (usually by forking it on a Git forge and using <code>git clone</code>) into a directory for “local” plugins. Use a directory name that is different from the reference plugin (otherwise there would be name conflicts).</p></li>
+<li><p>Comment out <code>vim.pack.add</code> for the reference plugin and replace it with <code>vim.cmd('packadd my-local-copy')</code>.</p></li>
+<li><p>Use a local copy for however long you need (make changes, push/pull branches, etc.). When done, revert changes from the previous step to start using reference plugin again.</p></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="Well, technically ...">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Well, technically …
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>… it is possible to update by hand a plugin directly installed by <code>vim.pack</code>. Locate it in <code>core</code> plugin package and start making changes (create branches and commits, push/pull to remotes, etc.). Just make sure to:</p>
+<ul>
+<li><p>Not <a href="#update">update</a> the plugin with <code>vim.pack</code>. It will change the state to where its <code>version</code> points, so local changes will not have effect.</p></li>
+<li><p>Do not do any big structural changes to it. Like it should still be a Git repository and located at the exact path it was before.</p></li>
+<li><p>Ignore any messages that this plugin is not at a state that <code>vim.pack</code> expects it to be.</p></li>
+<li><p>Eventually switch back to managing by <code>vim.pack</code> with <code>vim.pack.update({ 'plugin-name' }, { offline = true })</code>.</p></li>
+</ul>
+<p><strong>One more time</strong>: this is definitely “not officially supported, do on your own risk” kind of territory.</p>
+</div>
+</div>
+</div>
 <hr>
 <p>A subtle but one of the key things to understand is that <code>vim.pack.add()</code> is <strong>just a function</strong>. It takes plugin specifications and acts on them immediately. After execution is done without errors, all listed plugins should be available in the current Neovim session.</p>
 <p>Some consequences of this design are:</p>
@@ -541,12 +578,6 @@ Note
 <li><p>It can be called multiple times with different plugin lists (with <a href="#many-vim-pack-add">minor caveats</a>) for a more “modular” config.</p></li>
 <li><p><a href="#lazy-loading">Lazy loading</a> in principle is just “call this exact function, just some time later”.</p></li>
 <li><p>It can be used interactively like <code>:lua vim.pack.add({ 'https://github.com/nvim-mini/mini.nvim' })</code>.</p></li>
-</ul>
-<hr>
-<p>All plugins that were not previously installed by <code>vim.pack</code> are installed in parallel. They are put into a dedicated <code>core</code> <a href="#plugin-packages">plugin package</a> as “opt” plugins (see <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-directory"><code>:h vim.pack-directory</code></a>). There is no “start” plugin support because:</p>
-<ul>
-<li><p>It makes possible to comment out the (part of) <code>vim.pack.add()</code> call and some plugins will not load in the next session. Almost as if they don’t exist at all.</p></li>
-<li><p>This way the entire config acts as a blueprint of how plugins are loaded and meant to be updated. Using “start” plugins more fits the workflow like “manually install and forget about it” which is not quite “add to init.lua and forget about it”. Since all plugins are assumed to be listed in the config and are loaded with <code>vim.pack.add</code>, there is functionally no difference between “opt” and “start” plugin types.</p></li>
 </ul>
 <hr>
 <p>By default loading plugin is done by executing <code>:packadd</code> (possibly with <code>!</code>) command, which essentially makes plugin’s <a href="#runtime-files">runtime files</a> known to Neovim and sources some of them (<code>plugin/</code> and <code>ftdetect/</code> scripts).</p>
@@ -568,7 +599,6 @@ Note
 <section id="specification" class="level3">
 <h3 class="anchored" data-anchor-id="specification">Specification</h3>
 <p>Each plugin can be specified as a single string describing its source, i.e.&nbsp;from where to download its files (<code>git clone</code> for install and <code>git fetch</code> to update). Please use this approach if no extra tweaking is required.</p>
-<p>Only Git repos can be managed (installed, updated, deleted) by <code>vim.pack</code>. For other ways of plugin distribution, it is suggested to manually download them into a <a href="#plugin-packages">separate, dedicated plugin package</a> (either directly or via symlinked directory). This also includes so called “local” plugins, which users already have on the disk and want to manage themselves.</p>
 <p>By default the plugin will be installed as source’s repository name and will get updates following default branch (usually <code>main</code> or <code>master</code>). It is also possible to tweak this by specifying <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.Spec">table specification</a> instead of a single source string. Like this:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-3"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-3-1"><a href="#annotated-cell-3-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
 <a class="code-annotation-anchor" data-target-cell="annotated-cell-3" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-3-2" class="code-annotation-target"><a href="#annotated-cell-3-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">{</span> <span class="va">src</span> <span class="op">=</span> <span class="st">'https://github.com/nvim-mini/mini.nvim'</span><span class="op">,</span> <span class="va">version</span> <span class="op">=</span> <span class="st">'stable'</span> <span class="op">},</span></span>
@@ -1066,30 +1096,30 @@ Note
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
-<pre><strong>lua/plugins/mini-completion.lua</strong></pre>
+<pre><strong>lua/plugins/mini-hues.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-filename="lua/plugins/mini-completion.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="op">{</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'nvim-mini/mini.completion'</span><span class="op">,</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">event</span> <span class="op">=</span> <span class="st">'InsertEnter'</span><span class="op">,</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">dependencies</span> <span class="op">=</span> <span class="op">{</span> <span class="st">'nvim-mini/mini.snippets'</span> <span class="op">},</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-filename="lua/plugins/mini-hues.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="op">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'nvim-mini/mini.hues'</span><span class="op">,</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">lazy</span> <span class="op">=</span> <span class="kw">false</span><span class="op">,</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">priority</span> <span class="op">=</span> <span class="dv">1000</span><span class="op">,</span></span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">config</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.snippets'</span><span class="op">).</span>setup<span class="op">()</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.completion'</span><span class="op">).</span>setup<span class="op">()</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'colorscheme miniwinter'</span><span class="op">)</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
-<pre><strong>lua/plugins/mini-hues.lua</strong></pre>
+<pre><strong>lua/plugins/mini-completion.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-filename="lua/plugins/mini-hues.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="op">{</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'nvim-mini/mini.hues'</span><span class="op">,</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">lazy</span> <span class="op">=</span> <span class="kw">false</span><span class="op">,</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">priority</span> <span class="op">=</span> <span class="dv">1000</span><span class="op">,</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-filename="lua/plugins/mini-completion.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="op">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'nvim-mini/mini.completion'</span><span class="op">,</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">event</span> <span class="op">=</span> <span class="st">'InsertEnter'</span><span class="op">,</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="va">dependencies</span> <span class="op">=</span> <span class="op">{</span> <span class="st">'nvim-mini/mini.snippets'</span> <span class="op">},</span></span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="va">config</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'colorscheme miniwinter'</span><span class="op">)</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.snippets'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.completion'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
@@ -1102,7 +1132,7 @@ Note
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">},</span></span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div></li>
-<li><p>The translated <code>vim.pack</code> config (notice directory change: <code>lua/plugins</code> -&gt; <code>plugin</code>):</p>
+<li><p>The translated <code>vim.pack</code> config (notice directory change <code>lua/plugins</code> -&gt; <code>plugin</code> and <code>00-mini-hues.lua</code> to force load it first):</p>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>init.lua</strong></pre>
@@ -1111,32 +1141,32 @@ Note
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
-<pre><strong>plugins/mini-completion.lua</strong></pre>
+<pre><strong>plugin/00-mini-hues.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" data-filename="plugins/mini-completion.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'InsertEnter'</span><span class="op">,</span> <span class="op">{</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">once</span> <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">'https://github.com/nvim-mini/mini.snippets'</span><span class="op">,</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>      <span class="st">'https://github.com/nvim-mini/mini.completion'</span><span class="op">,</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.snippets'</span><span class="op">).</span>setup<span class="op">()</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.completion'</span><span class="op">).</span>setup<span class="op">()</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" data-filename="plugin/00-mini-hues.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.hues'</span> <span class="op">})</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'colorscheme miniwinter'</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
-<pre><strong>plugins/mini-hues.lua</strong></pre>
+<pre><strong>plugin/mini-completion.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" data-filename="plugins/mini-hues.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.hues'</span> <span class="op">})</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span>cmd<span class="op">(</span><span class="st">'colorscheme miniwinter'</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" data-filename="plugin/mini-completion.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">api</span><span class="op">.</span>nvim_create_autocmd<span class="op">(</span><span class="st">'InsertEnter'</span><span class="op">,</span> <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">once</span> <span class="op">=</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">callback</span> <span class="op">=</span> <span class="kw">function</span><span class="op">()</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">'https://github.com/nvim-mini/mini.snippets'</span><span class="op">,</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>      <span class="st">'https://github.com/nvim-mini/mini.completion'</span><span class="op">,</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.snippets'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">require</span><span class="op">(</span><span class="st">'mini.completion'</span><span class="op">).</span>setup<span class="op">()</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span><span class="op">,</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
-<pre><strong>plugins/mini-pairs.lua</strong></pre>
+<pre><strong>plugin/mini-pairs.lua</strong></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16" data-filename="plugins/mini-pairs.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.pairs'</span> <span class="op">})</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16" data-filename="plugin/mini-pairs.lua"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="va">vim</span><span class="op">.</span><span class="va">pack</span><span class="op">.</span>add<span class="op">({</span> <span class="st">'https://github.com/nvim-mini/mini.pairs'</span> <span class="op">})</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span><span class="op">(</span><span class="st">'mini.pairs'</span><span class="op">).</span>setup<span class="op">({</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">modes</span> <span class="op">=</span> <span class="op">{</span> <span class="va">command</span> <span class="op">=</span> <span class="kw">true</span> <span class="op">},</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
