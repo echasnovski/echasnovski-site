@@ -441,7 +441,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>An upcoming Neovim 0.12 release <a href="../blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html">will have a built-in plugin manager</a>. It is implemented in Lua and is available as a built-in <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack"><code>vim.pack</code></a> module (hence the name). This blog post describes fundamentals of how <code>vim.pack</code> is intended to be used. Reading only selected sections should be fine, but it is written to be read from top to bottom.</p>
+<p>The upcoming Neovim 0.12 release <a href="../blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html">will have a built-in plugin manager</a>. It is implemented in Lua and is available as a built-in <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack"><code>vim.pack</code></a> module (hence the name). This blog post describes fundamentals of how <code>vim.pack</code> is intended to be used. Reading only selected sections should be fine, but it is written to be read from top to bottom.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -457,10 +457,10 @@ Note
 </div>
 <section id="concepts" class="level2">
 <h2 class="anchored" data-anchor-id="concepts">Concepts</h2>
-<p>This section lists <code>vim.pack</code> adjacent information that would benefit to understand before using it.</p>
+<p>This section lists <code>vim.pack</code> adjacent information that would be beneficial to understand before using it.</p>
 <section id="lua" class="level3">
 <h3 class="anchored" data-anchor-id="lua">Lua</h3>
-<p>The <code>vim.pack</code> is written and is designed to be used in Lua programming language. So at least basic understanding of its logic and syntax would be useful.</p>
+<p>The <code>vim.pack</code> module is written and is designed to be used in Lua programming language. So at least a basic understanding of its logic and syntax would be useful.</p>
 <p>There are many sources online for the language itself, like <a href="https://learnxinyminutes.com/lua/">“Learn X in Y minutes where X=Lua”</a>. Neovim has its own resources: <a href="https://neovim.io/doc/user/helptag.html?tag=lua-concepts"><code>:h lua-concepts</code></a> and <a href="https://neovim.io/doc/user/helptag.html?tag=lua-guide"><code>:h lua-guide</code></a>.</p>
 <p>There shouldn’t be much needed to know to actually use <code>vim.pack</code>. Mostly concepts about tables (<code>{ 'one', 'two' }</code> and <code>{ a = 1, b = 2 }</code>), functions (<code>f({ 'one', 'two' })</code>), and how to execute code inside user’s config (put it in or source from <a href="https://neovim.io/doc/user/helptag.html?tag=init.lua">‘init.lua’ file</a>).</p>
 </section>
