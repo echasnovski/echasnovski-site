@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Evgeni Chasnovski">
-<meta name="dcterms.date" content="2026-03-10">
+<meta name="dcterms.date" content="2026-03-13">
 <meta name="description" content="A somewhat concise yet comprehensive guide to vim.pack: how it works and how to use it">
 
 <title>A Guide to vim.pack (Neovim built-in plugin manager) – Evgeni Chasnovski</title>
@@ -429,7 +429,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">March 10, 2026</p>
+      <p class="date">March 13, 2026</p>
     </div>
   </div>
   
@@ -453,6 +453,23 @@ Note
 </div>
 <div class="callout-body-container callout-body">
 <p>Beware that, although unlikely, some information from this post can become outdated. Neovim’s own documentation is always the higher authority. From the running Neovim instance execute <code>:h vim.pack</code> to read the help and <code>:h vim.pack-examples</code> to read suggested workflows for common use cases.</p>
+</div>
+</div>
+<p>If you are a visual learner or want to see how using <code>vim.pack</code> looks like, check out this YouTube video:</p>
+<div class="callout callout-style-default callout-note callout-titled" title="A Demo of vim.pack (Neovim built-in plugin manager)">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A Demo of vim.pack (Neovim built-in plugin manager)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/J1r0vrqOMJo" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
+</div>
 </div>
 </div>
 <section id="concepts" class="level2">
@@ -536,7 +553,7 @@ Note
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'https://github.com/nvim-treesitter/nvim-treesitter'</span><span class="op">,</span></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>By default during initial install there is also a confirmation dialog showing which plugins are going to be installed. Press <code>y</code> to confirm, <code>n</code> to skip, <code>a</code> to allow for all <code>vim.pack.add()</code> confirmations in current session. It looks like this:</p>
-<p><img src="2026-03-10-a-guide-to-vim-pack/demo-vim-pack-add-confirm.png" class="img-fluid"></p>
+<p><img src="2026-03-13-a-guide-to-vim-pack/demo-vim-pack-add-confirm.png" class="img-fluid"></p>
 <p>Adding a plugin via <code>vim.pack.add()</code> makes it “active” or “loaded” in current session.</p>
 <hr>
 <p>All plugins that were not previously installed by <code>vim.pack</code> are installed in parallel. They are put into a dedicated <code>core</code> <a href="#plugin-packages">plugin package</a> as “opt” plugins (see <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-directory"><code>:h vim.pack-directory</code></a>). There is no “start” plugin support because:</p>
@@ -554,7 +571,7 @@ Note
 <li><p>Use a local copy for however long you need (make changes, push/pull branches, etc.). When done, revert changes from the previous step to start using reference plugin again.</p></li>
 </ul>
 <div class="callout callout-style-default callout-note callout-titled" title="Well, technically ...">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
@@ -563,7 +580,7 @@ Note
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
-<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
 <p>… it is possible to update by hand a plugin directly installed by <code>vim.pack</code>. Locate it in <code>core</code> plugin package and start making changes (create branches and commits, push/pull to remotes, etc.). Just make sure to:</p>
 <ul>
@@ -835,7 +852,7 @@ Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The current single fragility of this approach occurs when “bootstrapping” from the <a href="#lockfile">lockfile</a>) a plugin that requires an action during install. See <a href="#hooks-install">dedicated note</a> about possible solutions.</p>
+<p>The current single fragility of this approach occurs when “bootstrapping” from the <a href="#lockfile">lockfile</a> a plugin that requires an action during install. See <a href="#hooks-install">dedicated note</a> about possible solutions.</p>
 <p>In this particular example a solution could be to create all installation hooks in ‘init.lua’ file:</p>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
@@ -972,7 +989,7 @@ Note
 <p>Every update that was actually done is recorded in a dedicated <code>nvim-pack.log</code> file inside “log” <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">standard path</a>.</p>
 <hr>
 <p>The goal of the confirmation buffer is to show update details for the user to read, confirm (execute <code>:write</code> for that) or deny (close the window for that, like with <code>:quit</code>) the update. Here is an example of how it looks:</p>
-<p><img src="2026-03-10-a-guide-to-vim-pack/demo-confirmation-buffer.png" class="img-fluid"></p>
+<p><img src="2026-03-13-a-guide-to-vim-pack/demo-confirmation-buffer.png" class="img-fluid"></p>
 <p>There are several buffer-local nice things to improve user experience:</p>
 <ul>
 <li><p>The <code>]]</code> and <code>[[</code> mappings navigate through plugin sections forwards and backwards.</p></li>
@@ -1013,7 +1030,7 @@ Note
 </section>
 <section id="migrate" class="level2">
 <h2 class="anchored" data-anchor-id="migrate">Migrate</h2>
-<p>There is a chance that you already use a plugin manager, in which case in order to use <code>vim.pack</code> you’d have to migrate from the previous one. And my personal suggestion would be to do it, as <code>vim.pack</code> being built-in means that it 1) has dedicated and knowledgeable people maintaining it; and 2) has basically the same stability guarantees as Neovim core itself. The downside might be a slower release cycle than a regular plugin, so you’d have to wait longer for possible fixes and new features (or use Nightly releases).</p>
+<p>There is a chance that you already use a plugin manager, in which case in order to use <code>vim.pack</code> you’d have to migrate from the previous one. And my personal suggestion would be to do it. It usually results in a simple and more “native” config than alternatives while still being enough to comfortably daily drive. It is also built-in, which means that it 1) has dedicated and knowledgeable people maintaining it; and 2) has basically the same stability guarantees as the Neovim core itself. The downside might be a slower release cycle than a regular plugin, so you’d have to wait longer for possible fixes and new features (or use Nightly releases).</p>
 <p>Depending on the config complexity and the number of used plugins, it might be a tedious task. But in a nutshell:</p>
 <ol type="1">
 <li><p>Update the config to use <code>vim.pack</code> instead of the previous plugin manager. Make sure that there is no use of the previous plugin manager whatsoever (otherwise it will become confusing to locate problems).</p></li>
