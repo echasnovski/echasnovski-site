@@ -10,7 +10,2687 @@
 <atom:link href="https://echasnovski.com/blog.xml" rel="self" type="application/rss+xml"/>
 <description>Personal website of Evgeni Chasnovski</description>
 <generator>quarto-1.8.24</generator>
-<lastBuildDate>Tue, 27 Jan 2026 00:00:00 GMT</lastBuildDate>
+<lastBuildDate>Fri, 13 Mar 2026 00:00:00 GMT</lastBuildDate>
+<item>
+  <title>A Guide to vim.pack (Neovim built-in plugin manager)</title>
+  <dc:creator>Evgeni Chasnovski</dc:creator>
+  <link>https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>The upcoming Neovim 0.12 release <a href="../blog/2025-07-04-neovim-now-has-builtin-plugin-manager.html">will have a built-in plugin manager</a>. It is implemented in Lua and is available as a built-in <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack"><code>vim.pack</code></a> module (hence the name). This blog post describes the fundamentals of how <code>vim.pack</code> is intended to be used. Reading only selected sections should be fine, but it is written to be read from top to bottom.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Beware that, although unlikely, some information from this post can become outdated. Neovim’s own documentation is always the higher authority. From the running Neovim instance execute <code>:h vim.pack</code> to read the help and <code>:h vim.pack-examples</code> to read suggested workflows for common use cases.</p>
+</div>
+</div>
+<p>If you are a visual learner or want to see how using <code>vim.pack</code> looks like, check out this YouTube video:</p>
+<div class="callout callout-style-default callout-note callout-titled" title="A Demo of vim.pack (Neovim built-in plugin manager)">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A Demo of vim.pack (Neovim built-in plugin manager)
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="quarto-video ratio ratio-16x9"><iframe data-external="1" src="https://www.youtube.com/embed/J1r0vrqOMJo" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>
+</div>
+</div>
+</div>
+<section id="concepts" class="level2">
+<h2 class="anchored" data-anchor-id="concepts">Concepts</h2>
+<p>This section lists <code>vim.pack</code> adjacent information that would be beneficial to understand before using it.</p>
+<section id="lua" class="level3">
+<h3 class="anchored" data-anchor-id="lua">Lua</h3>
+<p>The <code>vim.pack</code> module is written and is designed to be used in Lua programming language. So at least a basic understanding of its logic and syntax would be useful.</p>
+<p>There are many sources online for the language itself, like <a href="https://learnxinyminutes.com/lua/">“Learn X in Y minutes where X=Lua”</a>. Neovim has its own resources: <a href="https://neovim.io/doc/user/helptag.html?tag=lua-concepts"><code>:h lua-concepts</code></a> and <a href="https://neovim.io/doc/user/helptag.html?tag=lua-guide"><code>:h lua-guide</code></a>.</p>
+<p>The basic working knowledge to know for <code>vim.pack</code> is about:</p>
+<ul>
+<li>Tables: <code>{ 'one', 'two' }</code> and <code>{ a = 1, b = 2 }</code>.</li>
+<li>Functions: <code>f({ 'one', 'two' })</code>.</li>
+<li>How to execute code inside user’s config: put it in or source from <a href="https://neovim.io/doc/user/helptag.html?tag=init.lua">‘init.lua’ file</a>.</li>
+</ul>
+</section>
+<section id="runtime-files" class="level3">
+<h3 class="anchored" data-anchor-id="runtime-files">Runtime files</h3>
+<p>To provide extensibility and flexibility, Neovim (and Vim) has a concept of runtime files: various support files that can be found and used when Neovim is running. Where these files are searched is controlled by the <a href="https://neovim.io/doc/user/helptag.html?tag='runtimepath'">‘runtimepath’ option</a>, which is essentially a list of directories.</p>
+<p>Most commonly used types of runtime files when it comes to external plugins in Neovim are:</p>
+<ul>
+<li>Lua modules. Searched in <code>lua/</code> subdirectories.</li>
+<li>Plugin scripts. Searched in <code>plugin/</code> subdirectories.</li>
+<li>Filetype plugins. Searched in <code>ftplugin/</code> subdirectories.</li>
+</ul>
+<hr>
+<p>For example, if <code>'runtimepath'</code> is <code>/home/user/dir,/home/user/dir-other</code>, then:</p>
+<ul>
+<li><p><code>require('myplug')</code> will try to look for <code>lua/myplug.lua</code> or <code>lua/myplug/init.lua</code> inside <code>/home/user/dir</code>, then <code>/home/user/dir-other</code>, and source the first one it finds.</p></li>
+<li><p>All files in <code>/home/user/dir/plugin</code> and <code>/home/user/dir-other/plugin</code> are sourced in alphabetical order during startup.</p></li>
+<li><p>Setting filetype <code>myft</code> will look for <code>ftplugin/myft.{vim,lua}</code> inside <code>/home/user/dir</code>, then <code>/home/user/dir-other</code>, and source all that it finds.</p></li>
+</ul>
+<p>The most important runtime paths for common users available by default are:</p>
+<ul>
+<li><p><a href="https://neovim.io/doc/user/helptag.html?tag=$XDG_CONFIG_HOME">User’s config directory</a>: <code>~/.config/nvim</code> on Unix and <code>~/AppData/Local/nvim</code> on Windows. Used for personal config. This is also known as <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">“config” standard path</a>.</p></li>
+<li><p><a href="https://neovim.io/doc/user/helptag.html?tag=$XDG_DATA_HOME">The <code>site/</code> subdirectory of user’s data directory</a>: <code>~/.local/share/nvim/site</code> on Unix and <code>~/AppData/Local/nvim-data/site</code> on Windows. Used for data from plugins installed by user. The parent of <code>site</code> directory is also known as <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">“data” standard path</a>.</p></li>
+<li><p>The <a href="https://neovim.io/doc/user/helptag.html?tag=after-directory"><code>after/</code> subdirectory</a> of user’s config directory. Primarily used for manual runtime files that should have the “final say” over all others, as it is usually the last ‘runtimepath’ entry.</p></li>
+</ul>
+<hr>
+<p>When it comes to a plugin manager:</p>
+<ul>
+<li><p>Installing a plugin means to download and put it in the known location on the disk.</p></li>
+<li><p>Loading a plugin means to make sure that its path is a proper part of <code>'runtimepath'</code>. Not at the start (where user’s config directory should be), not at the end (where user’s <code>after/</code> config subdirectory should be), but somewhere in the middle.</p></li>
+</ul>
+</section>
+<section id="plugin-packages" class="level3">
+<h3 class="anchored" data-anchor-id="plugin-packages">Plugin packages</h3>
+<p>To at least somehow standardize extensibility via plugins, Neovim (and Vim) has the concept of <a href="https://neovim.io/doc/user/helptag.html?tag=packages">plugin packages</a> (a.k.a. “Vim packages” or just “packages”). It is a collection of plugins meant to be used together. For Neovim to find a plugin package, it should be put in ‘pack’ subdirectory of any path from <a href="https://neovim.io/doc/user/helptag.html?tag='packpath'"><code>'packpath'</code></a> (works similar and by default is equal to <code>'runtimepath'</code>).</p>
+<p>One package can have two types of plugins:</p>
+<ul>
+<li><p>So called “opt” plugins are meant to be available/loaded only on demand after executing <a href="https://neovim.io/doc/user/helptag.html?tag=:packadd"><code>:packadd</code></a>. This command searches through a dedicated set of directories (controlled by ‘packpath’ option).</p></li>
+<li><p>So called “start” plugins are meant to be available/loaded automatically during startup. The only way to make them not load during startup is to move them to the “opt” part of the package.</p></li>
+</ul>
+<hr>
+<p>For example, a package named <code>bundle</code> (common name from early days of adapting this feature) might have the following structure:</p>
+<pre class="tree-style"><code>bundle/
+├── start/                 Directory for "start" plugins
+│   ├── plug-one/          First "start" plugin
+│   │   └── ftplugin/
+│   │       └── myft.lua
+│   └── plug-two/          Second "start" plugin
+│       └── lua/
+│           └── myplug.lua
+└── opt/                   Directory for "opt" plugins
+    └── plug-three/        The only "opt" plugin
+        └── lua/
+            └── three.lua</code></pre>
+<p>If this package is put as <code>pack/bundle/</code> subdirectory under some known package path (the <code>~/.local/share/nvim/site</code> would be the most expected place), then:</p>
+<ul>
+<li><p>Plugins ‘plug-one’ and ‘plug-two’ will <em>always</em> be available after startup.</p></li>
+<li><p>Plugin ‘plug-three’ is made available after executing <code>:packadd plug-three</code>.</p></li>
+</ul>
+</section>
+</section>
+<section id="install-and-load" class="level2">
+<h2 class="anchored" data-anchor-id="install-and-load">Install and load</h2>
+<p>Adding plugin(s) to a config is done via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.add()"><code>vim.pack.add()</code></a>. It acts as a “smart <code>:packadd</code>” - install if plugin is missing and load it. The design is for it to be a part of the user’s config: add with a list of all external plugins you want to use and forget about it. Like this (for more comprehensive examples see “Config organization”):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb2-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="cb2-2">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.nvim'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb2-3">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/neovim/nvim-lspconfig'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb2-4">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-treesitter/nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb2-5"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div>
+<p>By default during initial install there is also a confirmation dialog showing which plugins are going to be installed. Press <code>y</code> to confirm, <code>n</code> to skip, <code>a</code> to allow for all <code>vim.pack.add()</code> confirmations in current session. It looks like this:</p>
+<p><img src="https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack/demo-vim-pack-add-confirm.png" class="img-fluid"></p>
+<p>Adding a plugin via <code>vim.pack.add()</code> makes it “active” or “loaded” in current session.</p>
+<hr>
+<p>All plugins that were not previously installed by <code>vim.pack</code> are installed in parallel. They are put into a dedicated <code>core</code> plugin package as “opt” plugins (see <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-directory"><code>:h vim.pack-directory</code></a>). There is no “start” plugin support because:</p>
+<ul>
+<li><p>It makes it possible to comment out the (part of) <code>vim.pack.add()</code> call and some plugins will not load in the next session. Almost as if they don’t exist at all.</p></li>
+<li><p>This way the entire config acts as a blueprint of how plugins are loaded and meant to be updated. Using “start” plugins more fits the workflow like “manually install and forget about it” which is not quite “add to init.lua and forget about it”. Since all plugins are assumed to be listed in the config and are loaded with <code>vim.pack.add</code>, there is functionally no difference between “opt” and “start” plugin types.</p></li>
+</ul>
+<hr>
+<p>Only Git repos can be managed (installed, updated, deleted) by <code>vim.pack</code>. For other ways of plugin distribution, it is suggested to manually download them into a separate, dedicated plugin package (either directly or via symlinked directory). This also includes so called “local” plugins, which users already have on the disk and want to manage themselves.</p>
+<p>Plugins installed by <code>vim.pack</code> are expected to be managed/altered <strong>only by <code>vim.pack</code></strong>. Which also includes to not update/delete their code by hand. There are safeguards to handle this graciously, but in general there can be problems. To contribute to a plugin you use via <code>vim.pack</code>, the safest approach is to:</p>
+<ul>
+<li><p>If not already, set up a directory for “local” plugins that fits into plugin package structure. The easiest approach is a dedicated package like <code>~/.local/share/nvim/site/pack/mine/opt</code> or <code>~/.config/nvim/pack/mine/opt</code> (while adding <code>pack/</code> directory to <code>.gitignore</code>). It can also be anywhere on the disk but with a symlink to an “opt” part of a known plugin package.</p></li>
+<li><p>Download it (usually by forking it on a Git forge and using <code>git clone</code>) into a directory for “local” plugins. Use a directory name that is different from the reference plugin (otherwise there would be name conflicts).</p></li>
+<li><p>Comment out <code>vim.pack.add</code> for the reference plugin in the config and replace it with <code>vim.cmd.packadd('my-local-copy')</code>.</p></li>
+<li><p>Use a local copy for however long you need (make changes, push/pull branches, etc.). When done, revert changes from the previous step to start using reference plugin again.</p></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="Well, technically ...">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Well, technically …
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-3" class="callout-3-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>… it is possible to update by hand a plugin directly installed by <code>vim.pack</code>. Locate it in <code>core</code> plugin package and start making changes (create branches and commits, push/pull to remotes, etc.). Just make sure to:</p>
+<ul>
+<li><p>Not update the plugin with <code>vim.pack</code>. It will change the state to where its <code>version</code> points, so local changes will not have effect.</p></li>
+<li><p>Do not cause any big structural changes. For example, it should still be a Git repository and located at the exact path it was before.</p></li>
+<li><p>Ignore any messages that this plugin is not at a state that <code>vim.pack</code> expects it to be.</p></li>
+<li><p>Eventually switch back to managing by <code>vim.pack</code> with <code>vim.pack.update({ 'plugin-name' }, { offline = true })</code>.</p></li>
+</ul>
+<p><strong>One more time</strong>: this is definitely a “not officially supported, do on your own risk” kind of territory.</p>
+</div>
+</div>
+</div>
+<hr>
+<p>A subtle but one of the key things to understand is that <code>vim.pack.add()</code> is <strong>just a function</strong>. It takes plugin specifications and acts on them immediately. After execution is done without errors, all listed plugins should be available in the current Neovim session.</p>
+<p>Some consequences of this design are:</p>
+<ul>
+<li><p>It results into a more unified config: adding a plugin is similar to creating a mapping or an autocommand.</p></li>
+<li><p>It can be called multiple times with different plugin lists (with minor caveats) for a more “modular” config.</p></li>
+<li><p>Lazy loading in principle is just “call this exact function, just some time later”.</p></li>
+<li><p>It can be used interactively like <code>:lua vim.pack.add({ 'https://github.com/nvim-mini/mini.nvim' })</code>.</p></li>
+</ul>
+<hr>
+<p>By default loading plugin is done by executing <code>:packadd</code> (possibly with <code>!</code>) command, which essentially makes plugin’s runtime files known to Neovim and sources some of them (<code>plugin/</code> and <code>ftdetect/</code> scripts).</p>
+<p>With <code>vim.pack.add()</code> it is also possible to have custom loading logic. This can be useful to do something more or do nothing at all. The latter is useful as a workaround for some complex lazy loading. For example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="vim-pack-add-no-load" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="vim-pack-add-no-load" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="vim-pack-add-no-load-1" class="code-annotation-target"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="vim-pack-add-no-load-2">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/neovim/nvim-lspconfig'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<a class="code-annotation-anchor" data-target-cell="vim-pack-add-no-load" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="vim-pack-add-no-load-3" class="code-annotation-target"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">load</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="vim-pack-add-no-load" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="vim-pack-add-no-load" data-code-lines="1" data-code-annotation="1">“Register” plugin, but not load it right away</span>
+</dd>
+<dt data-target-cell="vim-pack-add-no-load" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="vim-pack-add-no-load" data-code-lines="3" data-code-annotation="2">Do nothing instead of <code>:packadd</code> to load</span>
+</dd>
+</dl>
+<section id="specification" class="level3">
+<h3 class="anchored" data-anchor-id="specification">Specification</h3>
+<p>Each plugin can be specified as a single string describing its source, i.e.&nbsp;from where to download its files (<code>git clone</code> for install and <code>git fetch</code> to update). Please use this approach if no extra tweaking is required.</p>
+<p>By default the plugin will be installed as source’s repository name and will get updates following default branch (usually <code>main</code> or <code>master</code>). It is also possible to tweak this by specifying <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.Spec">table specification</a> instead of a single source string. Like this:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-3" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-3-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-3" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-3-2" class="code-annotation-target">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">src</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.nvim'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">version</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'stable'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-3" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-3-3" class="code-annotation-target">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">src</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/neovim/nvim-lspconfig'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'lspconfig'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-3" data-target-annotation="3" onclick="event.preventDefault();">3</a><span id="annotated-cell-3-4" class="code-annotation-target">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-treesitter/nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="annotated-cell-3-5"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-3" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-3" data-code-lines="2" data-code-annotation="1">Use updates from <code>stable</code> Git reference (branch, tag, or commit)</span>
+</dd>
+<dt data-target-cell="annotated-cell-3" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-3" data-code-lines="3" data-code-annotation="2">Use custom name</span>
+</dd>
+<dt data-target-cell="annotated-cell-3" data-target-annotation="3">3</dt>
+<dd>
+<span data-code-cell="annotated-cell-3" data-code-lines="4" data-code-annotation="3">Table and string specifications can be mixed</span>
+</dd>
+</dl>
+<p>To follow semver-like named tags, use <a href="https://neovim.io/doc/user/helptag.html?tag=vim.version.range()"><code>:h vim.version.range()</code></a> as <code>version</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-4" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-4-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="annotated-cell-4-2">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="annotated-cell-4-3">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">src</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.nvim'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-4" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-4-4" class="code-annotation-target">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">version</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">version</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>range<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'*'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-4-5">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="annotated-cell-4-6">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="annotated-cell-4-7">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">src</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/neovim/nvim-lspconfig'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-4" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-4-8" class="code-annotation-target">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">version</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">version</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>range<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'2.x'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-4-9">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="annotated-cell-4-10"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-4" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-4" data-code-lines="4" data-code-annotation="1">Always try installing latest semver tag</span>
+</dd>
+<dt data-target-cell="annotated-cell-4" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-4" data-code-lines="8" data-code-annotation="2">Install latest semver tag if it is &gt;=2.0.0 and &lt;3.0.0</span>
+</dd>
+</dl>
+<p>Use <code>data</code> field to store/pass extra information or plugin specific methods:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-5" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-5-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">selective_load</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">plug_data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-5" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-5-2" class="code-annotation-target">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">plug_data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">spec</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">or</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{}).</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">skip_load</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="annotated-cell-5-3">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>packadd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">plug_data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">spec</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-5-4"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="annotated-cell-5-5"></span>
+<span id="annotated-cell-5-6"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="annotated-cell-5-7">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.nvim'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="annotated-cell-5-8">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">src</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/neovim/nvim-lspconfig'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">skip_load</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="annotated-cell-5-9"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">load</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">selective_load</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-5" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-5" data-code-lines="2" data-code-annotation="1">Do not load if explicitly asked</span>
+</dd>
+</dl>
+</section>
+<section id="lockfile" class="level3">
+<h3 class="anchored" data-anchor-id="lockfile">Lockfile</h3>
+<p>On top of listing used plugins in a config (to control how they are loaded), <code>vim.pack</code> stores extra information in <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-lockfile">its lockfile</a>: <code>nvim-pack-lock.json</code> in user’s config directory. It contains JSON encoded information about the current state of all plugins managed by <code>vim.pack</code>. It is meant to be treated like a part of the config (like tracked via version control, for example) but should <strong>not be modified by hand</strong>.</p>
+<p>The lockfile serves several purposes:</p>
+<ul>
+<li><p>It is used as a “latest working state” reference when bootstrapping the config on the new machine. In this case during <strong>the very first <code>vim.pack.add()</code> call</strong> all plugins that are present in the lockfile but absent on disk are installed all at once.</p></li>
+<li><p>As a consequence of the previous point, it makes it possible to ensure that even lazy loaded plugins are installed right away at the expected state and not when their first <code>vim.pack.add</code>ed.</p></li>
+<li><p>It enables easier “revert the latest update” workflow by reverting the lockfile and updating to the lockfile’s state.</p></li>
+<li><p>It contains information about plugin’s <code>version</code>, i.e.&nbsp;target state when updating. This is useful when updating if there are not-yet-active plugins (since there is no <code>vim.pack.add()</code> call yet to say which <code>version</code> it follows).</p></li>
+<li><p>In future it will allow to store more information about plugins to perform more actions without much startup overhead. Like provide information about minimum expected Neovim version (per plugin) or plugin dependencies (to at least ensure that they are already loaded).</p></li>
+</ul>
+<p>If something is done to plugins not via <code>vim.pack</code> methods, lockfile can become out of sync with what is present on disk. Following troubleshooting steps should usually help.</p>
+</section>
+<section id="hooks" class="level3">
+<h3 class="anchored" data-anchor-id="hooks">Hooks</h3>
+<p>A common requirement for managing plugins is to be able to perform dedicated actions (usually called “plugin hooks”) whenever plugin’s state changes. Like “build/compile the plugin”, “update parsers installed by this plugin”, “perform initial registration”.</p>
+<p>The suggested interface for that is by creating <a href="https://neovim.io/doc/user/helptag.html?tag=autocommand">autocommand(s)</a> for <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack-events">dedicated <code>vim.pack</code> events</a>: <code>PackChangedPre</code> (before the change) and <code>PackChanged</code> (after the change). These events are triggered whenever plugins are affected via <code>vim.pack</code> functions.</p>
+<p>Autocommands for these events will receive information about affected plugin via <a href="https://neovim.io/doc/user/helptag.html?tag=event-data">event data</a>. It will contain at least plugin’s name and specification, whether it is active, and what kind of change it is. There are three major kinds of changes:</p>
+<ul>
+<li><code>kind=install</code> - initial plugin install, before loading.</li>
+<li><code>kind=update</code> - update already installed plugin, possibly not loaded.</li>
+<li><code>kind=delete</code> - delete from disk.</li>
+</ul>
+<hr>
+<p>Here is an example of updating tree-sitter parsers whenever plugin named ‘nvim-treesitter’ is updated:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-6" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-6-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'PackChanged'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-6-2">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">spec</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-6" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-6-3" class="code-annotation-target">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter'</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">and</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'update'</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-6" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-6-4" class="code-annotation-target">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">not</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">active</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>packadd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="annotated-cell-6-5">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>cmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'TSUpdate'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-6-6">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="annotated-cell-6-7"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-6" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-6" data-code-lines="3" data-code-annotation="1">Update tree-sitter parsers whenever ‘nvim-treesitter’ updates</span>
+</dd>
+<dt data-target-cell="annotated-cell-6" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-6" data-code-lines="4" data-code-annotation="2">Make sure that ‘nvim-treesitter’ is loaded to use <code>:TSUpdate</code></span>
+</dd>
+</dl>
+<hr>
+<p>The long-term plan is to move defining common hooks (like “after install” and “after update”) from user’s responsibility to plugin’s. One approach is to use some sort of standardized file in plugin root that tells plugin manager what scripts to execute on certain events. This is commonly mentioned as <a href="https://github.com/neovim/packspec/">“add <code>packspec</code> support”</a>. This should remove the need for custom hooks for most users.</p>
+<hr>
+<div id="hooks-install" class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>One important caveat worth mentioning is about plugin install hooks. For them to work, their autocommand has to be created <strong>before the <code>vim.pack.add()</code> call that does the installation</strong>. Otherwise Neovim can’t know about that hook (at least before there is a <code>packspec</code> support).</p>
+<p>Depending on the level of robustness you want to achieve for your config, there are several degrees of handling this:</p>
+<ul>
+<li><p>Create an autocommand before <code>vim.pack.add()</code> that lists the plugin. This will run the hook when the plugin is installed for the very first time.</p></li>
+<li><p>(Recommended) Create an autocommand before <strong>the very first <code>vim.pack.add()</code></strong>. This will run the hook even when installing the plugin based on the lockfile.</p></li>
+<li><p>If the hook <em>absolutely needs</em> to have plugin’s <code>data</code> (like if it contains project build instructions), the plugin should be listed in the very first <code>vim.pack.add()</code>. If this plugin is intended to be lazy loaded, register it without loading and use <code>vim.cmd.packadd</code> when later loading.</p></li>
+</ul>
+</div>
+</div>
+</section>
+</section>
+<section id="config-organization" class="level2">
+<h2 class="anchored" data-anchor-id="config-organization">Config organization</h2>
+<section id="single-vim-pack-add" class="level3">
+<h3 class="anchored" data-anchor-id="single-vim-pack-add">Single <code>vim.pack.add()</code></h3>
+<p>This is the most robust approach around which <code>vim.pack</code> was designed. Have a single <code>vim.pack.add()</code> that installs+loads plugins and (if needed) create one autocommand for hooks prior to it. Also works well when “bootstrapping” config on new machine (since it automatically resolves possible installation hooks problems).</p>
+<p>Here is an example:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-7" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="annotated-cell-7" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-7-1" class="code-annotation-target"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'PackChanged'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-7-2">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">spec</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span></span>
+<span id="annotated-cell-7-3">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter'</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">and</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'update'</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span></span>
+<span id="annotated-cell-7-4">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">not</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">active</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>packadd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="annotated-cell-7-5">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>cmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'TSUpdate'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-7-6">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="annotated-cell-7-7"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="annotated-cell-7-8"></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-7" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-7-9" class="code-annotation-target"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="annotated-cell-7-10">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.nvim'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="annotated-cell-7-11">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/neovim/nvim-lspconfig'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="annotated-cell-7-12">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-treesitter/nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="annotated-cell-7-13"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="annotated-cell-7-14"></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-7" data-target-annotation="3" onclick="event.preventDefault();">3</a><span id="annotated-cell-7-15" class="code-annotation-target"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>colorscheme<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'miniwinter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-7-16"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.basics'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-7-17"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.surround'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-7-18"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">lsp</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>enable<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'lua_ls'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+</div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-7" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-7" data-code-lines="1" data-code-annotation="1">Define hooks via autocommand(s)</span>
+</dd>
+<dt data-target-cell="annotated-cell-7" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-7" data-code-lines="9" data-code-annotation="2">Add (maybe install and load) all at once</span>
+</dd>
+<dt data-target-cell="annotated-cell-7" data-target-annotation="3">3</dt>
+<dd>
+<span data-code-cell="annotated-cell-7" data-code-lines="15" data-code-annotation="3">Use plugins immediately</span>
+</dd>
+</dl>
+<p>It should be enough for most users. The two most common downsides expressed about this approach are:</p>
+<ul>
+<li><p>It is not “modular” enough as many people prefer spreading plugin configuration across multiple files. The usual answer is to use many <code>vim.pack.add()</code> calls.</p></li>
+<li><p>It loads all plugins immediately during startup which can visibly affect startup time. It also increases ‘runtimepath’ (which can have <a href="../blog/2026-01-27-how-many-neovim-plugins-is-too-many.html">slightly negative impact</a>). The answer is to use lazy loading, but <strong>please</strong> only to a moderate extent. Extreme lazy loading usually comes with a hidden cognitive overhead both when using and maintaining the config.</p></li>
+</ul>
+</section>
+<section id="many-vim-pack-add" class="level3">
+<h3 class="anchored" data-anchor-id="many-vim-pack-add">Many <code>vim.pack.add()</code></h3>
+<p>Usually very similar to a “single <code>vim.pack.add()</code>” approach but with many <code>vim.pack.add</code> calls spread across single or multiple files.</p>
+<p>One way to do it is to add files inside <code>plugin/</code> directory of the config. This way they will be discovered and executed (in alphabetical order) automatically during startup.</p>
+<p>Here is an example:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>plugin/mini.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="plugin/mini.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb3-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.nvim'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb3-2"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>colorscheme<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'miniwinter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb3-3"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.basics'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb3-4"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.surround'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>plugin/nvim-lspconfig.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="plugin/nvim-lspconfig.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb4-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/neovim/nvim-lspconfig'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb4-2"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">lsp</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>enable<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'lua_ls'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>plugin/nvim-treesitter.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="plugin/nvim-treesitter.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb5-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'PackChanged'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb5-2">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">spec</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span></span>
+<span id="cb5-3">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter'</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">and</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'update'</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span></span>
+<span id="cb5-4">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">not</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">active</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>packadd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb5-5">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>cmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'TSUpdate'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb5-6">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb5-7"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb5-8"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-treesitter/nvim-treesitter'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In general it should be fine to use <code>vim.pack.add</code> for the same plugin several times in different places. This can come up when some plugin is used as a dependency for several other plugins. The first call will load the plugin while all the next ones will be ignored (<code>vim.pack.add()</code> will do nothing for active plugin).</p>
+<p>However, for clearer config I would suggest to have only a single <code>vim.pack.add</code> per plugin. Just make sure that it is executed before plugins that depend on it. In case of a <code>plugin/</code> directory, automated sourcing is alphabetical, so adjusting the file name should work here.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The current single fragility of this approach occurs when “bootstrapping” from the lockfile a plugin that requires an action during install. See dedicated note about possible solutions.</p>
+<p>In this particular example a solution could be to create all installation hooks in ‘init.lua’ file:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb6-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'PackChanged'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb6-2">  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- Various installation hooks</span></span>
+<span id="cb6-3"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div>
+</div>
+</div>
+</div>
+</section>
+<section id="lazy-loading" class="level3">
+<h3 class="anchored" data-anchor-id="lazy-loading">Lazy loading</h3>
+<p>One of the ways for users to improve startup and runtime performance, is to delay loading a plugin, a.k.a. “lazy load” it. Ideally, there should not be a need for that to improve startup time: a plugin should do negligible amount of work when setting itself up. However, different people perceive time differently and use different machines, so it still is something that should be possible.</p>
+<p>Functionally, there are two types of plugin lazy loading:</p>
+<ul>
+<li><p>“Load not during startup” - improves startup time until first draw at the cost of still loading all plugins (might slightly affect runtime performance). It is an approach that is easy to understand and maintain, though.</p></li>
+<li><p>“Load just before it is needed” - improves overall performance at the cost of a more complex config.</p></li>
+</ul>
+<p>Please be careful when deciding which plugins to lazy load. Some functionality needs to be available during startup before first redraw: colorscheme, statusline/tabline, starter dashboard, etc.</p>
+<hr>
+<p>The <code>vim.pack</code> is designed with lazy loading in mind, but definitely not as a front and center use case. Use it moderately.</p>
+<p>The basic idea is to call <code>vim.pack.add()</code> not during startup but register it to be called whenever you want to load the plugin.</p>
+<p>The “load not during startup” approach can be done via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.schedule()"><code>vim.schedule()</code></a>:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-11" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><span id="annotated-cell-11-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>schedule<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-11-2">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-11" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-11-3" class="code-annotation-target">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.cmdline'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="annotated-cell-11-4">    <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.completion'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="annotated-cell-11-5">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="annotated-cell-11-6"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+</div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-11" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-11" data-code-lines="3" data-code-annotation="1">Use standalone ‘mini.nvim’ repos for <code>vim.pack.add()</code> demonstration purposes</span>
+</dd>
+</dl>
+<p>The “load just before it is needed” approach can become complex if taken at face value. My personal suggestion is to only use basic autocommands and not rely on any complex logic (like “load on mapping”, etc.).</p>
+<p>Here is an example:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-12" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="annotated-cell-12" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-12-1" class="code-annotation-target"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'CmdlineEnter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">once</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-12-2">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.cmdline'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-12" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-12-3" class="code-annotation-target">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.cmdline'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-12-4"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="annotated-cell-12-5"></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-12" data-target-annotation="3" onclick="event.preventDefault();">3</a><span id="annotated-cell-12-6" class="code-annotation-target"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'InsertEnter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">once</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-12-7">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.completion'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="annotated-cell-12-8">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.completion'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-12-9"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+</div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-12" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-12" data-code-lines="1" data-code-annotation="1">Load once when entering Command-line mode</span>
+</dd>
+<dt data-target-cell="annotated-cell-12" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-12" data-code-lines="3" data-code-annotation="2">Explicitly set up ‘mini.nvim’ module</span>
+</dd>
+<dt data-target-cell="annotated-cell-12" data-target-annotation="3">3</dt>
+<dd>
+<span data-code-cell="annotated-cell-12" data-code-lines="6" data-code-annotation="3">Load once when entering Insert mode</span>
+</dd>
+</dl>
+<p>Both of these approaches can be unified and improved by using a dedicated <a href="https://nvim-mini.org/mini.nvim/doc/mini-misc.html#minimisc.safely"><code>safely()</code></a> wrapper from ‘mini.misc’ module of ‘mini.nvim’. With this, the config is more robust (errors will be reported as warnings to not block code execution and load all plugins) and unified:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="annotated-cell-13" style="background: #f1f3f5;"><pre class="sourceCode lua code-annotation-code code-with-copy code-annotated"><code class="sourceCode lua"><a class="code-annotation-anchor" data-target-cell="annotated-cell-13" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-13-1" class="code-annotation-target"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.misc'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="annotated-cell-13-2"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">misc</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.misc'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-13-3"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">later</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">f</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">misc</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>safely<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'later'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">f</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="annotated-cell-13-4"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">on_event</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">f</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">misc</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>safely<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'event:'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">..</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">f</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="annotated-cell-13-5"></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-13" data-target-annotation="2" onclick="event.preventDefault();">2</a><span id="annotated-cell-13-6" class="code-annotation-target">later<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-13-7">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.cmdline'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-13" data-target-annotation="3" onclick="event.preventDefault();">3</a><span id="annotated-cell-13-8" class="code-annotation-target">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.cmdline'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-13-9"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="annotated-cell-13-10"></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-13" data-target-annotation="4" onclick="event.preventDefault();">4</a><span id="annotated-cell-13-11" class="code-annotation-target">on_event<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'InsertEnter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-13-12">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.completion'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="annotated-cell-13-13">  <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.completion'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="annotated-cell-13-14"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code></pre></div></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-13" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-cell="annotated-cell-13" data-code-lines="1" data-code-annotation="1">Use standalone ‘mini.nvim’ repos for <code>vim.pack.add()</code> demonstration purposes</span>
+</dd>
+<dt data-target-cell="annotated-cell-13" data-target-annotation="2">2</dt>
+<dd>
+<span data-code-cell="annotated-cell-13" data-code-lines="6" data-code-annotation="2">Load some time later after startup</span>
+</dd>
+<dt data-target-cell="annotated-cell-13" data-target-annotation="3">3</dt>
+<dd>
+<span data-code-cell="annotated-cell-13" data-code-lines="8" data-code-annotation="3">Explicitly set up ‘mini.nvim’ module</span>
+</dd>
+<dt data-target-cell="annotated-cell-13" data-target-annotation="4">4</dt>
+<dd>
+<span data-code-cell="annotated-cell-13" data-code-lines="11" data-code-annotation="4">Load when entering Insert mode</span>
+</dd>
+</dl>
+<hr>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>When adding a new lazy loaded plugin, make sure it is installed. Either trigger its loading in a new session or manually run <code>vim.pack.add()</code> with its source.</p></li>
+<li><p>This also has the same “install hooks” fragility as the <a href="many-vim-pack-add">many <code>vim.pack.add()</code></a> approach with the same solutions.</p></li>
+</ul>
+</div>
+</div>
+</section>
+</section>
+<section id="update" class="level2">
+<h2 class="anchored" data-anchor-id="update">Update</h2>
+<p>Updating already installed plugins is done via <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.update()"><code>vim.pack.update()</code></a>. There is no dedicated user command <a href="https://github.com/neovim/neovim/issues/34764">yet</a>.</p>
+<p>Executing <code>:lua vim.pack.update()</code> (without arguments) will update all plugins and <code>:lua vim.pack.update({ 'mini.nvim' })</code> will update selected installed plugins specified by their name. It means:</p>
+<ul>
+<li>Download new changes from plugin sources.</li>
+<li>Compute new target revision and all the changes (<code>git log</code>) between current and target revisions.</li>
+<li>By default show a new tabpage with information about the update. This is known as a confirmation buffer. To skip the confirmation step, apply all pending updates immediately by setting <code>force = true</code> option of <code>vim.pack.update()</code>.</li>
+</ul>
+<p>Every update that was actually done is recorded in a dedicated <code>nvim-pack.log</code> file inside “log” <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">standard path</a>.</p>
+<hr>
+<p>The goal of the confirmation buffer is to show update details for the user to read, confirm (execute <code>:write</code> for that) or deny (close the window for that, like with <code>:quit</code>) the update. Here is an example of how it looks:</p>
+<p><img src="https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack/demo-confirmation-buffer.png" class="img-fluid"></p>
+<p>There are several buffer-local nice things to improve user experience:</p>
+<ul>
+<li><p>The <code>]]</code> and <code>[[</code> mappings navigate through plugin sections forwards and backwards.</p></li>
+<li><p>There is a so-called “in-process” (i.e.&nbsp;created in Neovim session with Neovim’s Lua code) LSP server enabled specifically in confirmation buffer. It provides several features in an LSP compatible way. This means that they will work both with <a href="https://neovim.io/doc/user/helptag.html?tag=lsp-defaults">default LSP mappings</a> and with any custom mappings.</p>
+<p>The supported LSP methods are:</p>
+<ul>
+<li><p><a href="https://neovim.io/doc/user/helptag.html?tag=vim.lsp.buf.document_symbol()">‘textDocument/documentSymbol’</a> to show structure of the buffer. By default opens a location list, but will work with, for example, any picker providing LSP document symbols picker.</p></li>
+<li><p><a href="https://neovim.io/doc/user/helptag.html?tag=vim.lsp.buf.hover()">‘textDocument/hover’</a> - show more information at cursor, like details of a particular pending change or newer tag. By default opens a floating window showing the change; execute the hover action again to jump into the window or move cursor for the window to disappear.</p></li>
+<li><p><a href="https://neovim.io/doc/user/helptag.html?tag=vim.lsp.buf.code_action()">‘textDocument/codeAction’</a> - show code actions relevant for a “plugin at cursor”. Like “delete” (if plugin is not active; useful if you only removed plugin from config but did not delete it), “update” or “skip updating” (if there are pending updates).</p></li>
+</ul></li>
+</ul>
+<hr>
+<p>Other common ways to use <code>vim.pack.update()</code>:</p>
+<ul>
+<li><p><code>:lua vim.pack.update(nil, { force = true })</code> - force updates immediately without confirmation buffer. Useful when scripting.</p></li>
+<li><p><code>:lua vim.pack.update(nil, { offline = true })</code> - show the current state of plugins without downloading new changes from sources. Useful to interactively explore installed plugins.</p></li>
+<li><p><code>:lua vim.pack.update(nil, { target = 'lockfile' })</code> - make sure that plugin state on disk is the same as recorded in the lockfile. Useful for reverting updates: ensure the lockfile is as it was before the update and execute the command.</p></li>
+</ul>
+</section>
+<section id="delete" class="level2">
+<h2 class="anchored" data-anchor-id="delete">Delete</h2>
+<p>Deleting a plugin is a relatively straightforward two step process:</p>
+<ul>
+<li><p>Remove from the config any logic for loading the plugin. Otherwise it will be reinstalled on the next startup.</p></li>
+<li><p>Use <a href="https://neovim.io/doc/user/helptag.html?tag=vim.pack.del()"><code>vim.pack.del()</code></a> to delete plugin(s) from disk. This will also remove the plugin from the lockfile. Here is an example: <code>:lua vim.pack.del({ 'nvim-lspconfig', 'nvim-treesitter' })</code>.</p>
+<p><strong>Do not delete directory with plugin code by hand</strong>. This will not adjust lockfile, which means the plugin will be reinstalled on the next startup.</p></li>
+</ul>
+</section>
+<section id="troubleshoot" class="level2">
+<h2 class="anchored" data-anchor-id="troubleshoot">Troubleshoot</h2>
+<p>To err is human. When you feel there might be problems with <code>vim.pack</code>, run <a href="https://neovim.io/doc/user/helptag.html?tag=:checkhealth"><code>:checkhealth</code></a> for it. Like this: <code>:checkhealth vim.pack</code>.</p>
+<p>It should report any known/common issues together with best-effort suggestions on how to fix it. For example it will:</p>
+<ul>
+<li><p>Detect missing or problematic lockfile entry.</p></li>
+<li><p>Whether lockfile is not aligned with what is on the disk.</p></li>
+<li><p>Notify if there are not active (installed but not loaded) plugins. Which might be a sign that it was removed from the config but not fully deleted.</p></li>
+</ul>
+</section>
+<section id="migrate" class="level2">
+<h2 class="anchored" data-anchor-id="migrate">Migrate</h2>
+<p>There is a chance that you already use a plugin manager, in which case in order to use <code>vim.pack</code> you’d have to migrate from the previous one. And my personal suggestion would be to do it. It usually results in a simple and more “native” config than alternatives while still being enough to comfortably daily drive. It is also built-in, which means that it 1) has dedicated and knowledgeable people maintaining it; and 2) has basically the same stability guarantees as the Neovim core itself. The downside might be a slower release cycle than a regular plugin, so you’d have to wait longer for possible fixes and new features (or use Nightly releases).</p>
+<p>Depending on the config complexity and the number of used plugins, it might be a tedious task. But in a nutshell:</p>
+<ol type="1">
+<li><p>Update the config to use <code>vim.pack</code> instead of the previous plugin manager. Make sure that there is no use of the previous plugin manager whatsoever (otherwise it will become confusing to locate problems).</p></li>
+<li><p>Make sure that plugins and accompanying files from the previous plugin manager are not on disk. This might be crucial to not have the same plugin installed in different places.</p>
+<p>For this, find the location of where the plugin manager installed plugins and delete the directory manually.</p></li>
+</ol>
+<p>Here are a couple of approaches that could make the transition easier:</p>
+<ul>
+<li><p>Instead of changing the “main” config, adjust a temporary one (see <a href="https://neovim.io/doc/user/helptag.html?tag=$NVIM_APPNAME"><code>:h $NVIM_APPNAME</code></a>) at your own pace without the pressure of not having the fully working setup. You can start either with a full copy of the “main” config or start fresh.</p>
+<p>For example, create <code>~/.config/nvim-vim-pack</code> directory. Either empty to start fresh or by copying <code>~/.config/nvim</code>. Adjusting <code>nvim-vim-pack</code> config will have no impact on the “main” <code>nvim</code> config. Use <code>NVIM_APPNAME=nvim-vim-pack nvim</code> to start Neovim with the <code>nvim-vim-pack</code> config. When you feel ready, move the content back to <code>~/.config/nvim</code> (it will reinstall <code>vim.pack</code> plugins into a permanent <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">“data” standard path</a>).</p></li>
+<li><p>Start with a simple one <code>vim.pack.add()</code> style of config and see if it fits your needs. It might be surprising and refreshing to trade the startup speed for config simplicity.</p>
+<p>If it doesn’t feel right, you can start modularizing the config. And only if absolutely needed, try lazy loading some plugins.</p></li>
+</ul>
+<section id="mini.deps" class="level3">
+<h3 class="anchored" data-anchor-id="mini.deps">mini.deps</h3>
+<p>The <a href="https://nvim-mini.org/mini.nvim/readmes/mini-deps.html">‘mini.deps’</a> was initially designed with the idea of being merged as Neovim’s built-in plugin manager. The overall concept proved to be rather successful and after about 1.5 years of public testing it was used as a basis for <code>vim.pack</code>.</p>
+<p>In many ways, <code>vim.pack</code> is a better and slicker version of ‘mini.deps’ which is why it will eventually be recommended instead of ‘mini.deps’. So the migration should be rather painless. But here are a couple of pointers:</p>
+<ul>
+<li><p>Instead of <code>MiniDeps.add('user/repo')</code> use <code>vim.pack.add({ 'https://github.com/user/repo' })</code>, i.e.&nbsp;use full URL and a list instead of a single string.</p></li>
+<li><p>In table specification: <code>source</code> -&gt; <code>src</code>, <code>checkout</code> -&gt; <code>version</code>.</p></li>
+<li><p>Resolve dependencies manually by listing them in <code>vim.pack.add()</code> list before target plugin. It shouldn’t be a problem to <code>vim.pack.add()</code> the same plugin several times, but it is better to resolve to the point of every plugin being added exactly once.</p></li>
+<li><p>Rewrite hooks to be in autocommand form.</p></li>
+<li><p>Instead of <code>MiniDeps.now()</code> and <code>MiniDeps.later()</code>, use <a href="https://nvim-mini.org/mini.nvim/doc/mini-misc.html#minimisc.safely"><code>MiniMisc.safely()</code></a>.</p></li>
+<li><p><strong>Do not forget</strong> to remove plugins (located in <code>site/pack/deps</code> subdirectory of <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">“data” standard path</a>) and possible <code>mini-deps-snap</code> snapshot file. Otherwise there will be conflicts (since ‘mini.deps’ also uses plugin package approach).</p></li>
+</ul>
+<p>You can see an example of a real config migration <a href="https://nvim-mini.org/MiniMax/configs/diffs/nvim-0.11_nvim-0.12/">in MiniMax</a>: the main theme of moving from <code>nvim-0.11</code> to <code>nvim-0.12</code> reference config is changing a plugin manager from ‘mini.deps’ to <code>vim.pack</code>.</p>
+<p>Here is a simpler example:</p>
+<ul>
+<li><p>‘mini.deps’ config (excluding the part of bootstrapping ‘mini.nvim’ or ‘mini.deps’):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb7-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">MiniDeps</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-mini/mini.nvim'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb7-2"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.basics'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb7-3"></span>
+<span id="cb7-4"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">MiniDeps</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="cb7-5">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">source</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter/nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb7-6">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">checkout</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'main'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb7-7">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">hooks</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">post_checkout</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>cmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'TSUpdate'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="cb7-8"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div></li>
+<li><p>The translated <code>vim.pack</code> config:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb8-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.nvim'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb8-2"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.basics'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb8-3"></span>
+<span id="cb8-4"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'PackChanged'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb8-5">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">spec</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span></span>
+<span id="cb8-6">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">name</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter'</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">and</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">kind</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">==</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'update'</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span></span>
+<span id="cb8-7">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">if</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">not</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">ev</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">data</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">active</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">then</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>packadd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb8-8">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>cmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'TSUpdate'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb8-9">  <span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span></span>
+<span id="cb8-10"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb8-11"></span>
+<span id="cb8-12"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="cb8-13">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb8-14">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">src</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-treesitter/nvim-treesitter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb8-15">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">version</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'main'</span></span>
+<span id="cb8-16">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="cb8-17"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div></li>
+</ul>
+</section>
+<section id="lazy.nvim" class="level3">
+<h3 class="anchored" data-anchor-id="lazy.nvim">lazy.nvim</h3>
+<p>The <a href="https://lazy.folke.io/">folke/lazy.nvim</a> is the most used plugin manager at the time of this writing. And rightly so: it is very capable with lots of features. Ironically, this itself makes it not very suitable to be a part of Neovim as most of the features come with significant code and maintenance complexity. Plus the whole idea of treating lazy loading as the main goal of a plugin manager does not sit well with Neovim core team.</p>
+<p>By design, not all ‘lazy.nvim’ capabilities are one-to-one reproducible in <code>vim.pack</code>. My best suggestion would be to follow both approaches suggested earlier: use temporary config and start with simple approach first to see that maybe there is nothing much to miss from ‘lazy.nvim’.</p>
+<p>Couple of pointers:</p>
+<ul>
+<li><p>Use full URL as a source (as string or <code>src</code> field) and a single <code>version</code> instead of <code>branch</code> / <code>tag</code> / <code>commit</code> / <code>version</code> / <code>pin</code> fields.</p></li>
+<li><p>Instead of the <code>opts</code> field use a dedicated way to configure a plugin (should be mentioned in plugin’s documentation/README) after <code>vim.pack.add</code>ing it. Typically it is something like <code>require('plugin').setup(opts)</code>, which ‘lazy.nvim’ does behind the scenes (but not <code>vim.pack.add()</code>).</p></li>
+<li><p>There is no built-in lazy loading with <code>vim.pack</code>, so specification fields like <code>cmd</code>, <code>event</code>, <code>ft</code>, <code>keys</code> can not be translated directly. For emulating loading on event see “Lazy loading” section.</p></li>
+<li><p>The directory where ‘lazy.nvim’ stores its plugins is <code>lazy</code> subdirectory of <a href="https://neovim.io/doc/user/helptag.html?tag=standard-path">“data” standard path</a>. Delete it manually before migrating.</p></li>
+<li><p>If you use <a href="https://www.lazyvim.org/">LazyVim</a>, then it is probably a better idea to start from a clean config and build from there. As LazyVim is heavily based on using ‘lazy.nvim’ as its plugin manager.</p></li>
+</ul>
+<hr>
+<p>The most recommended way of setting up ‘lazy.nvim’ plugins seems to be a so called <a href="https://lazy.folke.io/usage/structuring">“structuring plugins”</a> approach. Beware that those <code>lua/plugins/</code> plugin files are discovered and sourced by ‘lazy.nvim’ automatically. Just translating each file to use <code>vim.pack.add()</code> will not be enough, make sure to source those files during startup. One approach that I can recommend is to move them from <code>lua/plugins/</code> to <code>plugin/</code> directory (notice the singular case). The <code>plugin/</code> runtime files are sourced automatically during startup by Neovim itself.</p>
+<p>Here is an example:</p>
+<ul>
+<li><p>‘lazy.nvim’ “structured” config:</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb9-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- Bootstrap lazy.nvim</span></span>
+<span id="cb9-2"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">local</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">lazypath</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">fn</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>stdpath<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"data"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">..</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"/lazy/lazy.nvim"</span></span>
+<span id="cb9-3"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- ...</span></span>
+<span id="cb9-4"></span>
+<span id="cb9-5"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- Setup lazy.nvim</span></span>
+<span id="cb9-6"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"lazy"</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="cb9-7">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">spec</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb9-8">    <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">import</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"plugins"</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="cb9-9">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="cb9-10"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>lua/plugins/mini-hues.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-filename="lua/plugins/mini-hues.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb10-1"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb10-2">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-mini/mini.hues'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb10-3">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">lazy</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">false</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb10-4">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">priority</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1000</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb10-5">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">config</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb10-6">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>colorscheme<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'miniwinter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span>
+<span id="cb10-7">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb10-8"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>lua/plugins/mini-completion.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-filename="lua/plugins/mini-completion.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb11-1"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb11-2">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-mini/mini.completion'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb11-3">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">event</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'InsertEnter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb11-4">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">dependencies</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-mini/mini.snippets'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="cb11-5">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">config</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb11-6">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.snippets'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb11-7">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.completion'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb11-8">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb11-9"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>lua/plugins/mini-pairs.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12" data-filename="lua/plugins/mini-pairs.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb12-1"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">return</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb12-2">  <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'nvim-mini/mini.pairs'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb12-3">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">opts</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb12-4">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">modes</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">command</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="cb12-5">  <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="cb12-6"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span></span></code></pre></div></div>
+</div></li>
+<li><p>The translated <code>vim.pack</code> config (notice directory change <code>lua/plugins</code> -&gt; <code>plugin</code> and <code>00-mini-hues.lua</code> to force load it first):</p>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>init.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13" data-filename="init.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb13-1"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-- No special setup if 'plugin/' directory is used</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>plugin/00-mini-hues.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" data-filename="plugin/00-mini-hues.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb14-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.hues'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb14-2"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">cmd</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>colorscheme<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'miniwinter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">)</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>plugin/mini-completion.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" data-filename="plugin/mini-completion.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb15-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">api</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>nvim_create_autocmd<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'InsertEnter'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span></span>
+<span id="cb15-2">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">once</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb15-3">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">callback</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">function</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb15-4">    <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="cb15-5">      <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.snippets'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb15-6">      <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.completion'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb15-7">    <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb15-8">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.snippets'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb15-9">    <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.completion'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">()</span></span>
+<span id="cb15-10">  <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">end</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">,</span></span>
+<span id="cb15-11"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div>
+</div>
+<div class="code-with-filename">
+<div class="code-with-filename-file">
+<pre><strong>plugin/mini-pairs.lua</strong></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16" data-filename="plugin/mini-pairs.lua" style="background: #f1f3f5;"><pre class="sourceCode lua code-with-copy"><code class="sourceCode lua"><span id="cb16-1"><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">vim</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">pack</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>add<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'https://github.com/nvim-mini/mini.pairs'</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span>
+<span id="cb16-2"><span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">require</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">(</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">'mini.pairs'</span><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">).</span>setup<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">({</span></span>
+<span id="cb16-3">  <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">modes</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">command</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="kw" style="color: #003B4F;
+background-color: null;
+font-weight: bold;
+font-style: inherit;">true</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">},</span></span>
+<span id="cb16-4"><span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">})</span></span></code></pre></div></div>
+</div></li>
+</ul>
+<!--  -->
+
+
+</section>
+</section>
+
+ ]]></description>
+  <category>neovim</category>
+  <guid>https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack.html</guid>
+  <pubDate>Fri, 13 Mar 2026 00:00:00 GMT</pubDate>
+</item>
 <item>
   <title>How many Neovim plugins is too many</title>
   <dc:creator>Evgeni Chasnovski</dc:creator>
@@ -574,7 +3254,7 @@ Note
 <li><p>My personal (very biased) recommendation would be this: if you want to optimize startup and runtime performance benchmarked here, switching from many separate plugins to one plugin that provides same/similar functionality is the best course of action here. If that is not possible, then consider doing some simple lazy loading (like after first screen draw or on <code>InsertEnter</code>/<code>CmdlineEnter</code> events).</p>
 <p>It is also completely fine to not care about millisecond level overhead in favor of using plugins and structure that brings you more joy. In the end, the choice is always up to the user.</p></li>
 </ul>
-    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mdg67faaic2w" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" n-show-more="10" header="" n-show-depth="2" n-show-init="10" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l"></bluesky-comments>
+    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mdg67faaic2w" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" n-show-depth="2" header="" n-show-init="10" n-show-more="10" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l"></bluesky-comments>
   
 
 
@@ -2346,567 +5026,6 @@ font-style: inherit;">end</span></span></code></pre></div></div>
   <category>questionflow</category>
   <guid>https://echasnovski.com/blog/2020-05-11-count-bounces-in-table-tennis-world-record.html</guid>
   <pubDate>Mon, 11 May 2020 00:00:00 GMT</pubDate>
-</item>
-<item>
-  <title>Statistical uncertainty with R and pdqr</title>
-  <dc:creator>Evgeni Chasnovski</dc:creator>
-  <link>https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr.html</link>
-  <description><![CDATA[ 
-
-
-
-
-
-<!-- ```{r setup, include = FALSE} -->
-<!-- # Helper data -->
-<!-- n_aut_cars <- sum(mtcars$am == 0) -->
-<!-- n_man_cars <- sum(mtcars$am == 1) -->
-<!-- ``` -->
-<section id="prologue" class="level1">
-<h1>Prologue</h1>
-<p>I am glad to announce that my latest, long written R package <a href="https://echasnovski.github.io/pdqr/">‘pdqr’</a> is <a href="https://CRAN.R-project.org/package=pdqr">accepted to CRAN</a>. It provides tools for creating, transforming and summarizing custom random variables with distribution functions (as base R ‘p*()’, ‘d*()’, ‘q*()’, and ‘r*()’ functions). You can read a brief overview in <a href="http://www.questionflow.org/2019/08/01/announcing-pdqr/#package-overview">one of my previous posts</a>.</p>
-<p>We will need the following setup:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">library</span>(pdqr)</span>
-<span id="cb1-2"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">library</span>(magrittr)</span>
-<span id="cb1-3"></span>
-<span id="cb1-4"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># For the sake of reproducibility</span></span>
-<span id="cb1-5"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">set.seed</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">20191111</span>)</span></code></pre></div></div>
-</section>
-<section id="statistical-uncertainty" class="level1">
-<h1>Statistical uncertainty</h1>
-<section id="general-description" class="level2">
-<h2 class="anchored" data-anchor-id="general-description">General description</h2>
-<p>Statistical estimation usually has the following setup. There is a sample (<em>observed, usually randomly chosen, set</em> of values of measurable quantities) from some general population (<em>whole set</em> of values of the same measurable quantities). <em>We need to make conclusions about the general population based on a sample</em>. This is done by computing summary values (called <strong>statistics</strong>) of a sample, and making reasonable assumptions (with process usually called <strong>inference</strong>) about how these values are close to values that <em>potentially can be computed based on whole general population</em>. Thus, summary value based on a sample (<strong>sample statistic</strong>) is an <em>estimation</em> of potential summary value based on a general population (true value).</p>
-<p>How can we make inference about quality of this estimation? This question itself describes <strong>statistical uncertainty</strong> and can be unfolded into a deep philosophical question about probability, nature, and life in general. Basically, the answer depends on assumptions about the relation between sample, general population, and statistic.</p>
-<p>For me, the most beautiful inferential approach is <strong><a href="https://en.wikipedia.org/wiki/Bootstrapping_(statistics)">bootstrap</a></strong>. It has the following key assumption: <em>process of producing samples from general population can be simulated by doing random sampling with replacement from present sample</em>. In other words, we agree (and practice often agrees with us) that random sampling with replacement from current sample (sometimes called <em>bootstrap sampling</em>) has a “close enough” behavior to the “true nature” of how initial sample was created. Numerical estimation of “how close” is also an interesting problem, but it is a more complicated topic.</p>
-</section>
-<section id="computation-with-pdqr" class="level2">
-<h2 class="anchored" data-anchor-id="computation-with-pdqr">Computation with pdqr</h2>
-<p>Natural way of computing bootstrap quantities is straightforward: produce <img src="https://latex.codecogs.com/png.latex?B"> random bootstrap samples, for each one compute value of statistic under question, and summarize <em>sample of statistic values</em> with numerical quantity (usually with some center and spread values).</p>
-<p>There are many ways of performing bootstrap in R, like <a href="https://rdrr.io/cran/boot/man/boot.html">boot::boot()</a>, <a href="https://tidymodels.github.io/rsample/reference/bootstraps.html">rsample::bootstraps()</a>, and others. In turn, ‘pdqr’ offers its own way of describing and doing bootstrap inference for one-dimensional numeric sample(s):</p>
-<ul>
-<li><strong>Create</strong> a random variable (in the form of pdqr-function with <code>new_*()</code> family) based on initial sample. This random variable already describes a general population with “bootstrap assumption”: it will produce values based on initial sample. <a href="https://echasnovski.github.io/pdqr/reference/meta.html#pdqr-type">Type</a> of this variable determines the type of bootstrap:
-<ul>
-<li>Type <code>"discrete"</code> describes ordinary bootstrap. Only values from initial sample can be produced.</li>
-<li>Type <code>"continuous"</code> describes <a href="https://en.wikipedia.org/wiki/Bootstrapping_(statistics)#Smooth_bootstrap">smooth bootstrap</a>. Initial sample is smoothed by doing kernel density estimation with <a href="https://rdrr.io/r/stats/density.html">density()</a> function and random variable produces values from distribution with that density.</li>
-</ul></li>
-<li><strong>Transform</strong> created random variable into one that produces statistic values obtained with bootstrap. Sometimes this can be done with basic mathematical operations like <code>+</code>, <code>min</code>, etc. But usually this is done with <a href="https://echasnovski.github.io/pdqr/reference/form_estimate.html">form_estimate()</a> function: it creates many (10000 by default) bootstrap samples, for each computes statistic value, and creates its own random variable in the form of pdqr-function (<a href="https://echasnovski.github.io/pdqr/reference/meta.html#pdqr-class">class</a> and type are preserved from supplied random variable, but this can be adjusted). It needs at least three arguments:
-<ul>
-<li><code>f</code>: pdqr-function representing random variable. In described setup it is created as a result of “Create” step.</li>
-<li><code>stat</code>: statistic function that accepts numeric vector of size <code>sample_size</code> and returns single numeric or logical output.</li>
-<li><code>sample_size</code>: Size of a sample that each bootstrap draw should produce. In described setup it <em>should be equal</em> to number of elements in initial sample.</li>
-</ul></li>
-<li><strong>Summarize</strong> distribution of statistic. Usually this is point measure of center or spread, or interval.</li>
-</ul>
-<section id="example-1-single-numerical-estimate" class="level3">
-<h3 class="anchored" data-anchor-id="example-1-single-numerical-estimate">Example 1: single numerical estimate</h3>
-<p>Mean value of ‘mpg’ variable in <code>mtcars</code> dataset is 20.090625. However, having in mind statistical uncertainty, we can ask how precise is this estimation? This can, and should, be reformulated in the following question: <strong>if we repeat sampling sets of 32 cars from general population of all cars, how close their ‘mpg’ sample means will be to each other?</strong> This can be answered by computing bootstrap distribution of sample means (pipe <a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a> function from ‘magrittr’ package is used to simplify notation):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Using ordinary bootstrap</span></span>
-<span id="cb2-2">d_mpg_dis_mean <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>mpg <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb2-3">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"discrete"</span>) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb2-4">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_estimate</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">nrow</span>(mtcars))</span>
-<span id="cb2-5"></span>
-<span id="cb2-6">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Spread of this bootstrap distribution describes the precision of estimation:</span></span>
-<span id="cb2-7">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># bigger values indicate lower precision</span></span>
-<span id="cb2-8"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">summ_sd</span>(d_mpg_dis_mean)</span>
-<span id="cb2-9"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 1.04067</span></span>
-<span id="cb2-10"></span>
-<span id="cb2-11">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># This discrete distribution has the following d-function</span></span>
-<span id="cb2-12"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">plot</span>(</span>
-<span id="cb2-13">  d_mpg_dis_mean,</span>
-<span id="cb2-14">  <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"Ordinary bootstrap distribution of 'mpg' sample mean"</span></span>
-<span id="cb2-15">)</span></code></pre></div></div>
-<p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_discrete-1.png" class="img-fluid"></p>
-<p>If modeling assumption about continuous nature of ‘mpg’ variable is reasonable (which it seems so), you can use “smooth bootstrap” by changing type of initial pdqr-function:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Using smooth bootstrap with `type = "continuous"`</span></span>
-<span id="cb3-2">d_mpg_con_mean <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>mpg <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb3-3">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"continuous"</span>) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb3-4">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_estimate</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">nrow</span>(mtcars))</span>
-<span id="cb3-5"></span>
-<span id="cb3-6">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Spread is higher in this case because kernel density estimation with</span></span>
-<span id="cb3-7">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># `density()` function extends support during creation of pdqr-function on the</span></span>
-<span id="cb3-8">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># bootstrap step</span></span>
-<span id="cb3-9"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">summ_sd</span>(d_mpg_con_mean)</span>
-<span id="cb3-10"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 1.153957</span></span>
-<span id="cb3-11"></span>
-<span id="cb3-12"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">plot</span>(</span>
-<span id="cb3-13">  d_mpg_con_mean,</span>
-<span id="cb3-14">  <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"Smooth bootstrap distribution of 'mpg' sample mean"</span></span>
-<span id="cb3-15">)</span></code></pre></div></div>
-<p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_continuous-1.png" class="img-fluid"></p>
-<p>One can also do ordinary bootstrap but represent bootstrap distribution of sample mean with continuous random variable:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Using ordinary bootstrap, but treating sample mean as continuous</span></span>
-<span id="cb4-2">d_mpg_con_mean_2 <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>mpg <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb4-3">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"discrete"</span>) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb4-4">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_estimate</span>(</span>
-<span id="cb4-5">    <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">nrow</span>(mtcars),</span>
-<span id="cb4-6">    <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Create continuous pdqr-function from bootstrap sample means</span></span>
-<span id="cb4-7">    <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">args_new =</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">list</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"continuous"</span>)</span>
-<span id="cb4-8">  )</span>
-<span id="cb4-9"></span>
-<span id="cb4-10"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">summ_sd</span>(d_mpg_con_mean_2)</span>
-<span id="cb4-11"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 1.063524</span></span>
-<span id="cb4-12"></span>
-<span id="cb4-13"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">plot</span>(</span>
-<span id="cb4-14">  d_mpg_con_mean_2,</span>
-<span id="cb4-15">  <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">main =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"Ordinary bootstrap distribution of 'mpg' continuous sample mean"</span></span>
-<span id="cb4-16">)</span></code></pre></div></div>
-<p><img src="https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr/example-1_both-1.png" class="img-fluid"></p>
-<p>In this case, sample mean has standard deviation from 1.04067 to 1.1539572 (depends on assumptions about data generating process).</p>
-</section>
-<section id="example-2-single-logical-estimate" class="level3">
-<h3 class="anchored" data-anchor-id="example-2-single-logical-estimate">Example 2: single logical estimate</h3>
-<p>Share of 4-cylinder cars in <code>mtcars</code> is equal to 0.34375. However, it might happen that we don’t care about actual value, but only if it is bigger 0.3 or not. In present data it is bigger, but how sure we can be about that? In other words: <strong>if we repeat sampling sets of 32 cars from general population of all cars, which part of it will have share of 4-cylinder cars bigger than 0.3?</strong>. Here is the way of computing that with ‘pdqr’:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># If statistic returns logical value (indicating presence of some feature in</span></span>
-<span id="cb5-2"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># sample), output estimate pdqr-function is "boolean": "discrete" type function</span></span>
-<span id="cb5-3"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># with elements being exactly 0 (indicating `FALSE`) and 1 (indicating `TRUE`).</span></span>
-<span id="cb5-4">d_cyl_lgl <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>cyl <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb5-5">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"discrete"</span>) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb5-6">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_estimate</span>(</span>
-<span id="cb5-7">    <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">stat =</span> <span class="cf" style="color: #003B4F;
-background-color: null;
-font-weight: bold;
-font-style: inherit;">function</span>(x) {<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">mean</span>(x <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">4</span>) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">&gt;</span> <span class="fl" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0.3</span>},</span>
-<span id="cb5-8">    <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">nrow</span>(mtcars)</span>
-<span id="cb5-9">  )</span>
-<span id="cb5-10"></span>
-<span id="cb5-11">d_cyl_lgl</span>
-<span id="cb5-12"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## Probability mass function of discrete type</span></span>
-<span id="cb5-13"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## Support: [0, 1] (2 elements, probability of 1: 0.7113)</span></span>
-<span id="cb5-14"></span>
-<span id="cb5-15">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># To extract certain probability from boolean pdqr-function, use</span></span>
-<span id="cb5-16">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># `summ_prob_*()` functions</span></span>
-<span id="cb5-17"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">summ_prob_true</span>(d_cyl_lgl)</span>
-<span id="cb5-18"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 0.7113</span></span>
-<span id="cb5-19"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">summ_prob_false</span>(d_cyl_lgl)</span>
-<span id="cb5-20"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 0.2887</span></span></code></pre></div></div>
-<p>In this case, estimated probability that share of 4-cylinder cars in general population is more than 0.3 is 0.7113.</p>
-</section>
-<section id="example-3-comparison-of-estimates" class="level3">
-<h3 class="anchored" data-anchor-id="example-3-comparison-of-estimates">Example 3: comparison of estimates</h3>
-<p>In <code>mtcars</code> there are 19 cars with automatic transmission (‘am’ variable is 0) and 13 with manual (‘am’ variable is 1). We might be concerned with the following question: <strong>are cars with automatic transmission heavier than cars with manual transmission?</strong> This is an example of question where reformulating is very crucial, because it leads to completely different methodologies. Basically, it is all about dealing with statistical uncertainty and how to measure that one numerical set is bigger than the other.</p>
-<p>First, rather verbose, way of expanding this question is this one: <strong>if we randomly choose a car with automatic transmission (uniformly on set of all cars with automatic transmission) and a car with manual (uniformly on set of all cars with manual transmission), what is the probability that weight of the first one is bigger than the second one?</strong>. With ‘pdqr’ this can be computed straightforwardly by comparing two random variables (which is implemented exactly like the question above; read more <a href="https://echasnovski.github.io/pdqr/reference/methods-group-generic.html#ops">here</a>):</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Seems reasonable to treat weight as continuous random variable. Note that this</span></span>
-<span id="cb6-2"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># means use of kernel density estimation, which can lead to random variable that</span></span>
-<span id="cb6-3"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># returns negative values. As weight can be only positive, it is a good idea to</span></span>
-<span id="cb6-4"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># ensure that. Package 'pdqr' has `form_resupport()` function for that.</span></span>
-<span id="cb6-5">d_wt_am0 <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>wt[mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>am <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0</span>] <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span></span>
-<span id="cb6-6">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"continuous"</span>) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb6-7">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Ensure that returned values are only positive</span></span>
-<span id="cb6-8">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_resupport</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0</span>, <span class="cn" style="color: #8f5902;
-background-color: null;
-font-style: inherit;">NA</span>))</span>
-<span id="cb6-9">d_wt_am1 <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>wt[mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>am <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>] <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span></span>
-<span id="cb6-10">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">new_d</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">type =</span> <span class="st" style="color: #20794D;
-background-color: null;
-font-style: inherit;">"continuous"</span>) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb6-11">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_resupport</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0</span>, <span class="cn" style="color: #8f5902;
-background-color: null;
-font-style: inherit;">NA</span>))</span>
-<span id="cb6-12"></span>
-<span id="cb6-13"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Comparing two pdqr-functions with `&gt;=` results into boolean pdqr-function</span></span>
-<span id="cb6-14"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">summ_prob_true</span>(d_wt_am0 <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">&gt;=</span> d_wt_am1)</span>
-<span id="cb6-15"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 0.9209063</span></span></code></pre></div></div>
-<p>So in this case the answer is that probability of “automatic” cars being heavier than “manual” ones is around 0.921.</p>
-<p>Second way of understanding question about comparing is the following: <strong>is average weight of “automatic” cars bigger than of “manual”?</strong>. This type of questions are more widespread in statistical practice. Having to deal with statistical uncertainty, this should be reformulated: <strong>if we repeat sampling (in parallel pairs) sets of 19 “automatic” cars and of 13 “manual” cars, which part of the set pairs will have mean weight of “automatic” cars bigger?</strong> This question implies creating bootstrap distribution of sample means for “automatic” and “manual” cars with the following comparing:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" style="background: #f1f3f5;"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1">d_wt_am0_mean <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> d_wt_am0 <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb7-2">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_estimate</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">sum</span>(mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>am <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0</span>)) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb7-3">  <span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Ensure "positiveness" of random variable</span></span>
-<span id="cb7-4">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_resupport</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0</span>, <span class="cn" style="color: #8f5902;
-background-color: null;
-font-style: inherit;">NA</span>))</span>
-<span id="cb7-5">d_wt_am1_mean <span class="ot" style="color: #003B4F;
-background-color: null;
-font-style: inherit;">&lt;-</span> d_wt_am1 <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb7-6">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_estimate</span>(<span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">stat =</span> mean, <span class="at" style="color: #657422;
-background-color: null;
-font-style: inherit;">sample_size =</span> <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">sum</span>(mtcars<span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">$</span>am <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">==</span> <span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">1</span>)) <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">%&gt;%</span> </span>
-<span id="cb7-7">  <span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">form_resupport</span>(<span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">c</span>(<span class="dv" style="color: #AD0000;
-background-color: null;
-font-style: inherit;">0</span>, <span class="cn" style="color: #8f5902;
-background-color: null;
-font-style: inherit;">NA</span>))</span>
-<span id="cb7-8"></span>
-<span id="cb7-9"><span class="co" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;"># Comparing two random variables representing sample means</span></span>
-<span id="cb7-10"><span class="fu" style="color: #4758AB;
-background-color: null;
-font-style: inherit;">summ_prob_true</span>(d_wt_am0_mean <span class="sc" style="color: #5E5E5E;
-background-color: null;
-font-style: inherit;">&gt;=</span> d_wt_am1_mean)</span>
-<span id="cb7-11"><span class="do" style="color: #5E5E5E;
-background-color: null;
-font-style: italic;">## [1] 1</span></span></code></pre></div></div>
-<p>So in this case the answer is that probability of “automatic” cars being heavier than “manual” ones is 1.</p>
-<p>Computed results can have decisively different outcomes. If researcher sets a standard 0.95 rule, first variant would imply that conclusion ‘“automatic” cars are heavier than “manual”’ isn’t significant, while the second would imply otherwise.</p>
-</section>
-</section>
-</section>
-<section id="epilogue" class="level1">
-<h1>Epilogue</h1>
-<ul>
-<li>Basic knowledge about statistical uncertainty is crucial to understand the process of statistical inference.</li>
-<li>One of the most popular methodologies for doing statistical inference is bootstrap. There are at least two kinds of it: ordinary and smooth.</li>
-<li>Package ‘pdqr’ offers extensive functionality for describing and estimating statistical uncertainty. Core functions here are <a href="https://echasnovski.github.io/pdqr/reference/new-pdqr.html"><code>new_*()</code> family</a>, <a href="https://echasnovski.github.io/pdqr/reference/form_estimate.html"><code>form_estimate()</code></a>, and <a href="https://echasnovski.github.io/pdqr/reference/methods-group-generic.html#ops">comparison operators</a>.</li>
-</ul>
-<div class="callout callout-style-default callout-note callout-titled" title="sessionInfo()">
-<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>sessionInfo()
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-1" class="callout-1-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
-<pre><code>## R version 3.6.1 (2019-07-05)
-## Platform: x86_64-pc-linux-gnu (64-bit)
-## Running under: Ubuntu 18.04.3 LTS
-## 
-## Matrix products: default
-## BLAS:   /usr/lib/x86_64-linux-gnu/openblas/libblas.so.3
-## LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so
-## 
-## locale:
-##  [1] LC_CTYPE=ru_UA.UTF-8       LC_NUMERIC=C              
-##  [3] LC_TIME=ru_UA.UTF-8        LC_COLLATE=ru_UA.UTF-8    
-##  [5] LC_MONETARY=ru_UA.UTF-8    LC_MESSAGES=ru_UA.UTF-8   
-##  [7] LC_PAPER=ru_UA.UTF-8       LC_NAME=C                 
-##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
-## [11] LC_MEASUREMENT=ru_UA.UTF-8 LC_IDENTIFICATION=C       
-## 
-## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
-## 
-## other attached packages:
-## [1] magrittr_1.5 pdqr_0.2.0  
-## 
-## loaded via a namespace (and not attached):
-##  [1] Rcpp_1.0.2      bookdown_0.13   crayon_1.3.4    digest_0.6.21  
-##  [5] evaluate_0.14   blogdown_0.15   pillar_1.4.2    rlang_0.4.0    
-##  [9] stringi_1.4.3   rmarkdown_1.15  tools_3.6.1     stringr_1.4.0  
-## [13] xfun_0.9        yaml_2.2.0      compiler_3.6.1  htmltools_0.3.6
-## [17] knitr_1.25</code></pre>
-</div>
-</div>
-</div>
-
-
-</section>
-
- ]]></description>
-  <category>rstats</category>
-  <category>pdqr</category>
-  <category>questionflow</category>
-  <guid>https://echasnovski.com/blog/2019-11-11-statistical-uncertainty-with-pdqr.html</guid>
-  <pubDate>Mon, 11 Nov 2019 00:00:00 GMT</pubDate>
 </item>
 </channel>
 </rss>
