@@ -1100,6 +1100,15 @@ Note
 <li><p>If you use <a href="https://www.lazyvim.org/">LazyVim</a>, then it is probably a better idea to start from a clean config and build from there. As LazyVim is heavily based on using ‘lazy.nvim’ as its plugin manager.</p></li>
 </ul>
 <hr>
+<p>As for a startup speed, when comparing simple configs of <code>vim.pack</code> and ‘lazy.nvim’, the latter will most certainly have faster results. Primarily because it is built around the concept of “lazy load and fast custom load whenever you can”. <em>How much</em> faster - depends on the number of plugins.</p>
+<p>However, there are ways of making config with <code>vim.pack</code> have faster startup:</p>
+<ul>
+<li><p>The most speedup usually comes from <a href="#lazy-loading">lazy loading</a>, at the cost of extra a more complex config. Choosing the right balance between the two is up to you.</p></li>
+<li><p>For not lazy loaded parts, not trivial amount of improvement can come from adding <a href="https://neovim.io/doc/user/helptag.html?tag=vim.loader.enable()"><code>vim.loader.enable()</code></a> call as the <em>first line in ‘init.lua’</em>. It implements some dark “fast load” magic <a href="https://github.com/neovim/neovim/pull/22668">that was blessed by Folke himself</a>. After a few restarts it usually improves startup, especially if there are a lot of <code>require()</code> calls.</p>
+<p>How big the result will be is hard to tell, as it depends on variety of things. In real world configs without much lazy loading just this one line can speed up as high as ~30% (I’ve seen examples of 137ms-&gt;99ms and 430ms-&gt;315ms improvement), maybe more.</p></li>
+</ul>
+<p>From experience, implementing both of these approaches can result in a startup at least on par with ‘lazy.nvim’, if not better. My personal choice of startup optimization is to use only a handful of plugins (less things to load) together with a very simple lazy loading (<a href="https://nvim-mini.org/MiniMax/configs/nvim-0.12/">MiniMax style</a>); no <code>vim.loader.enable()</code> (as startup time is small enough: ~38ms compared to ~34ms with it).</p>
+<hr>
 <p>The most recommended way of setting up ‘lazy.nvim’ plugins seems to be a so called <a href="https://lazy.folke.io/usage/structuring">“structuring plugins”</a> approach. Beware that those <code>lua/plugins/</code> plugin files are discovered and sourced by ‘lazy.nvim’ automatically. Just translating each file to use <code>vim.pack.add()</code> will not be enough, make sure to source those files during startup. One approach that I can recommend is to move them from <code>lua/plugins/</code> to <code>plugin/</code> directory (notice the singular case). The <code>plugin/</code> <a href="#runtime-files">runtime files</a> are sourced automatically during startup by Neovim itself.</p>
 <p>Here is an example:</p>
 <ul>
@@ -1197,7 +1206,7 @@ Note
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="op">})</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div></li>
 </ul>
-    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mgxaiqbrts2y" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" n-show-more="10" n-show-init="10" n-show-depth="2" header="" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l"></bluesky-comments>
+    <bluesky-comments post="at://did:plc:sovgyj2emvmz4dp4naq7wy3l/app.bsky.feed.post/3mgxaiqbrts2y" filter-config="{&quot;filterEmptyReplies&quot;:true,&quot;mutePatterns&quot;:[],&quot;muteUsers&quot;:[]}" n-show-depth="2" header="" n-show-more="10" n-show-init="10" profile="did:plc:sovgyj2emvmz4dp4naq7wy3l"></bluesky-comments>
   
 
 
