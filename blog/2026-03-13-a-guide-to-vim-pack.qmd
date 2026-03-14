@@ -641,6 +641,20 @@ Couple of pointers:
 
 ---
 
+As for a startup speed, when comparing simple configs of `vim.pack` and 'lazy.nvim', the latter will most certainly have faster results. Primarily because it is built around the concept of "lazy load and fast custom load whenever you can". *How much* faster - depends on the number of plugins.
+
+However, there are ways of making config with `vim.pack` have faster startup:
+
+- The most speedup usually comes from [lazy loading](#lazy-loading), at the cost of extra a more complex config. Choosing the right balance between the two is up to you.
+
+- For not lazy loaded parts, not trivial amount of improvement can come from adding [`vim.loader.enable()`](https://neovim.io/doc/user/helptag.html?tag=vim.loader.enable()) call as the *first line in 'init.lua'*. It implements some dark "fast load" magic [that was blessed by Folke himself](https://github.com/neovim/neovim/pull/22668). After a few restarts it usually improves startup, especially if there are a lot of `require()` calls.
+
+    How big the result will be is hard to tell, as it depends on variety of things. In real world configs without much lazy loading just this one line can speed up as high as \~30% (I've seen examples of 137ms->99ms and 430ms->315ms improvement), maybe more.
+
+From experience, implementing both of these approaches can result in a startup at least on par with 'lazy.nvim', if not better. My personal choice of startup optimization is to use only a handful of plugins (less things to load) together with a very simple lazy loading ([MiniMax style](https://nvim-mini.org/MiniMax/configs/nvim-0.12/)); no `vim.loader.enable()` (as startup time is small enough: \~38ms compared to ~34ms with it).
+
+---
+
 The most recommended way of setting up 'lazy.nvim' plugins seems to be a so called ["structuring plugins"](https://lazy.folke.io/usage/structuring) approach. Beware that those `lua/plugins/` plugin files are discovered and sourced by 'lazy.nvim' automatically. Just translating each file to use `vim.pack.add()` will not be enough, make sure to source those files during startup. One approach that I can recommend is to move them from `lua/plugins/` to `plugin/` directory (notice the singular case). The `plugin/` [runtime files](#runtime-files) are sourced automatically during startup by Neovim itself.
 
 Here is an example:
