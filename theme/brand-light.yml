@@ -16,12 +16,12 @@ color:
     grey:    "#2E2E2E" # OKLch: 20  0
     comment: "#5E5E5E" # OKLch: 40 0
     black:   "#000409" # OKLch:  3  2 240
-    red:     "#700400" # OKLch: 20 16  30
-    green:   "#01642B" # OKLch: 20 16 150
-    yellow:  "#696900" # OKLch: 20 16 110
-    blue:    "#005A87" # OKLch: 20 16 240
-    magenta: "#5B0058" # OKLch: 20 16 330
-    cyan:    "#008283" # OKLch: 20 16 195
+    red:     "#870600" # OKLch: 30 16  30
+    green:   "#1d7300" # OKLch: 30 16 140
+    yellow:  "#626200" # OKLch: 30 16 110
+    blue:    "#006699" # OKLch: 30 16 240
+    magenta: "#780d60" # OKLch: 30 16 340
+    cyan:    "#008064" # OKLch: 30 16 170
     white:   "#F7F9E2" # OKLch: 97  3 110
 
   foreground: fg

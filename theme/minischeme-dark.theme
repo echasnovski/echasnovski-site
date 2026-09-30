@@ -2,9 +2,9 @@
   "metadata": {
     "copyright": ["2025 Evgeni Chasnovski <evgeni.chasnovski@gmail.com>"],
     "license": "MIT",
-    "name": "Seabed Dark"
+    "name": "Minischeme Dark"
   },
-  "background-color": "#15242F",
+  "background-color": "#081823",
   "text-styles": {
     "Normal": {
       "text-color": "#D4D4D4",
@@ -20,8 +20,8 @@
       "bold": true
     },
     "Function": {
-      "text-color": "#A5DBFF",
-      "selected-text-color": "#A5DBFF"
+      "text-color": "#A1DDFF",
+      "selected-text-color": "#A1DDFF"
     },
     "Variable": {
       "text-color": "#D4D4D4",
@@ -33,8 +33,8 @@
       "bold": true
     },
     "Operator": {
-      "text-color": "#D7DA9C",
-      "selected-text-color": "#D7DA9C"
+      "text-color": "#E0D699",
+      "selected-text-color": "#E0D699"
     },
     "BuiltIn": {
       "text-color": "#94E6E5",
@@ -46,52 +46,52 @@
       "bold": true
     },
     "Preprocessor": {
-      "text-color": "#A5DBFF",
-      "selected-text-color": "#A5DBFF"
+      "text-color": "#A1DDFF",
+      "selected-text-color": "#A1DDFF"
     },
     "Attribute": {
-      "text-color": "#A5DBFF",
-      "selected-text-color": "#A5DBFF"
+      "text-color": "#A1DDFF",
+      "selected-text-color": "#A1DDFF"
     },
     "Char": {
-      "text-color": "#AFE4B9",
-      "selected-text-color": "#AFE4B9"
+      "text-color": "#B4E3B5",
+      "selected-text-color": "#B4E3B5"
     },
     "SpecialChar": {
-      "text-color": "#D7DA9C",
-      "selected-text-color": "#D7DA9C"
+      "text-color": "#E0D699",
+      "selected-text-color": "#E0D699"
     },
     "String": {
-      "text-color": "#AFE4B9",
-      "selected-text-color": "#AFE4B9"
+      "text-color": "#B4E3B5",
+      "selected-text-color": "#B4E3B5"
     },
     "VerbatimString": {
-      "text-color": "#AFE4B9",
-      "selected-text-color": "#AFE4B9"
+      "text-color": "#B4E3B5",
+      "selected-text-color": "#B4E3B5"
     },
     "SpecialString": {
-      "text-color": "#AFE4B9",
-      "selected-text-color": "#AFE4B9"
+      "text-color": "#B4E3B5",
+      "selected-text-color": "#B4E3B5"
     },
     "Import": {
-      "text-color": "#AFE4B9",
-      "selected-text-color": "#AFE4B9"
+      "text-color": "#B4E3B5",
+      "selected-text-color": "#B4E3B5"
     },
     "DataType": {
-      "text-color": "#F4C2EE",
-      "selected-text-color": "#F4C2EE"
+      "text-color": "#F0C3F2",
+      "selected-text-color": "#F0C3F2"
     },
     "DecVal": {
-      "text-color": "#F4C2EE",
-      "selected-text-color": "#F4C2EE"
+      "text-color": "#F0C3F2",
+      "selected-text-color": "#F0C3F2"
     },
     "BaseN": {
-      "text-color": "#F4C2EE",
-      "selected-text-color": "#F4C2EE"
+      "text-color": "#F0C3F2",
+      "selected-text-color": "#F0C3F2"
     },
     "Float": {
-      "text-color": "#F4C2EE",
-      "selected-text-color": "#F4C2EE"
+      "text-color": "#F0C3F2",
+      "selected-text-color": "#F0C3F2"
     },
     "Constant": {
       "text-color": "#94E6E5",
@@ -107,8 +107,8 @@
       "selected-text-color": "#919191"
     },
     "Annotation": {
-      "text-color": "#FFC2B6",
-      "selected-text-color": "#FFC2B6"
+      "text-color": "#FFC0C4",
+      "selected-text-color": "#FFC0C4"
     },
     "CommentVar": {
       "text-color": "#94E6E5",
@@ -119,21 +119,21 @@
       "selected-text-color": "#919191"
     },
     "Information": {
-      "text-color": "#A5DBFF",
-      "selected-text-color": "#A5DBFF"
+      "text-color": "#A1DDFF",
+      "selected-text-color": "#A1DDFF"
     },
     "Warning": {
-      "text-color": "#D7DA9C",
-      "selected-text-color": "#D7DA9C"
+      "text-color": "#E0D699",
+      "selected-text-color": "#E0D699"
     },
     "Alert": {
-      "text-color": "#D7DA9C",
-      "selected-text-color": "#D7DA9C",
+      "text-color": "#E0D699",
+      "selected-text-color": "#E0D699",
       "bold": true
     },
     "Error": {
-      "text-color": "#FFC2B6",
-      "selected-text-color": "#FFC2B6",
+      "text-color": "#FFC0C4",
+      "selected-text-color": "#FFC0C4",
       "underline": true
     },
     "Others": {
@@ -144,8 +144,8 @@
   "custom-styles": {
     "Diff": {
       "Removed line": {
-        "text-color": "#FFC2B6",
-        "selected-text-color": "#FFC2B6"
+        "text-color": "#FFC0C4",
+        "selected-text-color": "#FFC0C4"
       },
       "Added line": {
         "text-color": "#AFE4B9",
