@@ -1,34 +1,34 @@
 /* quarto syntax highlight colors */
 :root {
   --quarto-hl-kw-color: #D4D4D4;
-  --quarto-hl-fu-color: #A5DBFF;
+  --quarto-hl-fu-color: #A1DDFF;
   --quarto-hl-va-color: #D4D4D4;
   --quarto-hl-cf-color: #D4D4D4;
-  --quarto-hl-op-color: #D7DA9C;
+  --quarto-hl-op-color: #E0D699;
   --quarto-hl-bu-color: #94E6E5;
   --quarto-hl-ex-color: #94E6E5;
-  --quarto-hl-pp-color: #A5DBFF;
-  --quarto-hl-at-color: #A5DBFF;
-  --quarto-hl-ch-color: #AFE4B9;
-  --quarto-hl-sc-color: #D7DA9C;
-  --quarto-hl-st-color: #AFE4B9;
-  --quarto-hl-vs-color: #AFE4B9;
-  --quarto-hl-ss-color: #AFE4B9;
-  --quarto-hl-im-color: #AFE4B9;
-  --quarto-hl-dt-color: #F4C2EE;
-  --quarto-hl-dv-color: #F4C2EE;
-  --quarto-hl-bn-color: #F4C2EE;
-  --quarto-hl-fl-color: #F4C2EE;
+  --quarto-hl-pp-color: #A1DDFF;
+  --quarto-hl-at-color: #A1DDFF;
+  --quarto-hl-ch-color: #B4E3B5;
+  --quarto-hl-sc-color: #E0D699;
+  --quarto-hl-st-color: #B4E3B5;
+  --quarto-hl-vs-color: #B4E3B5;
+  --quarto-hl-ss-color: #B4E3B5;
+  --quarto-hl-im-color: #B4E3B5;
+  --quarto-hl-dt-color: #F0C3F2;
+  --quarto-hl-dv-color: #F0C3F2;
+  --quarto-hl-bn-color: #F0C3F2;
+  --quarto-hl-fl-color: #F0C3F2;
   --quarto-hl-cn-color: #94E6E5;
   --quarto-hl-co-color: #919191;
   --quarto-hl-do-color: #919191;
-  --quarto-hl-an-color: #FFC2B6;
+  --quarto-hl-an-color: #FFC0C4;
   --quarto-hl-cv-color: #94E6E5;
   --quarto-hl-re-color: #919191;
-  --quarto-hl-in-color: #A5DBFF;
-  --quarto-hl-wa-color: #D7DA9C;
-  --quarto-hl-al-color: #D7DA9C;
-  --quarto-hl-er-color: #FFC2B6;
+  --quarto-hl-in-color: #A1DDFF;
+  --quarto-hl-wa-color: #E0D699;
+  --quarto-hl-al-color: #E0D699;
+  --quarto-hl-er-color: #FFC0C4;
 }
 
 /* other quarto variables */
@@ -61,23 +61,23 @@ code span {
 
 /* Alert */
 code span.al {
-  color: #D7DA9C;
+  color: #E0D699;
   font-weight: bold;
 }
 
 /* Annotation */
 code span.an {
-  color: #FFC2B6;
+  color: #FFC0C4;
 }
 
 /* Attribute */
 code span.at {
-  color: #A5DBFF;
+  color: #A1DDFF;
 }
 
 /* BaseN */
 code span.bn {
-  color: #F4C2EE;
+  color: #F0C3F2;
 }
 
 /* BuiltIn */
@@ -93,7 +93,7 @@ code span.cf {
 
 /* Char */
 code span.ch {
-  color: #AFE4B9;
+  color: #B4E3B5;
 }
 
 /* Constant */
@@ -119,17 +119,17 @@ code span.do {
 
 /* DataType */
 code span.dt {
-  color: #F4C2EE;
+  color: #F0C3F2;
 }
 
 /* DecVal */
 code span.dv {
-  color: #F4C2EE;
+  color: #F0C3F2;
 }
 
 /* Error */
 code span.er {
-  color: #FFC2B6;
+  color: #FFC0C4;
   text-decoration: underline;
 }
 
@@ -141,22 +141,22 @@ code span.ex {
 
 /* Float */
 code span.fl {
-  color: #F4C2EE;
+  color: #F0C3F2;
 }
 
 /* Function */
 code span.fu {
-  color: #A5DBFF;
+  color: #A1DDFF;
 }
 
 /* Import */
 code span.im {
-  color: #AFE4B9;
+  color: #B4E3B5;
 }
 
 /* Information */
 code span.in {
-  color: #A5DBFF;
+  color: #A1DDFF;
 }
 
 /* Keyword */
@@ -167,12 +167,12 @@ code span.kw {
 
 /* Operator */
 code span.op {
-  color: #D7DA9C;
+  color: #E0D699;
 }
 
 /* Preprocessor */
 code span.pp {
-  color: #A5DBFF;
+  color: #A1DDFF;
 }
 
 /* RegionMarker */
@@ -182,17 +182,17 @@ code span.re {
 
 /* SpecialChar */
 code span.sc {
-  color: #D7DA9C;
+  color: #E0D699;
 }
 
 /* SpecialString */
 code span.ss {
-  color: #AFE4B9;
+  color: #B4E3B5;
 }
 
 /* String */
 code span.st {
-  color: #AFE4B9;
+  color: #B4E3B5;
 }
 
 /* Variable */
@@ -202,16 +202,16 @@ code span.va {
 
 /* VerbatimString */
 code span.vs {
-  color: #AFE4B9;
+  color: #B4E3B5;
 }
 
 /* Warning */
 code span.wa {
-  color: #D7DA9C;
+  color: #E0D699;
 }
 
 .prevent-inlining {
   content: "</";
 }
 
-/*# sourceMappingURL=86d567419b3b55e08749d5a535ce5ac2.css.map */
+/*# sourceMappingURL=7a2c030b33bb4466f08ee8f15cba6252.css.map */
