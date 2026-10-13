@@ -8,21 +8,21 @@ meta:
 
 color:
   palette:
-    bg:      "#081823" # OKLch: 10 3 240
-    bg-2:    "#15242F" # OKLch: 15 3 240
-    fg:      "#D5D7C0" # OKLch: 85 3 110
-    fg-2:    "#E3E5CE" # OKLch: 90 3 110
+    bg:      "#12171A" # OKLch: 10 1 240
+    bg-2:    "#1E2327" # OKLch: 15 1 240
+    fg:      "#D5D5CE" # OKLch: 85 1 110
+    fg-2:    "#E3E3DC" # OKLch: 90 1 110
     grey-bg: "#222222" # OKLch: 15 0
     grey:    "#D4D4D4" # OKLch: 85 0
     comment: "#919191" # OKLch: 60 0
-    black:   "#000409" # OKLch:  3 2 240
-    red:     "#FFC2B6" # OKLch: 85 8  30
-    green:   "#AFE4B9" # OKLch: 85 8 150
-    yellow:  "#D7DA9C" # OKLch: 85 8 110
-    blue:    "#A5DBFF" # OKLch: 85 8 240
-    magenta: "#F4C2EE" # OKLch: 85 8 330
-    cyan:    "#94E6E5" # OKLch: 85 8 195
-    white:   "#F7F9E2" # OKLch: 97 3 110
+    black:   "#020406" # OKLch:  3 1 240
+    red:     "#FFC0C4" # OKLch: 85 8  15
+    green:   "#B4E3B5" # OKLch: 85 8 145
+    yellow:  "#E0D699" # OKLch: 85 8 100
+    blue:    "#A1DDFF" # OKLch: 85 8 235
+    magenta: "#F0C3F2" # OKLch: 85 8 325
+    cyan:    "#94E6E5" # OKLch: 85 8 190
+    white:   "#F7F7F0" # OKLch: 97 1 110
 
   foreground: fg
   background: bg
